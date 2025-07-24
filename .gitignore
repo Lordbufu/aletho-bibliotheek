@@ -1,0 +1,31 @@
+# Composer dependencies
+/vendor/
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+
+# PHPUnit and testing artifacts
+/phpunit.xml
+/phpunit.xml.dist
+/tests/_output/
+/build/
+
+# IDE/editor configurations
+.idea/
+/.vscode/
+/*.sw?
+*~
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+/storage/
+
+# temp exclusions, will clean these up later
+/docs/
+/old/

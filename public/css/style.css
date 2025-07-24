@@ -1,0 +1,198 @@
+/*	TODO List: - Create a file with adjustments for desktop/laptops (and proll also i-pads). */
+
+/*	style.css:
+		This file is intended to agument the default bootstrap experience, i dint quite want to mess around with mixins and Sass maps.
+		So i decided to just overwrite specific styles as i made my concepts, so i can still define my own taste/style where needed.
+ */
+:root {											 		 		/* Globals that define the page color theme. */
+	--main-brd-col: rgb(0, 0, 0);								/* Main border color. */
+	--sec-brd-color: rgb(255, 255, 255);						/* Second border color. */
+	--main-link-col: rgb(146, 58, 127);						/* Main purple: rgba(146,58,127,255). */
+	--err-text-col: rgba(177, 23, 23, 0.829);					/* Error error color. */
+}
+
+/* Alétho homestyle color definitions. */
+.primary-color-1 { background-color: rgb(28, 50, 105); }
+.primary-color-2 { background-color: rgb(255, 167, 15); }
+.secundary-color-1 { background-color: rgb(210, 235, 244); }
+.secundary-color-2 { background-color: rgb(232, 246, 249); }
+.secundary-color-3 { background-color: rgb(251, 189, 75); }
+.secundary-color-4 { background-color: rgb(253, 211, 135); }
+
+/* Alétho homestyle tekst definitions. */
+.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-style: normal; font-weight: 200; }
+.ondertitel-tekst { font-family: BC Alphapipe; font-weight: 600; }
+.tussenkoppen-tekst { font-family: Quicksand; font-weight: bold; }
+.overige-tekst { font-family: Quicksand; font-style: normal; }
+
+/* Costum class tags, to either replace, overwrite or add to the default bootstrap. */
+.center {														/* Center element on both axis, if position is 'absolute', mainly used for the landing page login container. */
+	margin: auto !important;									/* Set margin to auto. */
+	left: 0 !important;											/* Set left to 0. */
+	right: 0 !important;										/* Set right to 0. */
+	top: 0 !important;											/* Set top to 0. */
+	bottom: 0 !important;										/* Set bottom to 0. */
+}
+
+.buttons {														/* A global buttons style to unify the look and feel. */
+	border: solid 0.1em var(--main-brd-col);					/* The border with a globally define border color. */
+	text-decoration: none;										/* Remove any hyperlink text decorations */
+}
+
+.status-dot {													/* The book status dot, to indicate the status. */
+	height: 25px;												/* Give it a fixed height. */
+	width: 25px;												/* Give it a fixed width. */
+	border-radius: 50%;											/* Round of all borders. */
+	margin: auto;												/* Re-center element using auto margins. */
+	margin-right: 0.2rem !important;							/* Overwrite the right margin to move it away from the outer container its border. */
+}
+
+.error-text { font-style: italic; }
+
+/* Custom CSS tags to trigger specific styles, based on JS events. W.I.P. */
+.openBlock { display: block !important; }
+.openFlex { display: flex !important; }
+
+/* Status colors for the stoplight indicator on items. */
+.statusOne { background-color: rgb(41, 126, 38); }
+.statusTwo { background-color: rgb(255, 56, 35); }
+.statusThree { background-color: rgb(121, 117, 19); }
+.statusFour { background-color: rgb(105, 103, 103); }
+
+/* Default overwrites, to start with a 'clean' page template. */
+* {																/* You basic wildcard to try and catch most elements. */
+	padding: 0;													/* Reset all padding. */
+	margin: 0;													/* Reset all margin. */
+	box-sizing: border-box;										/* Set all sizing to border-box. */
+}
+
+h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
+	margin: 0;													/* Reset all header margin. */
+	padding: 0;													/* Reset all header padding. */
+}
+
+::placeholder {													/* All input placeholder text: */
+	text-align: center;											/* Center text inside input. */
+}
+
+.selector-for-some-widget {										/* Recommended by the bootstrap documentation. */
+	box-sizing: content-box;
+}
+
+/* Banner/Nav items. */
+.banner-image {													/* De banner image (Alétho diamond image). */
+	height: 3.5rem;												/* Fixed height to make it fit with the text. */
+	width: 10rem;												/* Fixed width to make it fit with the text. */
+}
+
+.banner-header {												/* De Banner header. */
+	font-size: 1.5rem;											/* Adjusted font size to match the icon image. */
+}
+
+/* Login specific extra styles to supliment the bootstrap defaults. */
+.login-cont {													/* Adding a size and position to the bootstrap .container. */
+	position: absolute;											/* Absolute to make the center tag work properly (center on both axis). */
+	width: 15rem;												/* Subject to change, 15rem seem ok for now. */
+	height: fit-content;										/* Scale height to content, so it adjusts with the error message length. */
+}
+
+.login-form {													/* The login form itself. */
+	height: 100%;												/* Scale height to 100% of its parrent. */
+	align-content: center;										/* Center the content inside the form. */
+	font-size: 0.9rem;											/* Reduce the default font size a bit. */
+}
+
+.login-name-label, .login-pw-label {							/* The form input labels. */
+	display: grid;												/* Set to grid for easier aligning. */
+	position: relative;											/* Set position to relative for bootstrap tooltip messages. */
+	justify-items: center;										/* Center the tooltip below the input element. */
+}
+
+.login-name-inp, .login-pw-inp {								/* The form inputs. */
+	font-size: 0.8rem;											/* Shrink the input text a bit more. */
+	width: 90%;													/* Set to 90% of its parrents width. */
+	padding: 0.2rem;											/* Add a bit of padding. */
+	margin-top: 0.2rem;											/* And a bit of top margin for spacing between the label text and input. */
+}
+
+.login-error {													/* The error text in the login screen. */
+	font-size: small;											/* Set to small size to reduce the amount of required space. */
+	color: var(--err-text-col);									/* Set a darker red color for the error text. */
+	height: 4rem;												/* Set a fixed height, to make sure we dont get odd gaps. */
+}
+
+.login-butt {													/* The login form submit button. */
+	width: 90%;													/* Set width to 90% of its parrent. */
+	margin: 0.5rem 0;											/* Add a bit of margin above and below the button. */
+	padding: 0.3rem;											/* And give the button a bit of body around the text/content itself.*/
+}
+
+/* Default view styles */
+.nav-row-cont {													/* The navigation bar row container. */
+	padding: 0.2rem;											/* Create a bit of space around the content. */
+	width: 100%;												/* Ensure the container covers the entire width of the top level nav element. */
+}
+
+.hamburger-icon {												/* Hamburger icon label for the nav bar. */
+	font-size: 1.7rem;											/* Change the font size, changing its over all size. */
+}
+
+.search-icon {													/* Search icon label for the nav bar. */
+	font-size: 1.7rem;											/* Change the font size, changing its over all size. */
+}
+
+.hamburger-icon, .search-icon {									/* Both navigation icons. */
+	cursor: pointer;											/* Show a pointed to indicate its a button like element. */
+}
+
+#customHamburgerDropdown, #customSearchDropdown {				/* Dropdown styles: */
+	max-width: 720px;											/* Overwrite bootstrap max-width, to be more uniform across screen sizes. */
+	margin: auto !important;									/* Attempt to center the element on screen. */
+}
+
+#customHamburgerDropdown {										/* Dropdown style specically for the hamburger menu: */
+	width: 50%;													/* Reduce the size dramatically by default, to 50% of its parrent. */
+}
+
+.hamburger-container {											/* The hamburger container, containing the menu buttons: */
+	max-width: 350px;											/* Create a smaller button container, else it just looks odd imo. */
+}
+
+.search-container {												/* The search container, containing the elements: */
+	max-width: 380px;											/* Reduce the overall size, so it looks more the same across screen sizes. */
+}
+
+.hamburger-container, .search-container {						/* Hamburger & search menu containers shared styles: */
+	width: 100%;												/* Set width to 100% of its parrent. */
+	margin: auto !important;									/* Attempt to center the element on screen. */
+}
+
+/* Search menu related styles */
+.search-options {												/* The search options dropdown: */
+	width: 25%;													/* Reduce the width, so the input can sit next to it. */
+	max-width: 30%;												/* Ensure max-width is also acceptable. */
+}
+
+.search-inp {													/* The search input field: */
+	width: 70%;													/* Reduce the width, so the options can sit next to it. */
+	max-width: 75%;												/* Ensure max-width is also acceptable. */
+}
+
+/* Item container related styles */
+.item-container, .item-details {								/* The item and its details container: */
+	max-width: 720px;											/* Set a decent max-width, so it doesnt look odd on wider screens. */
+}
+
+.item-details {													/* The item details dropdown: */
+	width: 75%;													/* Reduce the dropdown size to 75% of its parrent. */
+	margin: auto;												/* Attempt to center the element on screen. */
+}
+
+.item-button {													/* The item dropdown button: */
+	padding: 0.2rem;											/* Add extra padding to give it some body. */
+}
+
+#boek-save-button, #boek-status-button, #boek-delete-button {	/* The book-details admin buttons: */
+	padding: 0.1rem;											/* Add some padding giving it some body. */
+	width: 97%;													/* Set to 97% width of its parrent. */
+}
