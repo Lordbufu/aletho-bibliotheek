@@ -1,5 +1,5 @@
 -- Database Schema for management
-CREATE TABLE `biblioapp`.`books`(
+CREATE TABLE `books`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(100) NOT NULL,
     `office_id` INT(11) UNSIGNED NOT NULL,

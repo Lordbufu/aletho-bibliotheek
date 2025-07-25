@@ -1,5 +1,5 @@
 -- Database Schema for linking books <-> status
-CREATE TABLE `biblioapp`.`book_status`(
+CREATE TABLE `book_status`(
     `book_id` INT(11) UNSIGNED NOT NULL,
     `stat_id` INT(11) UNSIGNED NOT NULL,
     `meta_id` INT(11) UNSIGNED NOT NULL,

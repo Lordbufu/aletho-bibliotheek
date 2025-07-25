@@ -1,5 +1,5 @@
 -- Database Schema for linking books <-> genres
-CREATE TABLE `biblioapp`.`book_genre`(
+CREATE TABLE `book_genre`(
     `book_id` INT(11) UNSIGNED NOT NULL,
     `genre_id` INT(11) UNSIGNED NOT NULL,
     PRIMARY KEY(`book_id`, `genre_id`),

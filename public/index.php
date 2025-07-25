@@ -1,15 +1,36 @@
 <?php
+declare(strict_types=1);
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use Dotenv\Dotenv;
 use App\Core\App;
 
-Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();   // 1) Load .env into $_ENV & $_SERVER (won’t error if missing)
+// 1) Load environment variables from .env (no error if missing)
+Dotenv::createImmutable(__DIR__ . '/..')->safeLoad();
 
-$dbConfig  = require __DIR__ . '/../config/database.php';   // 2) Load DB config
+// 2) Load DB config array
+$dbConfig  = require __DIR__ . '/../config/database.php';
 
+// 3) Define paths
 $schemaDir = __DIR__ . '/../schema';
 $lockFile  = __DIR__ . '/../.installed.lock';
-$app       = new App($dbConfig, $schemaDir, $lockFile); // 3) Boot your App
 
-$app->run();    // 4) Run it (will install tables once, then “App ready to go.”)
+// 4) Boot the application (singleton)
+App::boot($dbConfig, $schemaDir, $lockFile);
+
+try {
+    if(App::run()) {
+        // 5) Main entry point – replace with your Router or Runner
+        // e.g. App::router()->dispatch();
+        echo 'App initialization completed successfully.';
+    } else {
+        echo 'App initialization failed.';
+    }
+} catch (\Throwable $e) {
+    // Single place to log or render fatal errors
+    App::logger()->error($e->getMessage());
+    http_response_code(500);
+    echo '❌ Fatal error: ' . $e->getMessage();
+    exit(1);
+}

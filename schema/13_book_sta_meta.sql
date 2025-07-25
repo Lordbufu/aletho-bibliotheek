@@ -1,5 +1,5 @@
 -- Database Schema for book meta data management
-CREATE TABLE `biblioapp`.`book_sta_meta`(
+CREATE TABLE `book_sta_meta`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `noti_id` INT(11) UNSIGNED NOT NULL,
     `action_type` VARCHAR(25) UNIQUE DEFAULT NULL,

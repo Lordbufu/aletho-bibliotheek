@@ -1,5 +1,5 @@
 -- Database Schema for notification management
-CREATE TABLE `biblioapp`.`notifications`(
+CREATE TABLE `notifications`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `type` VARCHAR(25) NOT NULL UNIQUE,
     `active` BOOLEAN NOT NULL DEFAULT TRUE,

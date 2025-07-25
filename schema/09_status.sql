@@ -1,5 +1,5 @@
 -- Database Schema for status management
-CREATE TABLE `biblioapp`.`status`(
+CREATE TABLE `status`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `type` VARCHAR(25) NOT NULL UNIQUE,
     `periode_length` INT(11) DEFAULT NULL,

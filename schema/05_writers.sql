@@ -1,5 +1,5 @@
 -- Database Schema for writers management
-CREATE TABLE `biblioapp`.`writers`(
+CREATE TABLE `writers`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL UNIQUE,
     PRIMARY KEY(`id`)

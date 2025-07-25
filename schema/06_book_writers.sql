@@ -1,5 +1,5 @@
 -- Database Schema for linking books <-> writers
-CREATE TABLE `biblioapp`.`book_writer`(
+CREATE TABLE `book_writer`(
     `book_id` INT(11) UNSIGNED NOT NULL,
     `writer_id` INT(11) UNSIGNED NOT NULL,
     PRIMARY KEY(`book_id`, `writer_id`),

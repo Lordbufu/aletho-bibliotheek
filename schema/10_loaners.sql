@@ -1,5 +1,5 @@
 -- Database Schema for loaners management
-CREATE TABLE `biblioapp`.`loaners`(
+CREATE TABLE `loaners`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(25) NOT NULL,
     `email` VARCHAR(50) NOT NULL,

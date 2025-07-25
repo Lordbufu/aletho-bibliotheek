@@ -1,5 +1,5 @@
 -- Database Schema for User Management
-CREATE TABLE `biblioapp`.`users` (
+CREATE TABLE `users` (
     `id` INT(11) UNSIGNED AUTO_INCREMENT,
     `name` VARCHAR(25) NOT NULL,
     `password` VARCHAR(255) NOT NULL,

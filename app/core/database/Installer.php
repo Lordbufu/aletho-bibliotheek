@@ -1,7 +1,8 @@
 <?php
 namespace App\Core\Database;
 
-use PDO;
+use PDO, RuntimeException, DateTime;
+use App\Core\App;
 
 class Installer {
     protected PDO    $pdo;
@@ -17,39 +18,40 @@ class Installer {
     }
 
     /**
-     * Scan schema/*.sql and return table-names that don't exist yet.
-     * If none missing, write "installed" and return false.
+     * Return an array of missing tables (file + table name) or false if everything's installed.
      */
     public function getMissingTables(): array|false {
-        // if already installed, bail
-        if(is_file($this->lockFile) && trim(file_get_contents($this->lockFile)) === 'installed') {
+        if($this->isInstalled()) {                                         // If already installed, bail
             return false;
         }
 
         $missing = [];
+        $files = glob($this->schemaDir.'/*.sql');                           // Sort files by filename
+        sort($files);                                                       // Lexicographically by filename
 
-        // Sort files by filename
-        $files = glob($this->schemaDir.'/*.sql');
-        sort($files); // Lexicographically by filename
+        foreach($files as $path) {
+            $table = preg_replace('/^\d+_/', '', basename($path, '.sql'));  // Strip numeric prefix
 
-        foreach ($files as $path) {
-            $table = preg_replace('/^\d+_/', '', basename($path, '.sql')); // Strip numeric prefix
+            $stmt = $this->pdo->prepare(
+                "SELECT 1 
+                   FROM information_schema.tables 
+                  WHERE table_schema = :schema 
+                    AND table_name   = :table 
+                  LIMIT 1"
+            );
 
-            $stmt = $this->pdo->prepare("
-                SELECT 1 FROM information_schema.tables
-                WHERE table_schema = :schema AND table_name = :table LIMIT 1
-            ");
+            $stmt->execute([
+                ':schema' => $this->dbName,
+                ':table'  => $table,
+            ]);
 
-            $stmt->execute([':schema' => $this->dbName, ':table' => $table]);
-
-            if (!$stmt->fetchColumn()) {
-                $missing[] = [ 'file' => $path, 'table' => $table ];
+            if(!$stmt->fetchColumn()) {
+                $missing[] = ['file' => $path, 'table' => $table];
             }
         }
 
-        // if nothing missing, mark installed
-        if (empty($missing)) {
-            file_put_contents($this->lockFile, 'installed');
+        if(empty($missing)) {                                               // if nothing missing, mark installed
+            $this->markInstalled([]);
             return false;
         }
 
@@ -57,29 +59,75 @@ class Installer {
     }
 
     /**
-     * Execute each missing table's SQL file.
-     * On *complete* success, write "installed" to the lock.
+     * Execute SQL for each missing table; on success, mark the lock as installed.
+     * Throws RuntimeException on any failure.
      */
     public function installTables(array $tables): void {
-        foreach ($tables as $entry) {
+        $installed = [];
+
+        foreach($tables as $entry) {
             $file  = $entry['file'];
             $table = $entry['table'];
 
-            if (!is_readable($file)) {
-                throw new \RuntimeException("SQL file not found: $file");
+            if(!is_readable($file)) {
+                App::get('logger')->error("SQL file missing for table '{$table}' at '{$file}'", 'installer');
+                throw new RuntimeException("SQL file for table '{$table}' not readable at '{$file}'.");
             }
 
             $sql = file_get_contents($file);
 
             try {
                 $this->pdo->exec($sql);
-                echo "✔ Created table $table\n";
-            } catch (\Throwable $e) {
-                throw new \RuntimeException("Failed creating table $table: ".$e->getMessage(), 0, $e);
+                $installed[] = $table;
+                App::get('logger')->warning("Successfully created table '{$table}'.", 'installer');
+            } catch(\Throwable $e) {
+                if (str_contains($e->getMessage(), 'already exists')) {
+                    // Log and skip, don't crash the install
+                    App::get('logger')->warning("Skipped table '{$table}': already exists.", 'installer');
+                } else {
+                    App::get('logger')->error("Failed to install table '{$table}': " . $e->getMessage(), 'installer');
+                    throw new \RuntimeException("Error installing table '{$table}': " . $e->getMessage(), 0, $e);
+                }
             }
         }
 
-        // only now mark everything done
-        file_put_contents($this->lockFile, 'installed');
+        $this->markInstalled($installed);
+        App::get('logger')->warning("Installer completed. Tables installed: [" . implode(', ', $installed) . "]", 'installer');
+    }
+
+    /**
+     * Check lock-file JSON for { status: "installed", … }.
+     */
+    protected function isInstalled(): bool {
+        if(!is_file($this->lockFile)) {
+            return false;
+        }
+
+        $data = json_decode(file_get_contents($this->lockFile), true);
+        return isset($data['status']) && $data['status'] === 'installed';
+    }
+
+    /**
+     * Write a JSON lock with timestamp and table list.
+     */
+    protected function markInstalled(array $tables): void {
+        $data = [
+            'status'    => 'installed',
+            'timestamp' => (new DateTime())->format(DateTime::ATOM),
+            'tables'    => $tables,
+        ];
+
+        file_put_contents($this->lockFile, json_encode($data, JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * Return install details or null if never run.
+     */
+    public function getInstallDetails(): ?array {
+        if(!is_file($this->lockFile)) {
+            return null;
+        }
+
+        return json_decode(file_get_contents($this->lockFile), true);
     }
 }

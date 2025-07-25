@@ -1,5 +1,5 @@
 -- Database Schema for linking status <-> notifications
-CREATE TABLE `biblioapp`.`status_noti`(
+CREATE TABLE `status_noti`(
     `status_id` INT(11) UNSIGNED NOT NULL,
     `notification_id` INT(11) UNSIGNED NOT NULL,
     PRIMARY KEY(`status_id`, `notification_id`),

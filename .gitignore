@@ -32,3 +32,4 @@ Thumbs.db
 # temp exclusions, will clean these up later
 /docs/
 /old/
+.installed.lock
