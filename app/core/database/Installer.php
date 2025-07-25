@@ -20,7 +20,7 @@ class Installer {
      * Scan schema/*.sql and return table-names that don't exist yet.
      * If none missing, write "installed" and return false.
      */
-    public function getMissingTables() {
+    public function getMissingTables(): array|false {
         // if already installed, bail
         if(is_file($this->lockFile) && trim(file_get_contents($this->lockFile)) === 'installed') {
             return false;
@@ -28,26 +28,27 @@ class Installer {
 
         $missing = [];
 
-        foreach(glob($this->schemaDir.'/*.sql') as $path) {
-            $table = basename($path, '.sql');
+        // Sort files by filename
+        $files = glob($this->schemaDir.'/*.sql');
+        sort($files); // Lexicographically by filename
+
+        foreach ($files as $path) {
+            $table = preg_replace('/^\d+_/', '', basename($path, '.sql')); // Strip numeric prefix
 
             $stmt = $this->pdo->prepare("
-              SELECT 1
-                FROM information_schema.tables
-               WHERE table_schema = :schema
-                 AND table_name   = :table
-               LIMIT 1
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = :schema AND table_name = :table LIMIT 1
             ");
 
-            $stmt->execute([':schema' => $this->dbName, ':table'  => $table ]);
+            $stmt->execute([':schema' => $this->dbName, ':table' => $table]);
 
-            if(!$stmt->fetchColumn()) {
-                $missing[] = $table;
+            if (!$stmt->fetchColumn()) {
+                $missing[] = [ 'file' => $path, 'table' => $table ];
             }
         }
 
         // if nothing missing, mark installed
-        if(empty($missing)) {
+        if (empty($missing)) {
             file_put_contents($this->lockFile, 'installed');
             return false;
         }
@@ -59,11 +60,12 @@ class Installer {
      * Execute each missing table's SQL file.
      * On *complete* success, write "installed" to the lock.
      */
-    public function installTables(array $tables) {
-        foreach($tables as $table) {
-            $file = "{$this->schemaDir}/{$table}.sql";
+    public function installTables(array $tables): void {
+        foreach ($tables as $entry) {
+            $file  = $entry['file'];
+            $table = $entry['table'];
 
-            if(!is_readable($file)) {
+            if (!is_readable($file)) {
                 throw new \RuntimeException("SQL file not found: $file");
             }
 
@@ -72,7 +74,7 @@ class Installer {
             try {
                 $this->pdo->exec($sql);
                 echo "✔ Created table $table\n";
-            } catch(\Throwable $e) {
+            } catch (\Throwable $e) {
                 throw new \RuntimeException("Failed creating table $table: ".$e->getMessage(), 0, $e);
             }
         }
