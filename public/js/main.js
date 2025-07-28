@@ -7,29 +7,41 @@ const DROPDOWN_CACHE = {
     itemDropdowns:  null
 }
 
-// document.addEventListener('DOMContentLoaded', () => {
 $(function(){
     /* Populate the dropdown cache. */
     DROPDOWN_CACHE.searchToggle   = $('#search-button');
     DROPDOWN_CACHE.searchDropdown = $('#customSearchDropdown');
     DROPDOWN_CACHE.hamToggle      = $('#hamburger-button');
     DROPDOWN_CACHE.hamDropdown    = $('#customHamburgerDropdown');
-    DROPDOWN_CACHE.itemDropdowns  = $('[id^="customItemDropdown-"]');
+    DROPDOWN_CACHE.itemDropdowns  = $('[id^="customItemDropdown-"]'); // expects unique IDs like customItemDropdown-<bookId>
 
     /* Build the cache mapping only once. */
     const mappings = getDropdownMappings(DROPDOWN_CACHE);
 
     // now bind handlers, etc.
     mappings.forEach(({toggle, dropdown}) => {
-        toggle.on('click', (event) => {
-            mappings.forEach(({ dropdown: otherDropdown }) => {
-            if (otherDropdown !== dropdown && otherDropdown.hasClass('show')) {
-                closeCollapse(otherDropdown);
+        toggle.on('click', function(event) {
+            event.stopPropagation();
+            const collapse = bootstrap.Collapse.getOrCreateInstance(dropdown[0], {toggle: false});
+            // If this dropdown is open, close it and return
+            if (dropdown.hasClass('show')) {
+                collapse.hide();
+                return;
             }
+            // Otherwise, close all others and open this one
+            mappings.forEach(({ dropdown: otherDropdown }) => {
+                if (otherDropdown !== dropdown && otherDropdown.hasClass('show')) {
+                    bootstrap.Collapse.getOrCreateInstance(otherDropdown[0], {toggle: false}).hide();
+                }
             });
-            
-            // your toggle logic…
-            dropdown.toggleClass('show'); 
+            collapse.show();
+        });
+    });
+
+    // Close all dropdowns when the add-book popin is triggered
+    $('#boek-toev-button').on('click', function() {
+        getDropdownMappings(DROPDOWN_CACHE).forEach(({ dropdown }) => {
+            closeCollapse(dropdown);
         });
     });
 
@@ -64,13 +76,8 @@ $(function(){
         });
     });
 
-    /* concept code for the status lights, currently just fake events so i can trigger the change. */
-    const statusLights = document.querySelectorAll('.status-dot');
-    const statusLightsArr = Array.from(statusLights);
-
-    for(key in statusLightsArr) {
-        statusLightsArr[key].addEventListener('click', testLights);
-    }
+    // Concept code for the status lights, now using jQuery
+    $('.status-dot').on('click', testLights);
 });
 
 /*  Helper - getDropdownMappings(): Returns an array of objects mapping a dropdown to its corresponding toggle. */
@@ -112,14 +119,9 @@ function getDropdownMappings(cache) {
 
 /*  Helper - closeCollapse: Closes the given dropdown if it is open. */
 function closeCollapse(dropdown) {
-    const el = dropdown && dropdown.get ? dropdown.get(0) : dropdown;
-
-    if(!el || !el.classList.contains("show")) {
-        return;
+    if (dropdown && dropdown.hasClass('show')) {
+        bootstrap.Collapse.getOrCreateInstance(dropdown[0], {toggle: false}).hide();
     }
-
-    let bsCollapse = bootstrap.Collapse.getInstance(el) || new bootstrap.Collapse(el, { toggle: false });
-    bsCollapse.hide();
 }
 
 /*  attachFocusOutEvents(): Attach focusout event for each dropdown to close it when focus leaves. */
@@ -209,29 +211,28 @@ function stringChecker($type, $value) {
         Change the search placeholder text, of the search input below the dropdown menu.
  */
 function changeSearchText(e) {
-    let sInput = e.target.nextElementSibling;
-    sInput.placeholder = " Zoek op " + e.target.value + " ...";
+    // e is a native event or jQuery event
+    let $input = $(e.target).next();
+    $input.attr('placeholder', ' Zoek op ' + $(e.target).val() + ' ...');
 }
 
 /* Concept code of how to change the status light for each item, based on the current status style. */
 function testLights(e) {
-    if(e.target.classList.contains('statusOne')) {
-        e.target.classList.remove('statusOne');
-        return e.target.classList.toggle('statusTwo');
+    var $el = $(e.target);
+    if ($el.hasClass('statusOne')) {
+        $el.removeClass('statusOne').addClass('statusTwo');
+        return;
     }
-
-    if(e.target.classList.contains('statusTwo')) {
-        e.target.classList.remove('statusTwo');
-        return e.target.classList.toggle('statusThree');
+    if ($el.hasClass('statusTwo')) {
+        $el.removeClass('statusTwo').addClass('statusThree');
+        return;
     }
-
-    if(e.target.classList.contains('statusThree')) {
-        e.target.classList.remove('statusThree');
-        return e.target.classList.toggle('statusFour');
+    if ($el.hasClass('statusThree')) {
+        $el.removeClass('statusThree').addClass('statusFour');
+        return;
     }
-
-    if(e.target.classList.contains('statusFour')) {
-        e.target.classList.remove('statusFour');
-        return e.target.classList.toggle('statusOne');
+    if ($el.hasClass('statusFour')) {
+        $el.removeClass('statusFour').addClass('statusOne');
+        return;
     }
 }
