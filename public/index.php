@@ -23,7 +23,8 @@ try {
     if(App::run()) {
         // 5) Main entry point – replace with your Router or Runner
         // e.g. App::router()->dispatch();
-        echo 'App initialization completed successfully.';
+        $router = require __DIR__ . '/../config/routes.php';
+        $router->dispatch();
     } else {
         echo 'App initialization failed.';
     }
