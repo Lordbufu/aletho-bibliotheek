@@ -6,8 +6,16 @@ use App\Core\App;
 
 class ProtoTypeController {
     public function home() {
-        $user = [ 'userType' => 'admin' ]; // Example user data, replace with actual logic
-        return App::view('main.view', $user);
+        $data = [
+            'userType' => 'admin',                              // Example user type, can be 'admin', 'user', etc; Uncomment to get the login view.
+            'books' => [                                        // Example book data
+                ['id' => 1, 'name' => 'Book 1', 'author' => 'Author 1'],
+                ['id' => 2, 'name' => 'Book 2', 'author' => 'Author 2'],
+                // Add more books as needed
+            ]
+        ];
+        
+        return App::view('main.view', $data);
     }
 
     public function test() {
