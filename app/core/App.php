@@ -16,8 +16,8 @@ class App {
     private static App $instance;
     private ServiceContainer $services;
     private array $dbConfig;
-    protected string   $schemaDir;
-    protected string   $lockFile;
+    protected string $schemaDir;
+    protected string $lockFile;
 
     /**
      * Make the constructor private to enforce boot().
@@ -78,15 +78,15 @@ class App {
      * @return bool  true if everything initialized OK
      * @throws \Throwable  on any initialization error
      */
-    public function run(): bool {
+    public static function run(): bool {
         // silently install or verify schema; will throw on error
-        if($this->installSchema()) {
-            $this->get('logger')->warning("Installer triggered: tables created or skipped where necessary.", 'installer');
+        if(self::$instance->installSchema()) {
+            self::$instance->get('logger')->warning("Installer triggered: tables created or skipped where necessary.", 'installer');
         } else {
-            $this->get('logger')->warning("Installer skipped: all required tables already exist.", 'installer');
+            self::$instance->get('logger')->warning("Installer skipped: all required tables already exist.", 'installer');
         }
 
-        echo $this->mailTemplateTest();         // temp test case.
+        // echo self::$instance->mailTemplateTest();         // temp test case.
         // at this point you know your DB is good, so hand off
         // to routing / controller logic
         return true;
@@ -129,5 +129,37 @@ class App {
         $html = App::get('mailTemplateService')->renderTemplate($segments, $tokens);
 
         return $html; // Just renders to screen for debugging
+    }
+
+    /**
+     * Render a view file from app/views/ with optional data.
+     *
+     * @param string $view      View filename (e.g., 'main.view.php')
+     * @param array  $data      Associative array of data for the view
+     * @return void
+     */
+    public static function view(string $view, array $data = []): void {
+        $viewFile = __DIR__ . '/../views/' . $view . '.php';
+
+        if (!file_exists($viewFile)) {
+            http_response_code(500);
+            echo "View not found: {$view}";
+            return;
+        }
+
+        extract($data, EXTR_SKIP);
+        require $viewFile;
+    }
+
+    /**
+     * Redirect to a different URL and exit.
+     *
+     * @param string $url
+     * @param int $statusCode
+     * @return void
+     */
+    public static function redirect(string $url, int $statusCode = 302): void {
+        header('Location: ' . $url, true, $statusCode);
+        exit;
     }
 }
