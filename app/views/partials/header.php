@@ -6,7 +6,7 @@
 		<link rel="icon" type="image/x-icon" href="/images/favicon.ico">
 		<title>Alétho Bibliotheek App</title>
 		<!-- Font Awesome min css: -->
-		<link href="css/fontawesome-free-6.7.2-web.all.min.css" rel="stylesheet">
+		<link href="css/fontawesome.all.min.css" rel="stylesheet">
 		<!-- Manual Bootstrap min css: -->
 		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
 		<!-- Adobe Font BC Alphapipe -->

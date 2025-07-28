@@ -20,8 +20,8 @@
 .secundary-color-4 { background-color: rgb(253, 211, 135); }
 
 /* Alétho homestyle tekst definitions. */
-.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-style: normal; font-weight: 200; }
-.ondertitel-tekst { font-family: BC Alphapipe; font-weight: 600; }
+.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 400; font-style: normal; }
+.ondertitel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 700; font-style: normal; }
 .tussenkoppen-tekst { font-family: Quicksand; font-weight: bold; }
 .overige-tekst { font-family: Quicksand; font-style: normal; }
 
