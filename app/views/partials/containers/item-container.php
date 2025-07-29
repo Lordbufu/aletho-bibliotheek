@@ -57,7 +57,7 @@
         </div>
 
         <!-- Admin additions: -->
-         <?php if(isset($userType) && $userType === 'admin'): ?>
+         <?php if(isset($userType) && ($userType === 'office_admins' || $userType === 'global_admins')): ?>
         <div class="secundary-color-1 dropdown-container border border-top-0 border-dark">
             <input class="dropdown-item" value="Laatste lener" disabled>
         </div>

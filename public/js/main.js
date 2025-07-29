@@ -1,146 +1,114 @@
-/* Create a constant dropdown cache, so its only loaded at runtime. */
-const DROPDOWN_CACHE = {
-    searchToggle:   null,
-    searchDropdown: null,
-    hamToggle:      null,
-    hamDropdown:    null,
-    itemDropdowns:  null
-}
+// This file is part of the Aletho Bibliotheek project.
+let popinIsOpen = false;
 
 $(function(){
-    /* Populate the dropdown cache. */
-    DROPDOWN_CACHE.searchToggle   = $('#search-button');
-    DROPDOWN_CACHE.searchDropdown = $('#customSearchDropdown');
-    DROPDOWN_CACHE.hamToggle      = $('#hamburger-button');
-    DROPDOWN_CACHE.hamDropdown    = $('#customHamburgerDropdown');
-    DROPDOWN_CACHE.itemDropdowns  = $('[id^="customItemDropdown-"]'); // expects unique IDs like customItemDropdown-<bookId>
+    // DRY popin setup
+    function setupPopin(openBtn, popinId, closeBtn) {
+        $(openBtn).on('click', function() { openPopin(popinId); });
+        $(closeBtn).on('click', function() { closePopin(popinId); });
+        $(popinId).on('click', function(e) { if (e.target === this) closePopin(popinId); });
+    }
 
-    /* Build the cache mapping only once. */
-    const mappings = getDropdownMappings(DROPDOWN_CACHE);
+    setupPopin('#boek-toev-button', '#add-book-popin', '#close-add-book-popin');
+    setupPopin('#periode-wijz-button', '#status-period-popin', '#close-status-period-popin');
+    setupPopin('#wachtwoord-wijz-button', '#password-reset-popin', '#close-password-reset-popin');
+    setupPopin('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
 
-    // now bind handlers, etc.
-    mappings.forEach(({toggle, dropdown}) => {
-        toggle.on('click', function(event) {
-            event.stopPropagation();
-            const collapse = bootstrap.Collapse.getOrCreateInstance(dropdown[0], {toggle: false});
-            // If this dropdown is open, close it and return
-            if (dropdown.hasClass('show')) {
-                collapse.hide();
-                return;
+    $(document).on('click', function(event) {
+        // If a popin is open, only close the hamburger dropdown if click is outside any popin
+        if (popinIsOpen) {
+            if (
+                $(event.target).closest('#add-book-popin:visible, #status-period-popin:visible, #password-reset-popin:visible, #change-book-status-popin:visible').length > 0
+            ) {
+                return; // Click was inside a popin, do nothing
             }
-            // Otherwise, close all others and open this one
-            mappings.forEach(({ dropdown: otherDropdown }) => {
-                if (otherDropdown !== dropdown && otherDropdown.hasClass('show')) {
-                    bootstrap.Collapse.getOrCreateInstance(otherDropdown[0], {toggle: false}).hide();
-                }
-            });
-            collapse.show();
-        });
+            closeHamburgerDropdown();
+            return;
+        }
+
+        // Hamburger dropdown: close if open and click is outside
+        if (! $(event.target).closest('#customHamburgerDropdown, #hamburgerButton').length) {
+            closeHamburgerDropdown();
+        }
+
+        // Search dropdown: close if open and click is outside
+        if (! $(event.target).closest('#customSearchDropdown, #searchButton').length) {
+            closeSearchDropdown();
+        }
     });
 
-    // Close all dropdowns when the add-book popin is triggered
-    $('#boek-toev-button').on('click', function() {
-        getDropdownMappings(DROPDOWN_CACHE).forEach(({ dropdown }) => {
-            closeCollapse(dropdown);
+    $('#status-type').on('change', function() {
+        let $selected = $(this).find('option:selected');
+        $('#periode-length').val($selected.data('periode_length'));
+        $('#reminder-day').val($selected.data('reminder_day'));
+        $('#overdue-day').val($selected.data('overdue_day'));
+    });
+
+    // Trigger change on load to pre-fill with the first status
+    $('#status-type').trigger('change');
+
+    // When any popin is triggered, close the hamburger dropdown only
+    $('#boek-toev-button, #periode-wijz-button, #wachtwoord-wijz-button, #boek-status-wijz-button').on('click', function() {
+        closeHamburgerDropdown();
+    });
+
+    // Book details dropdown logic: only one open at a time
+    $('[id^="itemButton-"]').on('click', function(e) {
+        let targetId = $(this).attr('data-bs-target');
+
+        e.stopPropagation();
+        // Close hamburger and search dropdowns
+        closeHamburgerDropdown();
+        closeSearchDropdown();
+
+        // Close all other open details
+        $('.item-details.collapse.show').each(function() {
+            if ('#' + $(this).attr('id') !== targetId) {
+                bootstrap.Collapse.getOrCreateInstance(this, {toggle: false}).hide();
+            }
         });
     });
 
     /* Login input elements & events: */
     $('#login-name, #login-passw').on('input', inputCheck);
 
-    /* 1. Document click event: Close dropdown if a click is outside both the dropdown and its toggle. */
-    $(document).on('click', function(event) {
-        getDropdownMappings(DROPDOWN_CACHE).forEach(({ toggle, dropdown }) => {
-            if(dropdown.hasClass('show') && !dropdown.has(event.target).length && !(toggle && toggle.has(event.target).length)) {
-                closeCollapse(dropdown);
-            }
-        });
-    });
-
-    /* 2. Global keydown event: On Escape, close all open dropdowns. */
-    $(document).on('keydown', function(event) {
-        if(event.key === 'Escape') {
-            getDropdownMappings(DROPDOWN_CACHE).forEach(({ dropdown }) => {
-                closeCollapse(dropdown);
-            });
-        }
-    });
-
-    /* 3. Attach focusout event for each dropdown to close it when focus leaves. (function defined outside this event) */
-    attachFocusOutEvents();
-
-    /* 4. Window blur event: Close all dropdowns when the window loses focus. */
-    $(window).on('blur', function(event){
-        getDropdownMappings(DROPDOWN_CACHE).forEach(({ dropdown }) => {
-            closeCollapse(dropdown);
-        });
-    });
-
     // Concept code for the status lights, now using jQuery
     $('.status-dot').on('click', testLights);
 });
 
-/*  Helper - getDropdownMappings(): Returns an array of objects mapping a dropdown to its corresponding toggle. */
-function getDropdownMappings(cache) {
-    const maps = [];
-
-    if(cache.searchToggle && cache.searchDropdown && cache.searchDropdown.length) {
-        maps.push({
-            toggle:  cache.searchToggle,
-            dropdown: cache.searchDropdown
-        });
-    }
-
-    if(cache.hamToggle && cache.hamDropdown && cache.hamDropdown.length) {
-        maps.push({
-            toggle: cache.hamToggle,
-            dropdown: cache.hamDropdown
-        });
-    }
-
-    /* Automatically add any dynamically generated item dropdowns. */
-    if(cache.itemDropdowns && cache.itemDropdowns.length) {
-        cache.itemDropdowns.each(function() {
-            const $dropdown = $(this);
-            const targetId  = $dropdown.attr('id');
-            const $toggle   = $(`[data-bs-target="#${targetId}"]`);
-
-            if($toggle.length) {
-                maps.push({
-                    toggle: $toggle,
-                    dropdown: $dropdown
-                });
-            }
-        });
-    }
-
-    return maps;
+// Open popin function with popinIsOpen flag
+function openPopin(selector) {
+    $(selector).show();
+    popinIsOpen = true;
+    closeHamburgerDropdown();
 }
 
-/*  Helper - closeCollapse: Closes the given dropdown if it is open. */
-function closeCollapse(dropdown) {
-    if (dropdown && dropdown.hasClass('show')) {
-        bootstrap.Collapse.getOrCreateInstance(dropdown[0], {toggle: false}).hide();
+// Close popin function with popinIsOpen flag
+function closePopin(selector) {
+    $(selector).hide();
+    popinIsOpen = false;
+}
+
+// Helper to close the hamburger dropdown only, but still allowing custom logic.
+function closeHamburgerDropdown() {
+    closeDropdown('#customHamburgerDropdown');
+}
+
+// Helper to close the search dropdown only, but still allowing custom logic.
+function closeSearchDropdown() {
+    closeDropdown('#customSearchDropdown');
+}
+
+// Generic function to close any dropdown by selector, using the Bootstrap Collapse instance.
+function closeDropdown(selector) {
+    let $dropdown = $(selector);
+
+    if ($dropdown.hasClass('show')) {
+        bootstrap.Collapse.getOrCreateInstance($dropdown[0], {toggle: false}).hide();
     }
 }
 
-/*  attachFocusOutEvents(): Attach focusout event for each dropdown to close it when focus leaves. */
-function attachFocusOutEvents() {
-    getDropdownMappings(DROPDOWN_CACHE).forEach(({ dropdown }) => {
-        dropdown.on('focusout', () => {
-            /* Timeout ensures that the focus has shifted. */
-            setTimeout(() => {
-                if (!dropdown.is(':focus-within')) {
-                    closeCollapse(dropdown);
-                }
-            }, 0);
-        });
-    });
-}
-
-/*  inputCheck(e):
-        Check the input and add bootstrap styling if valid or invalid based on stringChecker().
- */
+/* inputCheck(e): Check the input and add bootstrap styling if valid or invalid based on stringChecker(). */
 function inputCheck(e) {
     let check;
 
@@ -187,9 +155,7 @@ function inputCheck(e) {
 }
 
 // W.I.P.
-/*  stringChecker($type, $value):
-        This needs to be a global function with a all various string length checks.
- */
+/* stringChecker($type, $value): This needs to be a global function with a all various string length checks. */
 function stringChecker($type, $value) {
     switch($type) {
         case 'name':
@@ -207,9 +173,7 @@ function stringChecker($type, $value) {
     }
 }
 
-/*  changeSearchText(e):
-        Change the search placeholder text, of the search input below the dropdown menu.
- */
+/* changeSearchText(e): Change the search placeholder text, of the search input below the dropdown menu. */
 function changeSearchText(e) {
     // e is a native event or jQuery event
     let $input = $(e.target).next();
@@ -218,7 +182,7 @@ function changeSearchText(e) {
 
 /* Concept code of how to change the status light for each item, based on the current status style. */
 function testLights(e) {
-    var $el = $(e.target);
+    let $el = $(e.target);
     if ($el.hasClass('statusOne')) {
         $el.removeClass('statusOne').addClass('statusTwo');
         return;

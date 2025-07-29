@@ -5,27 +5,12 @@
   <?php require 'partials/containers/hamburger-container.php'; ?>
 
   <?php foreach ($books as $book): ?>
-    <?php require 'partials/containers/item-container.php'; ?>
+	<?php require 'partials/containers/item-container.php'; ?>
   <?php endforeach; ?>
 </div>
 
+
 <?php require 'partials/popins/add-book-popin.php'; ?>
-
-<script>
-// JavaScript to handle the hamburger menu add book popin functionality
-$(function() {
-  $('#boek-toev-button').on('click', function() {
-    $('#add-book-popin').show();
-  });
-  $('#close-add-book-popin').on('click', function() {
-    $('#add-book-popin').hide();
-  });
-  // Optional: Hide modal when clicking outside the modal-content
-  $('#add-book-popin').on('click', function(e) {
-    if (e.target === this) {
-      $(this).hide();
-    }
-  });
-});
-</script>
-
+<?php require 'partials/popins/status-period-popin.php'; ?>
+<?php require 'partials/popins/password-reset-popin.php'; ?>
+<?php require 'partials/popins/change-book-status-popin.php'; ?>
