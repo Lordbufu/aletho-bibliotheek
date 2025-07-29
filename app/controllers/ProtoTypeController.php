@@ -8,9 +8,24 @@ class ProtoTypeController {
     public function home() {
         $data = [
             'userType' => 'office_admins', // Can be user, office_admins, or global_admins
+            'currentOfficeId' => 1,
+            //'userType' => 'global_admins', // Can be user, office_admins, or global_admins
+            //'userType' => 'user', // Can be user, office_admins, or global_admins
             'books' => [
-                ['id' => 1, 'name' => 'Book 1', 'author' => 'Author 1'],
-                ['id' => 2, 'name' => 'Book 2', 'author' => 'Author 2']
+                [   'id' => 1,
+                    'name' => 'Book 1',
+                    'author' => 'Author 1',
+                    'genre' => 'Roman',
+                    'office' => 'Hoofdkantoor',
+                    'office_id' => 1
+                ],
+                [   'id' => 2,
+                    'name' => 'Book 2',
+                    'author' => 'Author 2',
+                    'genre' => 'Non-fictie',
+                    'office' => 'Filiaal Noord',
+                    'office_id' => 2
+                ]
             ],
             'statuses' => [
                 [   'id' => 1,
@@ -40,6 +55,15 @@ class ProtoTypeController {
                 ['id' => 2, 'name' => 'Bob'],
                 ['id' => 3, 'name' => 'Charlie']
             ],
+            'genres' => [
+                ['id' => 1, 'name' => 'Roman'],
+                ['id' => 2, 'name' => 'Non-fictie'],
+                ['id' => 3, 'name' => 'Science Fiction']
+            ],
+            'offices' => [
+                ['id' => 1, 'name' => 'Hoofdkantoor'],
+                ['id' => 2, 'name' => 'Filiaal Noord']
+            ]
         ];
 
         return App::view('main.view', $data);
