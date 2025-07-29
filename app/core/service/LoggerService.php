@@ -1,4 +1,5 @@
 <?php
+// TODO: Review why the rootPath is not working, and the logs are stored in the wrong place.
 namespace App\Core\Services;
 
 class LoggerService {
