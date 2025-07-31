@@ -72,7 +72,7 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 }
 
 ::placeholder {													/* All input placeholder text: */
-	text-align: center;											/* Center text inside input. */
+	text-align: center !important;								/* Center text inside input. */
 }
 
 .selector-for-some-widget {										/* Recommended by the bootstrap documentation. */

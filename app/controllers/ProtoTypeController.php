@@ -6,8 +6,8 @@ use App\Core\App;
 
 class ProtoTypeController {
     public function home() {
-        $user = [ 'name' => 'user', 'is_loaner' => 1, 'is_office_admin' => 0, 'is_global_admin' => 0 ];
-        // $user = [ 'name' => 'officeAdmin', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1 ];
+        // $user = [ 'name' => 'user', 'is_loaner' => 1, 'is_office_admin' => 0, 'is_global_admin' => 0 ];
+        $user = [ 'name' => 'officeAdmin', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1 ];
         // $user = [ 'name' => 'globaleAdmin', 'is_loaner' => 0, 'is_office_admin' => 0, 'is_global_admin' => 1 ];
 
         $data = [
@@ -16,7 +16,7 @@ class ProtoTypeController {
             'books' => [
                 [ 'id' => 1, 'name' => 'Book 1', 'author' => 'Author 1', 'genre' => 'Roman', 'office_id' => 1, 'status_id' => 1 ],
                 [ 'id' => 2, 'name' => 'Book 2', 'author' => 'Author 2', 'genre' => 'Non-fictie', 'office_id' => 2, 'status_id' => 3 ],
-                [ 'id' => 2, 'name' => 'Book 3', 'author' => 'Author 1', 'genre' => 'Science Fiction', 'office_id' => 1, 'status_id' => 2 ],
+                [ 'id' => 3, 'name' => 'Book 3', 'author' => 'Author 1', 'genre' => 'Science Fiction', 'office_id' => 1, 'status_id' => 2 ],
             ],
             'statuses' => [
                 [ 'id' => 1, 'type' => 'Uitgeleend' ],

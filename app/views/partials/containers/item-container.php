@@ -1,14 +1,12 @@
 <?php    // Should be evaluate via session data in the controlller
     $canEdit = $perm->canEdit();
     $canEditOffice = $perm->canEditOffice($book['office_id']);
-
     foreach($statuses as $status) {
         if($status['id'] === $book['status_id']) {
             $huidigeStatus = $status['type'];
         }
     }
-
-    $statusVerl = '25-01-1873';
+    $statusVerl = date('25/01/1873');
 ?>
 
 <!-- /* Item container example, with a dropdown for potentially editable details and user based content. */ -->
@@ -30,101 +28,100 @@
 
     <!-- Detailed item info, based on user type -->
     <div class="collapse item-details secundary-color-1 border border-top-0 border-dark" id="customItemDropdown-<?= $book['id'] ?>">
-        <form class="book-edit-form p-2" data-book-id="<?= $book['id'] ?>" method="get" action="/">
-            <div class="row g-2">
-
-                
+        <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="get" action="/">
+            <!-- Name and Author container -->
+            <div class="row">
                 <?php if ($canEdit): ?>
-                <!-- Name -->
                 <div class="col-12 col-md-6">
                     <div class="input-group input-group-sm">
-                        <!-- class="dropdown-item" was removed-->
-                        <input type="text" class="form-control" id="book-name-<?= $book['id'] ?>" name="book-name" value="<?= htmlspecialchars($book['name']) ?>" disabled>
+                        <input type="text" class="form-control text-center" id="book-name-<?= $book['id'] ?>" name="book-name" value="<?= htmlspecialchars($book['name']) ?>" disabled>
                         <button type="button" class="btn btn-link edit-field-btn" data-swap-targets="#book-name-<?= $book['id'] ?>" aria-label="Edit Book Name">✏️</button>
                     </div>
                 </div>
                 <?php endif; ?>
-
-                <!-- Author -->
                 <div class="col-12 col-md-6">
                     <div class="input-group input-group-sm">
-                        <!-- class="dropdown-item" was removed-->
-                        <input type="text" class="form-control" id="book-writer-<?= $book['id'] ?>" name="book_writer" value="<?= htmlspecialchars($book['author'] ?? '') ?>" disabled>
+                        <input type="text" class="form-control text-center" id="book-writer-<?= $book['id'] ?>" name="book_writer" value="<?= htmlspecialchars($book['author'] ?? '') ?>" disabled>
                         <?php if ($canEdit): ?>
                         <button type="button" class="btn btn-link edit-field-btn" data-swap-targets="#book-writer-<?= $book['id'] ?>" aria-label="Edit Author">✏️</button>
                         <?php endif; ?>
                     </div>
                 </div>
+            </div>
 
-                <!-- Genre -->
-                <div class="col-12 col-md-3">
-                    <?php if ($canEdit): ?>
-                    <select class="form-select form-select-sm" id="genre-input-<?= $book['id'] ?>" name="genre_id">
-                        <?php foreach ($genres as $genre): ?>
-                        <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($genre['name']) ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php else: ?>
-                    <div class="form-control form-control-sm bg-light text-muted"><?= htmlspecialchars($book['genre'] ?? 'Onbekend') ?></div>
-                    <?php endif; ?>
-                </div>
+            <!-- Genre -->
+            <div class="col-12 col-md-3">
+                <?php if ($canEdit): ?>
+                <select class="form-select form-select-sm text-center" id="genre-input-<?= $book['id'] ?>" name="genre_id">
+                    <?php foreach ($genres as $genre): ?>
+                    <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($genre['name']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php else: ?>
+                <div class="form-control form-control-sm bg-light text-muted"><?= htmlspecialchars($book['genre'] ?? 'Onbekend') ?></div>
+                <?php endif; ?>
+            </div>
 
-                <!-- Office -->
-                <div class="col-12 col-md-3">
-                    <?php if ($canEditOffice): ?>
-                    <select class="form-select form-select-sm" id="office-input-<?= $book['id'] ?>" name="office_id">
-                        <?php foreach ($offices as $office): ?>
-                        <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($office['name']) ?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <?php else: ?>
-                            <div class="form-control form-control-sm bg-light text-muted">
-                            <?php
-                                foreach ($offices as $office):
-                                    if($office['id'] === $book['office_id']) : 
-                                        echo htmlspecialchars($office['name'] ?? 'Onbekend kantoor');
-                                    endif;
-                                endforeach; ?>
-                            </div>
-                    <?php endif; ?>
-                </div>
+            <!-- Office -->
+            <div class="col-12 col-md-3">
+                <?php if ($canEditOffice): ?>
+                <select class="form-select form-select-sm text-center" id="office-input-<?= $book['id'] ?>" name="office_id">
+                    <?php foreach ($offices as $office): ?>
+                    <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($office['name']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+                <?php else: ?>
+                        <div class="form-control form-control-sm bg-light text-muted">
+                        <?php
+                            foreach ($offices as $office):
+                                if($office['id'] === $book['office_id']) : 
+                                    echo htmlspecialchars($office['name'] ?? 'Onbekend kantoor');
+                                endif;
+                            endforeach; ?>
+                        </div>
+                <?php endif; ?>
+            </div>
 
-                <!-- Status -->
-                <div class="col-12 col-md-4">
-                    <div class="secundary-color-1 dropdown-container p-2 border-0">
-                        <div class="d-block">Status</div>
-                        <div class="fw-bold"><?= htmlspecialchars($huidigeStatus) ?></div>
+            <!-- Status, Status expires and Loaner history container -->
+            <div class="row">
+                <!-- Status Field -->
+                <div class="col-12 col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Status</span>
+                        <input type="text" class="form-control text-center" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($huidigeStatus) ?>" disabled>
                     </div>
                 </div>
 
-                <!-- Status expire date -->
-                <div class="col-12 col-md-4">
-                    <div class="secundary-color-1 dropdown-container p-2 border-0">
-                        <div class="d-block">Status verloopt</div>
-                        <div class="fw-bold"><?= htmlspecialchars($statusVerl) ?></div>
+                <!-- Expiry Field -->
+                <div class="col-12 col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Verloopt</span>
+                        <input type="text" class="form-control text-center" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusVerl) ?>" disabled>
                     </div>
                 </div>
 
                 <?php if($canEdit): ?>
                 <!-- Loaner history (Admin only) -->
-                <div class="col-12 col-md-4">
-                    <div class="secundary-color-1 dropdown-container p-2">
-                        <select>
-                        <?php foreach($loanerHistory as $loaner): ?>
-                            <option value="<?= $loaner['id'] ?>" <?php if ($loaner['id'] === 1) { echo 'selected'; } ?>>
-                                <?= htmlspecialchars($loaner['name']) ?>
+                <div class="col-12 col-md-6">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Vorige Leners</span>
+                        <select class="form-select form-select-sm text-center" aria-label="Laatste lener">
+                        <?php foreach($loanerHistory as $index => $loaner): ?>
+                            <option value="<?= $loaner['id'] ?>" <?= $index === 0 ? 'selected' : 'disabled' ?>>
+                                <?= htmlspecialchars($loaner['name'], ENT_QUOTES, 'UTF-8') ?>
                             </option>
                         <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
                 <?php endif; ?>
+            </div>
 
-            <div class="d-flex flex-column flex-md-row gap-2 mt-3">
+            <div class="d-flex flex-column flex-md-row gap-1 mt-1">
                 <?php if($canEdit): ?>
                 <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto">
                     Wijzigingen Opslaan
