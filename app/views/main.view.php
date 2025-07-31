@@ -2,7 +2,7 @@
 	require 'partials\templates\header.php';
 	require 'partials\templates\banner.php';
 
-	if(!isset($userType)) {
+	if(!isset($user)) {
 		require 'auth\login.view.php';
 	} else {
 		require 'user.view.php';
