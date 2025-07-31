@@ -1,5 +1,5 @@
 <?php
-namespace Input;
+namespace App\Core\Input;
 
 class Request {
     private array $data;
