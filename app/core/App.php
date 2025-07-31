@@ -1,9 +1,10 @@
 <?php
 namespace App\Core;
 
+use App\Core\Input\Request;
 use App\Core\ServiceContainer;
+use App\Core\Auth\UserPermissions;
 use App\Core\Database\{Database, Installer};
-use App\Core\Services\{MailTemplateService, MailerService, LoggerService};
 
 /**
  * @method static \App\Core\Database\Database database()
@@ -60,15 +61,16 @@ class App {
      * Load your factories from services.php & register them.
      */
     private function registerServices(): void {
+        // Hardcoded services:
+        $this->services->register('database', fn() => new Database($this->dbConfig));
+        $this->services->register('request', fn() => new Request(array_merge($_GET, $_POST)));
+        $this->services->register('perm', fn() => new UserPermissions());
+
+        // Load defined intances in 'services.php'
         $bindings = require __DIR__ . '/service/services.php';
 
         foreach($bindings as $key => $factory) {
-            // special‐case database so it receives $dbConfig
-            if($key === 'database') {
-                $this->services->register($key, fn() => $factory($this->dbConfig));
-            } else {
-                $this->services->register($key, $factory);
-            }
+            $this->services->register($key, $factory);
         }
     }
 
