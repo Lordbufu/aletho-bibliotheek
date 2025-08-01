@@ -180,17 +180,23 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 
 /* Item container related styles */
 .item-container {
-  display: inline-block;    /* or flex: 0 0 auto; */
-  width: 372px;             /* lock in your desired width */
-  vertical-align: top;
+	display: inline-block;    /* or flex: 0 0 auto; */
+	width: 372px;             /* lock in your desired width */
+	vertical-align: top;
+}
+
+.status-badge {
+	display: inline-block;
+	width: 8rem;            									/* tweak this width to fit your longest label */
+	cursor: default;        									/* pointer only on interactive states */
 }
 
 /*  Mobile-first: full width, tiny padding  */
 .item-details {
-  width: 100%;
-  padding: 0.5rem 0.5rem 1rem;
-  margin: 0 auto;
-  box-sizing: border-box;
+	width: 100%;
+	padding: 0.5rem 0.5rem 1rem;
+	margin: 0 auto;
+	box-sizing: border-box;
 }
 
 .item-button {													/* The item dropdown button: */
@@ -203,14 +209,14 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 }
 
 .item-container .editable select {
-  text-align: left;
-  text-align-last: left;   /* for some browsers to align the selected option */
+	text-align: left;
+	text-align-last: left;   /* for some browsers to align the selected option */
 }
 
 /*  From md (≥768px) upward: constrain width  */
 @media (min-width: 768px) {
-  .item-details {
-    max-width: 720px;
-    margin: 0.2rem auto 1rem;
-  }
+	.item-details {
+		max-width: 720px;
+		margin: 0.2rem auto 1rem;
+	}
 }

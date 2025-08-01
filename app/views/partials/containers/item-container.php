@@ -91,7 +91,7 @@
                 <!-- Status Field -->
                 <div class="col-12 col-md-6">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text">Status</span>
+                        <span class="input-group-text status-badge">Status</span>
                         <input type="text" class="form-control text-center" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($huidigeStatus) ?>" disabled>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                 <!-- Expiry Field -->
                 <div class="col-12 col-md-6">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text">Verloopt</span>
+                        <span class="input-group-text status-badge">Verloopt</span>
                         <input type="text" class="form-control text-center" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusVerl) ?>" disabled>
                     </div>
                 </div>
@@ -108,7 +108,7 @@
                 <!-- Loaner history (Admin only) -->
                 <div class="col-12 col-md-6">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text">Vorige Leners</span>
+                        <span class="input-group-text status-badge">Vorige Leners</span>
                         <select class="form-select form-select-sm text-center" aria-label="Laatste lener">
                         <?php foreach($loanerHistory as $index => $loaner): ?>
                             <option value="<?= $loaner['id'] ?>" <?= $index === 0 ? 'selected' : 'disabled' ?>>
@@ -121,6 +121,7 @@
                 <?php endif; ?>
             </div>
 
+            <!-- Admin controlle buttons -->
             <div class="d-flex flex-column flex-md-row gap-1 mt-1">
                 <?php if($canEdit): ?>
                 <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto">
