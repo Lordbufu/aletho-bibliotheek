@@ -10,9 +10,7 @@ class LoggerService {
      * Creates the log directory if it doesn't exist.
      */
     public function __construct() {
-        // Resolve project root path relative to this file (adjust as needed)
-        $rootPath = dirname(__DIR__, 2); // Moves two levels up from LoggerService location
-        $this->logDir = $rootPath . '/storage/logs';
+        $this->logDir = BASE_PATH . '/storage/logs';        // Use the BASE_PATH define in the index.php
 
         if(!is_dir($this->logDir)) {
             mkdir($this->logDir, 0775, true);
