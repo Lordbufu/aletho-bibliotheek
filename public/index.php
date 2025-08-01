@@ -1,8 +1,11 @@
 <?php
 declare(strict_types=1);
+define('BASE_PATH', realpath(__DIR__ . '/..'));                         // Define a base project root path
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';                            // Require the composer autoload file.
+require __DIR__ . '/../app/helpers.php';                                // Require the helper function (might be a temp solution)
 
+// Load the required namespaces
 use Dotenv\Dotenv;
 use App\Core\App;
 
@@ -22,7 +25,6 @@ App::boot($dbConfig, $schemaDir, $lockFile);
 try {
     if(App::run()) {
         // 5) Main entry point – replace with your Router or Runner
-        // e.g. App::router()->dispatch();
         $router = require __DIR__ . '/../config/routes.php';
         $router->dispatch();
     } else {
