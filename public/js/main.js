@@ -2,6 +2,12 @@
 let popinIsOpen = false;
 
 $(function() {
+    /* Login input elements & events: */
+    $('#login-name, #login-passw').on('input', inputCheck);
+
+    // Concept code for the status lights, now using jQuery
+    $('.status-dot').on('click', testLights);
+
     // DRY popin setup
     function setupPopin(openBtn, popinId, closeBtn) {
         $(openBtn).on('click', function() { openPopin(popinId); });
@@ -125,11 +131,67 @@ $(function() {
         // $form.submit();
     });
 
-    /* Login input elements & events: */
-    $('#login-name, #login-passw').on('input', inputCheck);
+    // 1) On each keystroke, filter item containers
+    $('#search-inp').on('input', function() {
+        const query  = $(this).val().toLowerCase().trim();
+        const method = $('#search-options').val(); // title | writer | genre
 
-    // Concept code for the status lights, now using jQuery
-    $('.status-dot').on('click', testLights);
+        $('.item-container').each(function() {
+            const $card = $(this);
+            let textToSearch = '';
+
+            // pick the right field to search
+            switch (method) {
+                case 'writer':
+                    textToSearch = $card.find('input[name="book_writer"]').val() || '';
+                    break;
+                case 'genre':
+                    textToSearch = $card.find('select[name="genre_id"] option:selected').text() || '';
+                    break;
+                case 'title':
+                default:
+                    textToSearch = $card.find('.mn-main-col').text() || '';
+            }
+
+            // show/hide based on match
+            if (textToSearch.toLowerCase().includes(query)) {
+                $card.show();
+            } else {
+                $card.hide();
+            }
+        });
+    });
+
+    // Adjust search placeholder labels on change
+    $('#search-options').on('change', function() {
+        const method = $(this).val();
+        const labels = {
+            title:  'Zoek op titel …',
+            writer: 'Zoek op schrijver …',
+            genre:  'Zoek op genre …'
+        };
+
+        $('#search-inp').attr('placeholder', labels[method] || labels.title).val('').trigger('input');
+    });
+
+    // 2) On sort‐select change, reorder .item-container
+    $('#sort-options').on('change', function() {
+        const [field, direction] = $(this).val().split('-');  // e.g. ['title','asc']
+        const $wrapper = $('#view-container');               // parent of .item-container
+        // Pull cards into an array
+        const cards = $wrapper.find('.item-container').get();
+
+        // Sort
+        cards.sort((a, b) => {
+            const va = getSortValue($(a), field);
+            const vb = getSortValue($(b), field);
+            const cmp = va.localeCompare(vb, 'nl', { sensitivity: 'base' });
+            return direction === 'asc' ? cmp : -cmp;
+        });
+
+        // Re-append in new order
+        cards.forEach(card => $wrapper.append(card));
+    });
 });
 
 // Open popin function with popinIsOpen flag
@@ -207,6 +269,20 @@ function inputCheck(e) {
     if(e.target.classList.contains('is-valid')) {
         e.target.style.outline = '';
         return e.target.classList.remove('is-valid');
+    }
+}
+
+// Utility: extract sort key from a card
+function getSortValue($card, field) {
+    switch (field) {
+        case 'writer':
+            return ($card.find('input[name="book_writer"]').val() || '').toLowerCase();
+        case 'genre':
+            return ($card.find('select[name="genre_id"] option:selected').text() || '').toLowerCase();
+
+        case 'title':
+        default:
+            return ($card.find('.mn-main-col').text() || '').toLowerCase();
     }
 }
 

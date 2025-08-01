@@ -4,41 +4,31 @@
 		This file is intended to agument the default bootstrap experience, i dint quite want to mess around with mixins and Sass maps.
 		So i decided to just overwrite specific styles as i made my concepts, so i can still define my own taste/style where needed.
  */
-:root {											 		 		/* Globals that define the page color theme. */
+:root {											 		 		 /* Globals that define the page color theme. */
 	--main-brd-col: rgb(0, 0, 0);								/* Main border color. */
 	--sec-brd-color: rgb(255, 255, 255);						/* Second border color. */
 	--main-link-col: rgb(146, 58, 127);						/* Main purple: rgba(146,58,127,255). */
 	--err-text-col: rgba(177, 23, 23, 0.829);					/* Error error color. */
+	--color-primary-1: rgb(28, 50, 105);						/* Primary color 1 from the house style */
+	--color-primary-2: rgb(255, 167, 15);						/* Primary color 2 from the house style */
+	--color-sec-1: rgb(210, 235, 244);							/* Secundary color 1 from the house style */
+	--color-sec-2: rgb(232, 246, 249);							/* Secundary color 2 from the house style */
+	--color-sec-3: rgb(251, 189, 75);							/* Secundary color 3 from the house style */
+	--color-sec-4: rgb(253, 211, 135);							/* Secundary color 4 from the house style */
 }
 
-/* Alétho homestyle color definitions. */
-.primary-color-1 { background-color: rgb(28, 50, 105); }
-.primary-color-2 { background-color: rgb(255, 167, 15); }
-.secundary-color-1 { background-color: rgb(210, 235, 244); }
-.secundary-color-2 { background-color: rgb(232, 246, 249); }
-.secundary-color-3 { background-color: rgb(251, 189, 75); }
-.secundary-color-4 { background-color: rgb(253, 211, 135); }
-
-/* Alétho homestyle tekst definitions. */
-.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 400; font-style: normal; }
+.primary-color-1 { background-color: var(--color-primary-1); }											/* Prepare framework like tags to assign house style colors */
+.primary-color-2 { background-color: var(--color-primary-2); }
+.secundary-color-1 { background-color: var(--color-sec-1); }
+.secundary-color-2 { background-color: var(--color-sec-2); }
+.secundary-color-3 { background-color: var(--color-sec-3); }
+.secundary-color-4 { background-color: var(--color-sec-4); }
+.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 400; font-style: normal; }			/* Alétho homestyle tekst definitions. */
 .ondertitel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 700; font-style: normal; }
 .tussenkoppen-tekst { font-family: Quicksand; font-weight: bold; }
 .overige-tekst { font-family: Quicksand; font-style: normal; }
 
 /* Costum class tags, to either replace, overwrite or add to the default bootstrap. */
-.center {														/* Center element on both axis, if position is 'absolute', mainly used for the landing page login container. */
-	margin: auto !important;									/* Set margin to auto. */
-	left: 0 !important;											/* Set left to 0. */
-	right: 0 !important;										/* Set right to 0. */
-	top: 0 !important;											/* Set top to 0. */
-	bottom: 0 !important;										/* Set bottom to 0. */
-}
-
-.buttons {														/* A global buttons style to unify the look and feel. */
-	border: solid 0.1em var(--main-brd-col);					/* The border with a globally define border color. */
-	text-decoration: none;										/* Remove any hyperlink text decorations */
-}
-
 .status-dot {													/* The book status dot, to indicate the status. */
 	height: 25px;												/* Give it a fixed height. */
 	width: 25px;												/* Give it a fixed width. */
@@ -47,14 +37,8 @@
 	margin-right: 0.2rem !important;							/* Overwrite the right margin to move it away from the outer container its border. */
 }
 
-.error-text { font-style: italic; }
-
-/* Custom CSS tags to trigger specific styles, based on JS events. W.I.P. */
-.openBlock { display: block !important; }
-.openFlex { display: flex !important; }
-
-/* Status colors for the stoplight indicator on items. */
-.statusOne { background-color: rgb(41, 126, 38); }
+.error-text { font-style: italic; }								 /* Generalized error text style */
+.statusOne { background-color: rgb(41, 126, 38); }				/* Status button fixed colors for now. */
 .statusTwo { background-color: rgb(255, 56, 35); }
 .statusThree { background-color: rgb(121, 117, 19); }
 .statusFour { background-color: rgb(105, 103, 103); }
@@ -66,17 +50,8 @@
 	box-sizing: border-box;										/* Set all sizing to border-box. */
 }
 
-h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
-	margin: 0;													/* Reset all header margin. */
-	padding: 0;													/* Reset all header padding. */
-}
-
 ::placeholder {													/* All input placeholder text: */
 	text-align: center !important;								/* Center text inside input. */
-}
-
-.selector-for-some-widget {										/* Recommended by the bootstrap documentation. */
-	box-sizing: content-box;
 }
 
 /* Banner/Nav items. */
@@ -91,7 +66,6 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 
 /* Login specific extra styles to supliment the bootstrap defaults. */
 .login-cont {													/* Adding a size and position to the bootstrap .container. */
-	position: absolute;											/* Absolute to make the center tag work properly (center on both axis). */
 	width: 15rem;												/* Subject to change, 15rem seem ok for now. */
 	height: fit-content;										/* Scale height to content, so it adjusts with the error message length. */
 }
@@ -133,11 +107,7 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 	width: 100%;												/* Ensure the container covers the entire width of the top level nav element. */
 }
 
-.hamburger-icon {												/* Hamburger icon label for the nav bar. */
-	font-size: 1.7rem;											/* Change the font size, changing its over all size. */
-}
-
-.search-icon {													/* Search icon label for the nav bar. */
+.hamburger-icon, .search-icon {									/* Search/Hamburger icon label for the nav bar. */
 	font-size: 1.7rem;											/* Change the font size, changing its over all size. */
 }
 
@@ -228,7 +198,16 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 
 .item-container .editable select {
 	text-align: left;
-	text-align-last: left;   /* for some browsers to align the selected option */
+	text-align-last: left;   									/* for some browsers to align the selected option */
+}
+
+.sort-group {
+  gap: .5rem;            										/* Space between label & select */
+}
+
+.sort-group .form-select {
+  min-width: 8rem;       										/* Prevent the select from being too narrow */
+  max-width: 14rem;      										/* Cap its width to match your card sizes */
 }
 
 /*  From md (≥768px) upward: constrain width  */

@@ -1,12 +1,13 @@
 <?php    // Should be evaluate via session data in the controlller
-    $canEdit = $perm->canEdit();
-    $canEditOffice = $perm->canEditOffice($book['office_id']);
+    // Book view specific logic.
+    $canEditOffice = $perm->canEditOffice($book['office_id']);          // Can edit book office location
+
+    // Set this books current status
     foreach($statuses as $status) {
         if($status['id'] === $book['status_id']) {
             $huidigeStatus = $status['type'];
         }
     }
-    $statusVerl = date('25/01/1873');
 ?>
 
 <!-- /* Item container example, with a dropdown for potentially editable details and user based content. */ -->
@@ -107,7 +108,7 @@
                 <div class="col-12 col-md-6">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text status-badge">Verloopt</span>
-                        <input type="text" class="form-control text-center" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusVerl) ?>" disabled>
+                        <input type="date" class="form-control text-center" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusExp) ?>" disabled>
                     </div>
                 </div>
 

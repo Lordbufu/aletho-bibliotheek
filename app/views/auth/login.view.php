@@ -1,5 +1,5 @@
 		<!-- /* Login container, to position everything in the center of the screen/view. */ -->
-		<div class="login-cont container p-0 center">
+		<div class="login-cont container p-0">
 			<!-- /* Login header container, so i can give the whole thing a nice looking border. */ -->
 			<div class="primary-color-1 border border-dark rounded-top p-1" id="login-header-cont">
 				<h3 class="text-white titel-tekst">Inloggen</h3>

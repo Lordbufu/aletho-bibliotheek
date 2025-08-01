@@ -1,9 +1,8 @@
 		<!-- /* Header container, for the header menus and text. */ -->
 		<nav class="container-xxl p-1 primary-color-1 border border-dark rounded d-flex flex-row justify-content-center align-items-center">
 
-		<?php if(!isset($userType)) : ?>
+		<?php if(!isset($user)) : ?>
 			<image class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
-			<!-- <h1 class="banner-header text-white titel-tekst">Alétho Bibliotheek App</h1> -->
 		<?php else : ?>
 			<div class="nav-row-cont row align-items-center">
 				<div class="col-1 p-0 d-flex justify-content-start">

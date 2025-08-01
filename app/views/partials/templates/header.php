@@ -25,4 +25,4 @@
 	</head>
 
 	<!-- /* Body to set the main page style and size. */ -->
-	<body class="container-fluid secundary-color-2 p-1 text-center">
+	<body class="d-flex flex-column min-vh-100 secundary-color-2 p-1">
