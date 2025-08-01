@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\App;
+// use DateTime;
 
 class ProtoTypeController {
     public function home() {
@@ -10,9 +11,14 @@ class ProtoTypeController {
         $user = [ 'name' => 'officeAdmin', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1 ];
         // $user = [ 'name' => 'globaleAdmin', 'is_loaner' => 0, 'is_office_admin' => 0, 'is_global_admin' => 1 ];
 
+        // Testing status expire data display/formating
+        $dateObj = new \DateTime('25-01-1873');
+        $statusExp = $dateObj->format('Y-m-d');
+
         $data = [
             'user' => [ 'name'=> $user['name'] ],
             'perm' => App::get('perm')->setUser($user),
+            'statusExp' => $statusExp,
             'books' => [
                 [ 'id' => 1, 'name' => 'Book 1', 'author' => 'Author 1', 'genre' => 'Roman', 'office_id' => 1, 'status_id' => 1 ],
                 [ 'id' => 2, 'name' => 'Book 2', 'author' => 'Author 2', 'genre' => 'Non-fictie', 'office_id' => 2, 'status_id' => 3 ],
