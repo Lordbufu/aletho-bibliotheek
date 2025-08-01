@@ -88,9 +88,6 @@ class App {
             self::$instance->get('logger')->warning("Installer skipped: all required tables already exist.", 'installer');
         }
 
-        // echo self::$instance->mailTemplateTest();         // temp test case.
-        // at this point you know your DB is good, so hand off
-        // to routing / controller logic
         return true;
     }
 

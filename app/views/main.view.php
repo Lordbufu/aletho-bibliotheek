@@ -1,11 +1,11 @@
 <?php
-	require 'partials\templates\header.php';
-	require 'partials\templates\banner.php';
+	require viewPath('partials\templates\header.php');
+	require viewPath('partials\templates\banner.php');
 
 	if(!isset($user)) {
-		require 'auth\login.view.php';
+		require viewPath('auth\login.view.php');
 	} else {
-		require 'user.view.php';
+		require viewPath('auth\user.view.php');
 	}
 
-	require 'partials\templates\footer.php';
+	require viewPath('partials\templates\footer.php');
