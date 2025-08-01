@@ -1,7 +1,7 @@
 // This file is part of the Aletho Bibliotheek project.
 let popinIsOpen = false;
 
-$(function(){
+$(function() {
     // DRY popin setup
     function setupPopin(openBtn, popinId, closeBtn) {
         $(openBtn).on('click', function() { openPopin(popinId); });
@@ -67,6 +67,62 @@ $(function(){
                 bootstrap.Collapse.getOrCreateInstance(this, {toggle: false}).hide();
             }
         });
+    });
+
+    /* Book details edit\submit logic events */
+    // single click-handler for all edit buttons
+    $(document).on('click', '.edit-field-btn', function() {
+        const selector   = $(this).data('swapTargets');
+        const $field     = $(selector);
+
+        // only act if the field is currently disabled
+        if($field.prop('disabled')) {
+            // Enable field
+            $field.prop('disabled', false);
+
+            // Mark editable & save org value.
+            $field.addClass('field-editable').data('originalValue', $field.val());
+
+            // set focus
+            $field.focus();
+        }
+    });
+
+    // Book details on input change event for input and select
+    $(document).on('input change', 'input, select', function() {
+        let $this = $(this);
+
+        // only mark if we previously unlocked it
+        if ($this.hasClass('field-editable')) {
+            $this.addClass('field-edited');
+        }
+    });
+
+    // Book details 'click' event for the submit button 
+    $(document).on('click', '[id^="save-change-"]', function(e) {
+        e.preventDefault();
+
+        // 1) Find this button’s form
+        const $btn  = $(this);
+        const $form = $btn.closest('form.book-edit-form');
+
+        // 2) Disable & cleanup only fields in *this* form
+        $form.find('input.field-editable, select.field-editable').each(function() {
+            const $fld      = $(this);
+            const original  = $fld.data('originalValue');
+            const current   = $fld.val();
+
+            // mark if changed
+            if (current !== original) {
+                $fld.addClass('edited');
+            }
+
+            // disable & reset markers
+            $fld.prop('disabled', true).removeClass('field-editable').removeData('originalValue');
+        });
+
+        // 3) (Re)submit or AJAX-post the form if needed:
+        // $form.submit();
     });
 
     /* Login input elements & events: */

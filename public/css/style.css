@@ -191,6 +191,24 @@ h1, h2, h3, h4, h5, h6 {										/* Remove any remaining header spacing. */
 	cursor: default;        									/* pointer only on interactive states */
 }
 
+/* when a field is unlocked for editing */
+.field-editable {
+	outline: 2px solid #0d6efd;  /* blue focus outline */
+	background-color: #f8f9fa;   /* subtle light background */
+}
+
+/* once the user actually changes something */
+.field-edited {
+	border: 2px dashed #ffc107;  /* amber dashed to signal “needs saving” */
+}
+
+/* highlight fields that changed */
+/* light highlight on changed fields */
+.edited {
+  	background-color: #fff3cd;
+  	border-color:    #ffeeba;
+}
+
 /*  Mobile-first: full width, tiny padding  */
 .item-details {
 	width: 100%;

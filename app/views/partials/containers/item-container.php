@@ -52,13 +52,17 @@
             <!-- Genre -->
             <div class="col-12 col-md-3">
                 <?php if ($canEdit): ?>
-                <select class="form-select form-select-sm text-center" id="genre-input-<?= $book['id'] ?>" name="genre_id">
-                    <?php foreach ($genres as $genre): ?>
-                    <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($genre['name']) ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="input-group input-group-sm">
+                    <!-- Genre Select -->
+                    <select class="form-select form-select-sm text-center" id="genre-input-<?= $book['id'] ?>" name="genre_id" disabled>
+                        <?php foreach ($genres as $genre): ?>
+                        <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>> <?= htmlspecialchars($genre['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <!-- Edit button -->
+                    <button type="button" class="btn btn-link edit-field-btn" data-swap-targets="#genre-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
+                </div>
                 <?php else: ?>
                 <div class="form-control form-control-sm bg-light text-muted"><?= htmlspecialchars($book['genre'] ?? 'Onbekend') ?></div>
                 <?php endif; ?>
@@ -67,19 +71,22 @@
             <!-- Office -->
             <div class="col-12 col-md-3">
                 <?php if ($canEditOffice): ?>
-                <select class="form-select form-select-sm text-center" id="office-input-<?= $book['id'] ?>" name="office_id">
-                    <?php foreach ($offices as $office): ?>
-                    <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($office['name']) ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
+                <div class="input-group input-group-sm">
+                    <!-- Office Select -->
+                    <select class="form-select form-select-sm text-center" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
+                        <?php foreach ($offices as $office): ?>
+                        <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <!-- Edit button -->
+                    <button type="button" class="btn btn-link edit-field-btn" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
+                </div>
                 <?php else: ?>
                         <div class="form-control form-control-sm bg-light text-muted">
                         <?php
                             foreach ($offices as $office):
                                 if($office['id'] === $book['office_id']) : 
-                                    echo htmlspecialchars($office['name'] ?? 'Onbekend kantoor');
+                                    echo htmlspecialchars($office['name']);
                                 endif;
                             endforeach; ?>
                         </div>
@@ -124,28 +131,11 @@
             <!-- Admin controlle buttons -->
             <div class="d-flex flex-column flex-md-row gap-1 mt-1">
                 <?php if($canEdit): ?>
-                <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto">
-                    Wijzigingen Opslaan
-                </button>
-                <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto">
-                    Status Aanpassen
-                </button>
-                <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto ms-md-auto">
-                    Boek Verwijderen
-                </button>
+                <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto">Status Aanpassen</button>
+                <button id="save-changes-<?= $book['id'] ?>" type="submit" name="save-item" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto">Wijzigingen Opslaan</button>
+                <button type="submit" name="action" class="btn btn-sm secundary-color-4 text-black w-100 w-md-auto ms-md-auto">Boek Verwijderen</button>
                 <?php endif; ?>
             </div>
         </form>
     </div>
 </div>
-
-<script>
-    document.querySelectorAll('.edit-field-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const target = document.querySelector(btn.dataset.swapTargets);
-            target.disabled = !target.disabled;
-            target.classList.toggle('form-control');
-            if (!target.disabled) target.focus();
-        });
-    });
-</script>
