@@ -84,9 +84,10 @@ class App {
         // silently install or verify schema; will throw on error
         if(self::$instance->installSchema()) {
             self::$instance->get('logger')->warning("Installer triggered: tables created or skipped where necessary.", 'installer');
-        } else {
-            self::$instance->get('logger')->warning("Installer skipped: all required tables already exist.", 'installer');
         }
+        // else {
+        //     self::$instance->get('logger')->warning("Installer skipped: all required tables already exist.", 'installer');
+        // }
 
         return true;
     }
