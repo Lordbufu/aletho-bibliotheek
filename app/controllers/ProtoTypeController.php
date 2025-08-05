@@ -8,8 +8,8 @@ use App\Core\App;
 class ProtoTypeController {
     public function home() {
         // $user = [ 'name' => 'user', 'is_loaner' => 1, 'is_office_admin' => 0, 'is_global_admin' => 0 ];
-        $user = [ 'name' => 'officeAdmin', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1 ];
-        // $user = [ 'name' => 'globaleAdmin', 'is_loaner' => 0, 'is_office_admin' => 0, 'is_global_admin' => 1 ];
+        // $user = [ 'name' => 'officeAdmin', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1 ];
+        $user = [ 'name' => 'globaleAdmin', 'is_loaner' => 0, 'is_office_admin' => 0, 'is_global_admin' => 1 ];
 
         // Testing status expire data display/formating
         $dateObj = new \DateTime('25-01-1873');

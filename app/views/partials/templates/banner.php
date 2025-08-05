@@ -1,22 +1,18 @@
-		<!-- /* Header container, for the header menus and text. */ -->
-		<nav class="container-xxl p-1 primary-color-1 border border-dark rounded d-flex flex-row justify-content-center align-items-center">
-
-		<?php if(!isset($user)) : ?>
-			<image class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
-		<?php else : ?>
-			<div class="nav-row-cont row align-items-center">
-				<div class="col-1 p-0 d-flex justify-content-start">
-					<button class="hamburger-icon primary-color-1 fas fa-bars bg-sec-col border border-0" id="hamburger-button" type="button" data-bs-toggle="collapse" data-bs-target="#customHamburgerDropdown" aria-expanded="false" aria-controls="customHamburgerDropdown"></button>
-				</div>
-
-				<div class="col p-0 d-flex justify-content-center">
-					<image class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
-				</div>
-
-				<div class="p-0 col-1 d-flex justify-content-end">
-					<button class="search-icon primary-color-1 bg-sec-col border border-0" id="search-button" type="button" data-bs-toggle="collapse" data-bs-target="#customSearchDropdown" aria-expanded="false" aria-controls="customSearchDropdown">&#128269;</button>
-				</div>
-			</div>
-		<?php endif; ?>
+<!-- /* Header container, for the header menus and text. */ -->
+<nav class="aletho-header container-xxl p-1 align-items-center banner-nav">
+	<?php if(!isset($user)) : ?>
+	<image class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
+	<?php else : ?>
+    <button id="hamburger-button" class="aletho-menu-buttons fas fa-bars" type="button"
+    	data-bs-toggle="collapse" data-bs-target="#customHamburgerDropdown"
+    	aria-expanded="false" aria-controls="customHamburgerDropdown"
+	></button>
 		
-		</nav>
+	<img class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
+
+    <button id="search-button" class="aletho-menu-buttons" type="button"
+    	data-bs-toggle="collapse" data-bs-target="#customSearchDropdown"
+    	aria-expanded="false" aria-controls="customSearchDropdown"
+	>&#128269;</button>
+	<?php endif; ?>
+</nav>

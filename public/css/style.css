@@ -4,202 +4,276 @@
 		This file is intended to agument the default bootstrap experience, i dint quite want to mess around with mixins and Sass maps.
 		So i decided to just overwrite specific styles as i made my concepts, so i can still define my own taste/style where needed.
  */
-:root {											 		 		 /* Globals that define the page color theme. */
-	--main-brd-col: rgb(0, 0, 0);								/* Main border color. */
-	--sec-brd-color: rgb(255, 255, 255);						/* Second border color. */
-	--main-link-col: rgb(146, 58, 127);						/* Main purple: rgba(146,58,127,255). */
-	--err-text-col: rgba(177, 23, 23, 0.829);					/* Error error color. */
-	--color-primary-1: rgb(28, 50, 105);						/* Primary color 1 from the house style */
-	--color-primary-2: rgb(255, 167, 15);						/* Primary color 2 from the house style */
-	--color-sec-1: rgb(210, 235, 244);							/* Secundary color 1 from the house style */
-	--color-sec-2: rgb(232, 246, 249);							/* Secundary color 2 from the house style */
-	--color-sec-3: rgb(251, 189, 75);							/* Secundary color 3 from the house style */
-	--color-sec-4: rgb(253, 211, 135);							/* Secundary color 4 from the house style */
+/* Globals that define the page color theme */
+:root {
+	--main-brd-col: rgb(0, 0, 0);										/* Main border color */
+	--sec-brd-color: rgb(255, 255, 255);								/* Second border color */
+	--main-link-col: rgb(146, 58, 127);								/* Main purple: rgba(146,58,127,255) */
+	--err-text-col: rgba(177, 23, 23, 0.829);							/* Error error color */
+	--aletho-default-border: 0.1rem solid rgb(33, 37, 41);				/* Default border style */		
+	--color-text-1: rgb(255, 255, 255);								/* Text color 1 to give better contrast with housestyle */
+	--color-text-2: rgb(0, 0, 0);										/* Text color 1 the default black */
+	--color-primary-1: rgb(28, 50, 105);								/* Primary color 1 from the house style */
+	--color-primary-2: rgb(255, 167, 15);								/* Primary color 2 from the house style */
+	--color-sec-1: rgb(210, 235, 244);									/* Secundary color 1 from the house style */
+	--color-sec-2: rgb(232, 246, 249);									/* Secundary color 2 from the house style */
+	--color-sec-3: rgb(251, 189, 75);									/* Secundary color 3 from the house style */
+	--color-sec-4: rgb(253, 211, 135);									/* Secundary color 4 from the house style */
 }
 
-.primary-color-1 { background-color: var(--color-primary-1); }											/* Prepare framework like tags to assign house style colors */
-.primary-color-2 { background-color: var(--color-primary-2); }
-.secundary-color-1 { background-color: var(--color-sec-1); }
-.secundary-color-2 { background-color: var(--color-sec-2); }
-.secundary-color-3 { background-color: var(--color-sec-3); }
-.secundary-color-4 { background-color: var(--color-sec-4); }
-.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 400; font-style: normal; }			/* Alétho homestyle tekst definitions. */
-.ondertitel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 700; font-style: normal; }
-.tussenkoppen-tekst { font-family: Quicksand; font-weight: bold; }
-.overige-tekst { font-family: Quicksand; font-style: normal; }
+/* Your basic wildcard to reset silly user-agent styling */
+* { padding: 0; margin: 0; box-sizing: border-box; }
+/* Cause inputs are weird like that, we need to seperatly center there text */
+::placeholder { text-align: center !important; }
+
+/* Intergrate housestyle in class tags (temp solution for prototyping) */ 
+.primary-color-1 {
+	background-color: var(--color-primary-1);
+}
+
+.primary-color-2 {
+	background-color: var(--color-primary-2);
+}
+
+.secundary-color-1 {
+	background-color: var(--color-sec-1);
+}
+
+.secundary-color-2 {
+	background-color: var(--color-sec-2);
+}
+
+.secundary-color-3 {
+	background-color: var(--color-sec-3);
+}
+
+.secundary-color-4 {
+	background-color: var(--color-sec-4);
+}
+
+.titel-tekst {
+	font-family: "bc-alphapipe", sans-serif;
+	font-weight: 400;
+	font-style: normal;
+}
+
+.ondertitel-tekst {
+	font-family: "bc-alphapipe", sans-serif;
+	font-weight: 700;
+	font-style: normal;
+}
+
+.tussenkoppen-tekst {
+	font-family: Quicksand;
+	font-weight: bold;
+}
+
+.overige-tekst {
+	font-family: Quicksand;
+	font-style: normal;
+}
+
+/* Default housestyle main background */
+.aletho-background {
+	background-color: var(--color-sec-2);								/* Default lighest blue color */
+}
+
+/* Default housestyle header */
+.aletho-header {
+	color: var(--color-text-1);											/* Default tekst color */
+	background-color: var(--color-primary-1);							/* The standard blue background */
+	font-family: "bc-alphapipe", sans-serif;							/* Housestyle font similar to the logo */
+	font-weight: 400;													/* Housestyle font weight */
+	font-style: normal;													/* Normal style */
+	text-align: center;													/* Align text to center */
+}
+
+/* Default housestyle menu button */
+.aletho-menu-buttons {
+	background-color: transparent;										/* Strip background color to visualy merge with banner */
+	font-size: 1.7rem;													/* Change the font size, changing its over all size */
+	border: 0;															/* Remove button borders */
+	color: var(--color-text-1);											/* Ensure text content or icon/special signs, are always white */
+}
+
+/* Default housestyle submit button */
+.aletho-buttons {
+	color: var(--color-text-1);											/* Text color that is readable */
+	background-color: var(--color-primary-2);							/* Housestyle secondary background color */
+	text-align: center;													/* Align text to center */
+	padding: 0.2rem;													/* Give them a bit of body via padding */
+	border-radius: 0.375rem !important;									/* Add a border radius */
+	margin: 0.1rem 0 0.1rem 0 !important;								/* Bit of top and bottom margin for button spacing */
+	font-family: Quicksand;												/* Housestyle font */
+	font-weight: bold;													/* Housestyle fontweight */
+	border: 0;															/* Disabled silly border */
+}
+
+/* Default container for containing items */
+.aletho-item-container {
+	display: inline-block;    											/* or flex: 0 0 auto; */
+	width: 372px;             											/* lock in your desired width */
+	vertical-align: top;												/* */
+	padding: 0.25rem;													/* */
+	font-size: 0.9rem;													/* */
+	font-family: "bc-alphapipe", sans-serif;							/* */
+	font-weight: 700;													/* */
+	font-style: normal;													/* */
+}
+
+/* Item container related styles */
+.aletho-item {
+	display: flex;														/* */
+	background-color: var(--color-sec-1);								/* The standard lighter blue background */
+	align-items: center;												/* */
+}
+
+/* Custom dropdown button */
+.aletho-dropdown-buttons {
+	color: var(--color-text-2);											/* Text color that is readable */
+	background-color: var(--color-sec-4);								/* Housestyle secondary background color */
+	padding: 0.1rem;													/* Remove a bit of bootstrap padding */
+	border: 0;															/* Remove the ugly border */
+}
+
+/* Custom dropdown body */
+.aletho-dropdown-body {
+	background-color: var(--color-sec-1);								/* The standard lighter blue background */
+	width: 100%;														/* Set to 100% of its parrent */
+	padding: 0.1rem !important;											/* Add a but of padding to create better looking spacing around the edges */
+	text-align: center;													/* Align text is required in some dropdown */
+	border-radius: 0 0 0.375rem 0.375rem;								/* Round of only the bottom corners */
+}
+
+/* Custom bootstrap modal content addition */
+.aletho-modal-content {
+	border: 0 !important;												/* Remove the visual border */
+	border-radius: 0 0 0.375rem 0.375rem !important;					/* Round of only the bottom corners */
+	border-width: 0 !important;											/* Need to also remove the width for bootstrap modal overwrites */
+}
+
+/* Default housestyle form/popin/dropdown body */
+.aletho-modal-body {
+	background-color: var(--color-sec-1);								/* Slightly different background color then the body */
+	text-align: center;													/* Text align to make things a bit easier */
+	font-family: Quicksand;												/* Housestyle font */
+	font-weight: bold;													/* Housestyle fontweight */
+	padding: 0.2rem;													/* Create a bit of inner body */
+	border-radius: 0 0 0.375rem 0.375rem !important;					/* Round of only the bottom corners */
+}
+
+/* Default housestyle input */
+.aletho-inputs {
+	background-color: var(--color-sec-2);								/* Housestyle lightblue background */
+	font-family: Quicksand;												/* Housestyle font */
+	font-weight: normal;												/* Housestyle fontweight */
+	text-align: center;													/* Text align to make things a bit easier */
+	font-size: .75rem;													/* Reduce font size a bit */
+	padding: 0.2rem;													/* A bit of padding for body */
+	margin: 0.2rem;														/* A bit of margin for spacing */
+	border: 0;															/* Remove the ugly border */
+	position: relative;													/* Set position to relative */
+}
+
+.aletho-inputs:focus { background-color: var(--color-sec-2); }			/* Retain background color on focus */
+.aletho-inputs:disabled { background-color: var(--color-sec-2); }		/* Ensure the background is the same when disabled */
+
+/* Default housestyle labels */
+.aletho-labels {
+	display: inline-block;												/* Set to inline-block for centering the text */
+	font-family: Quicksand;												/* Housestyle font */
+	font-weight: bold;													/* Housestyle fontweight */
+	text-align: center;													/* Align text to center */
+	font-size: .75rem;													/* Reduce font size a bit */
+	background-color: var(--color-sec-1);								/* Set default background color */
+	align-content: center;												/* Align content horizontally */
+	margin: 0.2rem;														/* A bit of margin for spacing */
+	width: 7rem;            											/* Ensure its no bigger then its longest text */
+	cursor: default;        											/* Dont trigger the text edit cursor */
+}
+
+/* Potentially already obsolete styles */
+/* Default housestyle border */
+.aletho-border {
+	border: var(--aletho-default-border);								/* Asign the default border style */
+	border-radius: 0 0 0.375rem 0.375rem;								/* Round of only the bottom corners */
+}
+/* Default housestyle dropdown border (no top, rounded bottom) */
+.aletho-dropdown-border {
+	border: var(--aletho-default-border);								/* Asign the default border style */
+	border-top: none;													/* Disabled the top border */
+	border-radius: 0 0 0.375rem 0.375rem;								/* Round of only the bottom corners */
+}
 
 /* Costum class tags, to either replace, overwrite or add to the default bootstrap. */
-.status-dot {													/* The book status dot, to indicate the status. */
-	height: 25px;												/* Give it a fixed height. */
-	width: 25px;												/* Give it a fixed width. */
-	border-radius: 50%;											/* Round of all borders. */
-	margin: auto;												/* Re-center element using auto margins. */
-	margin-right: 0.2rem !important;							/* Overwrite the right margin to move it away from the outer container its border. */
+.error-text { font-style: italic; }								 		/* Generalized error text style */
+
+/* Temp status dot styles for prototype reasons */
+.status-dot {
+	height: 25px;														/* Give it a fixed height. */
+	width: 25px;														/* Give it a fixed width. */
+	border-radius: 50%;													/* Round of all borders. */
+	margin: auto;														/* Re-center element using auto margins. */
+	margin-right: 0.2rem !important;									/* Overwrite the right margin to move it away from the outer container its border. */
 }
 
-.error-text { font-style: italic; }								 /* Generalized error text style */
-.statusOne { background-color: rgb(41, 126, 38); }				/* Status button fixed colors for now. */
+/* Status button fixed colors for now. */
+.statusOne { background-color: rgb(41, 126, 38); }
 .statusTwo { background-color: rgb(255, 56, 35); }
 .statusThree { background-color: rgb(121, 117, 19); }
 .statusFour { background-color: rgb(105, 103, 103); }
 
-/* Default overwrites, to start with a 'clean' page template. */
-* {																/* You basic wildcard to try and catch most elements. */
-	padding: 0;													/* Reset all padding. */
-	margin: 0;													/* Reset all margin. */
-	box-sizing: border-box;										/* Set all sizing to border-box. */
-}
-
-::placeholder {													/* All input placeholder text: */
-	text-align: center !important;								/* Center text inside input. */
-}
-
-/* Banner/Nav items. */
-.banner-image {													/* De banner image (Alétho diamond image). */
-	height: 3.5rem;												/* Fixed height to make it fit with the text. */
-	width: 10rem;												/* Fixed width to make it fit with the text. */
-}
-
-.banner-header {												/* De Banner header. */
-	font-size: 1.5rem;											/* Adjusted font size to match the icon image. */
-}
-
-/* Login specific extra styles to supliment the bootstrap defaults. */
-.login-cont {													/* Adding a size and position to the bootstrap .container. */
-	width: 15rem;												/* Subject to change, 15rem seem ok for now. */
-	height: fit-content;										/* Scale height to content, so it adjusts with the error message length. */
-}
-
-.login-form {													/* The login form itself. */
-	height: 100%;												/* Scale height to 100% of its parrent. */
-	align-content: center;										/* Center the content inside the form. */
-	font-size: 0.9rem;											/* Reduce the default font size a bit. */
-}
-
-.login-name-label, .login-pw-label {							/* The form input labels. */
-	display: grid;												/* Set to grid for easier aligning. */
-	position: relative;											/* Set position to relative for bootstrap tooltip messages. */
-	justify-items: center;										/* Center the tooltip below the input element. */
-}
-
-.login-name-inp, .login-pw-inp {								/* The form inputs. */
-	font-size: 0.8rem;											/* Shrink the input text a bit more. */
-	width: 90%;													/* Set to 90% of its parrents width. */
-	padding: 0.2rem;											/* Add a bit of padding. */
-	margin-top: 0.2rem;											/* And a bit of top margin for spacing between the label text and input. */
-}
-
-.login-error {													/* The error text in the login screen. */
-	font-size: small;											/* Set to small size to reduce the amount of required space. */
-	color: var(--err-text-col);									/* Set a darker red color for the error text. */
-	height: 4rem;												/* Set a fixed height, to make sure we dont get odd gaps. */
-}
-
-.login-butt {													/* The login form submit button. */
-	width: 90%;													/* Set width to 90% of its parrent. */
-	margin: 0.5rem 0;											/* Add a bit of margin above and below the button. */
-	padding: 0.3rem;											/* And give the button a bit of body around the text/content itself.*/
-}
-
 /* Default view styles */
-.nav-row-cont {													/* The navigation bar row container. */
-	padding: 0.2rem;											/* Create a bit of space around the content. */
-	width: 100%;												/* Ensure the container covers the entire width of the top level nav element. */
+/* Login specific extra styles to supliment the bootstrap defaults. */
+.login-cont {															/* Adding a size and position to the bootstrap .container. */
+	width: 15rem;														/* Subject to change, 15rem seem ok for now. */
+	height: fit-content;												/* Scale height to content, so it adjusts with the error message length. */
 }
 
-.hamburger-icon, .search-icon {									/* Search/Hamburger icon label for the nav bar. */
-	font-size: 1.7rem;											/* Change the font size, changing its over all size. */
+.login-form {															/* The login form itself. */
+	height: 100%;														/* Scale height to 100% of its parrent. */
+	align-content: center;												/* Center the content inside the form. */
+	font-size: 0.9rem;													/* Reduce the default font size a bit. */
 }
 
-.hamburger-icon, .search-icon {									/* Both navigation icons. */
-	cursor: pointer;											/* Show a pointed to indicate its a button like element. */
+.login-name-label, .login-pw-label {									/* The form input labels. */
+	display: grid;														/* Set to grid for easier aligning. */
+	position: relative;													/* Set position to relative for bootstrap tooltip messages. */
+	justify-items: center;												/* Center the tooltip below the input element. */
 }
 
-#customHamburgerDropdown, #customSearchDropdown {				/* Dropdown styles: */
-	max-width: 720px;											/* Overwrite bootstrap max-width, to be more uniform across screen sizes. */
-	margin: auto !important;									/* Attempt to center the element on screen. */
+.login-name-inp, .login-pw-inp {										/* The form inputs. */
+	font-size: 0.8rem;													/* Shrink the input text a bit more. */
+	width: 90%;															/* Set to 90% of its parrents width. */
+	padding: 0.2rem;													/* Add a bit of padding. */
+	margin-top: 0.2rem;													/* And a bit of top margin for spacing between the label text and input. */
 }
 
-#customHamburgerDropdown {										/* Dropdown style specically for the hamburger menu: */
-	width: 50%;													/* Reduce the size dramatically by default, to 50% of its parrent. */
+.login-error {															/* The error text in the login screen. */
+	font-size: small;													/* Set to small size to reduce the amount of required space. */
+	color: var(--err-text-col);											/* Set a darker red color for the error text. */
+	height: 4rem;														/* Set a fixed height, to make sure we dont get odd gaps. */
 }
 
-.hamburger-container {											/* The hamburger container, containing the menu buttons: */
-	max-width: 350px;											/* Create a smaller button container, else it just looks odd imo. */
+.login-butt {															/* The login form submit button. */
+	width: 90%;															/* Set width to 90% of its parrent. */
+	margin: 0.5rem 0;													/* Add a bit of margin above and below the button. */
+	padding: 0.3rem;													/* And give the button a bit of body around the text/content itself.*/
 }
 
-.search-container {												/* The search container, containing the elements: */
-	max-width: 380px;											/* Reduce the overall size, so it looks more the same across screen sizes. */
-}
-
-.hamburger-container, .search-container {						/* Hamburger & search menu containers shared styles: */
-	width: 100%;												/* Set width to 100% of its parrent. */
-	margin: auto !important;									/* Attempt to center the element on screen. */
-}
-
-/* Search menu related styles */
-.search-options {												/* The search options dropdown: */
-	width: 25%;													/* Reduce the width, so the input can sit next to it. */
-	max-width: 30%;												/* Ensure max-width is also acceptable. */
-}
-
-.search-inp {													/* The search input field: */
-	width: 70%;													/* Reduce the width, so the options can sit next to it. */
-	max-width: 75%;												/* Ensure max-width is also acceptable. */
-}
-
-/* Item container related styles */
-.item-container {
-	display: inline-block;    /* or flex: 0 0 auto; */
-	width: 372px;             /* lock in your desired width */
-	vertical-align: top;
-}
-
-.status-badge {
-	display: inline-block;
-	width: 8rem;            									/* tweak this width to fit your longest label */
-	cursor: default;        									/* pointer only on interactive states */
-}
-
+/* AI suggestions (mixed) */
 /* when a field is unlocked for editing */
 .field-editable {
-	outline: 2px solid #0d6efd;  /* blue focus outline */
-	background-color: #f8f9fa;   /* subtle light background */
+	outline: 0.2rem solid #0d6efd;  							/* blue focus outline */
+	background-color: #f8f9fa;   								/* subtle light background */
 }
 
 /* once the user actually changes something */
-.field-edited {
-	border: 2px dashed #ffc107;  /* amber dashed to signal “needs saving” */
-}
+.field-edited { border: 0.2rem dashed #ffc107; }				/* amber dashed to signal “needs saving” */
 
 /* highlight fields that changed */
 /* light highlight on changed fields */
-.edited {
-  	background-color: #fff3cd;
-  	border-color:    #ffeeba;
-}
-
-/*  Mobile-first: full width, tiny padding  */
-.item-details {
-	width: 100%;
-	padding: 0.5rem 0.5rem 1rem;
-	margin: 0 auto;
-	box-sizing: border-box;
-}
-
-.item-button {													/* The item dropdown button: */
-	padding: 0.2rem;											/* Add extra padding to give it some body. */
-}
-
-#boek-save-button, #boek-status-button, #boek-delete-button {	/* The book-details admin buttons: */
-	padding: 0.1rem;											/* Add some padding giving it some body. */
-	width: 97%;													/* Set to 97% width of its parrent. */
-}
-
-.item-container .editable select {
-	text-align: left;
-	text-align-last: left;   									/* for some browsers to align the selected option */
-}
+.edited { background-color: #fff3cd; border-color: #ffeeba; }
 
 .sort-group {
   gap: .5rem;            										/* Space between label & select */
@@ -209,6 +283,95 @@
   min-width: 8rem;       										/* Prevent the select from being too narrow */
   max-width: 14rem;      										/* Cap its width to match your card sizes */
 }
+
+/* Cleaned up snippets */
+/* Header/Banner/Nav items. */
+/* Banner Nav bar */
+.banner-nav {
+	display: grid;														/* Align with a grid */
+	grid-template-areas: "hMenu logo search";							/* Define areas */
+	grid-template-columns: auto 1fr auto;								/* auto align using column spacing */
+	align-items: center;												/* center the other axis */
+	background-color: var(--color-primary-1);							/* Give it the corect housestyle color */
+	color: var(--color-text-1);											/* Make sure any text is read-able */
+	border-radius: 0.375rem;
+}
+
+/* De banner image (Alétho diamond image). */
+.banner-image {
+	grid-area: logo;													/* Assign to grid area */
+	max-height: 3rem;													/* Force a max height */
+	object-fit: contain;												/* Contain image */
+	justify-self: center;												/* Center remaining axis */
+}
+
+/* Assign buttons to grid area */
+.banner-nav #hamburger-button { grid-area: hMenu; }
+.banner-nav #search-button { grid-area: search; }
+
+/* Extra dropdown and related forms styling */
+/* Extra styling for the hamburger menu */
+.hamburger-container {
+	display: grid;														/* Set as grid */
+	grid-template-columns: repeat(auto-fit, minmax(100px, auto));		/* Auto space elements */
+	justify-content: center;											/* Always center its content */
+	gap: 0.1rem;														/* Set a small gap */
+	max-width: 350px;													/* Set a max-width for mobile */
+	margin: 0 auto;														/* Ensure its auto centerd */
+}
+
+/* Both menu dropdown additions */
+#customHamburgerDropdown, #customSearchDropdown {
+	max-width: 720px;													/* Overwrite bootstrap max-width, to be more uniform across screen sizes */
+	margin: auto !important;											/* Attempt to center the element on screen */
+}
+
+/* Only the hamburger dropdown */
+#customHamburgerDropdown { width: 50%; }								/* Reduce the size dramatically by default, to 50% of its parrent */
+
+/* Search select element */
+.search-select {
+	width: 25%;															/* Reduce the width, so the input can sit next to it. */
+	max-width: 30%;														/* Ensure max-width is also acceptable. */
+}
+
+/* Search input element */
+.search-input {
+	width: 70%;															/* Reduce the width, so the options can sit next to it. */
+	max-width: 75%;														/* Ensure max-width is also acceptable. */
+}
+
+/* Pop-in related custom styles */
+/* Quick edit to size and center certain inputs etc */
+.extra-popin-style {
+	margin: auto;														/* Re-center element using auto margins. */
+	width: 85%;															/* Ensure there slightly smaller then the parrent */
+}
+
+/* Quick test edit to size input in the details window */
+.extra-input-style { width: 85% !important; }
+.extra-button-style { width: 12% !important; }
+
+.extra-fake-button {
+	width: 12% !important;
+	opacity: 0;
+	border: 0;
+}
+
+/* Force another width for the book details admin buttons  */
+.input-group button { width: 85%; }
+
+/* Other random changes */
+/* Apply housestyle font to sort elements */
+.sort-container {
+	font-size: 0.9rem;											/* Change font size slightly */
+	font-family: Quicksand;
+	font-weight: bold;
+}
+
+
+/* Change a bootstap opacity, so the color is displayed correctly */
+.btn-close { --bs-btn-close-opacity: 1; }
 
 /*  From md (≥768px) upward: constrain width  */
 @media (min-width: 768px) {

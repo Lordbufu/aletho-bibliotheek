@@ -1,33 +1,37 @@
 <!-- app/views/partials/popins/change-book-status-popin.php -->
 <div id="change-book-status-popin" class="modal" tabindex="-1" style="display:none;">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content bg-white text-center">
-      <div class="modal-header">
-        <h5 class="modal-title w-100 text-center">Boekstatus Aanpassen</h5>
-        <button type="button" class="btn-close" id="close-change-book-status-popin"></button>
-      </div>
-      <div class="modal-body">
-        <form id="change-book-status-form">
-          <div class="mb-3">
-            <label for="change-status-type" class="form-label text-center w-100">Status</label>
-            <select class="form-select text-center" id="change-status-type" name="change_status_type" required>
-                <option value="default" selected disabled hidden>Selecteer een status</option>
-              <?php foreach ($statusTypes as $status): ?>
-                <option value="<?= $status['id'] ?>"><?= htmlspecialchars($status['type']) ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="change-loaner-email" class="form-label text-center w-100">E-mail</label>
-            <input type="email" class="form-control text-center" id="change-loaner-email" name="change_loaner_email" required>
-          </div>
-          <div class="mb-3">
-            <label for="change-loaner-name" class="form-label text-center w-100">Lener Naam</label>
-            <input type="text" class="form-control text-center" id="change-loaner-name" name="change_loaner_name" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Opslaan</button>
-        </form>
-      </div>
+    <div class="modal-dialog modal-dialog-centered" style="max-width:90vw; margin:auto;">
+        <div class="modal-content aletho-modal-content">
+
+            <div class="aletho-header modal-header pt-2 pb-2">
+                <h5 class="modal-title w-100">Boekstatus Aanpassen</h5>
+                <button type="button" class="btn-close btn-close-white" id="close-change-book-status-popin"></button>
+            </div>
+
+            <div class="aletho-modal-body p-1">
+                <form id="change-book-status-form mb-1">
+                    <!-- status select -->
+                    <label for="change-status-type" class="aletho-labels extra-popin-style">Status</label>
+                    <select class="aletho-inputs extra-popin-style" id="change-status-type" name="change_status_type" required>
+                        <option value="default" selected disabled hidden>Selecteer een status</option>
+                            <?php foreach ($statuses as $status): ?>
+                        <option value="<?= $status['id'] ?>"><?= htmlspecialchars($status['type']) ?></option>
+                            <?php endforeach; ?>
+                    </select>
+
+                    <!-- loaner email -->
+                    <label for="change-loaner-email" class="aletho-labels extra-popin-style">E-mail</label>
+                    <input type="email" class="aletho-inputs extra-popin-style" id="change-loaner-email" name="change_loaner_email" required>
+
+                    <!-- loaner name -->
+                    <label for="change-loaner-name" class="aletho-labels extra-popin-style">Lener Naam</label>
+                    <input type="text" class="aletho-inputs extra-popin-style mb-2" id="change-loaner-name" name="change_loaner_name" required>
+
+                    <!-- submit -->
+                    <button type="submit" class="aletho-buttons extra-popin-style">Opslaan</button>
+                </form>
+            </div>
+
+        </div>
     </div>
-  </div>
 </div>

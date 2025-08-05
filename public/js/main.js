@@ -15,16 +15,23 @@ $(function() {
         $(popinId).on('click', function(e) { if (e.target === this) closePopin(popinId); });
     }
 
-    setupPopin('#boek-toev-button', '#add-book-popin', '#close-add-book-popin');
-    setupPopin('#periode-wijz-button', '#status-period-popin', '#close-status-period-popin');
-    setupPopin('#wachtwoord-wijz-button', '#password-reset-popin', '#close-password-reset-popin');
+    // Add book pop-in
+    setupPopin('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
+
+    // Change status periode pop-in
+    setupPopin('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
+
+    // Password reset pop-in
+    setupPopin('#password-reset-button', '#password-reset-popin', '#close-password-reset-popin');
+
+    // Change book status pop-in
     setupPopin('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
 
     $(document).on('click', function(event) {
         // If a popin is open, only close the hamburger dropdown if click is outside any popin
         if (popinIsOpen) {
             if (
-                $(event.target).closest('#add-book-popin:visible, #status-period-popin:visible, #password-reset-popin:visible, #change-book-status-popin:visible').length > 0
+                $(event.target).closest('#add-book-popin:visible,#status-period-popin:visible, #password-reset-popin:visible, #change-book-status-popin:visible').length > 0
             ) {
                 return; // Click was inside a popin, do nothing
             }

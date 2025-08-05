@@ -14,7 +14,7 @@
     <div class="sort-container d-flex justify-content-center my-3">
         <div class="sort-group d-inline-flex align-items-center">
             <label for="sort-options" class="m-0 me-2">Sorteren op:</label>
-            <select id="sort-options" class="form-select form-select-sm w-auto">
+            <select id="sort-options" class="form-select form-select-sm w-auto text-center">
                 <option value="title-asc">Titel oplopend</option>
                 <option value="title-desc">Titel aflopend</option>
                 <option value="writer-asc">Schrijver oplopend</option>

@@ -1,3 +1,4 @@
+	<div class="d-flex justify-content-center align-items-center text-center min-vh-100">
 		<!-- /* Login container, to position everything in the center of the screen/view. */ -->
 		<div class="login-cont container p-0">
 			<!-- /* Login header container, so i can give the whole thing a nice looking border. */ -->
@@ -29,3 +30,4 @@
 				<input class="login-butt buttons md-1 border border-dark rounded overige-tekst secundary-color-4" id="login-submit" type="submit" value="Inloggen">
 			</form>
 		</div>
+	</div>

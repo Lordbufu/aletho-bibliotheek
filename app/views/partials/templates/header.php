@@ -25,4 +25,4 @@
 	</head>
 
 	<!-- /* Body to set the main page style and size. */ -->
-	<body class="d-flex flex-column min-vh-100 secundary-color-2 p-1">
+	<body class="aletho-background d-flex flex-column min-vh-100 p-1">
