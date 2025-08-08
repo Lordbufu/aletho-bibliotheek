@@ -1,4 +1,4 @@
-<!-- /* View content container, to style/position the main content. */ -->
+<!-- Main view-container -->
 <div class="view-container container-fluid" id="view-container">
 
 <?php

@@ -1,6 +1,6 @@
 <!-- /* Hamburger dropdown menu, and the associated user based content. */ -->
-<div class="collapse aletho-dropdown-body aletho-search-container" id="customHamburgerDropdown">
-    <div class="hamburger-container mb-1" id="hamb-cont">
+<div class="collapse aletho-dropdown-body" id="customHamburgerDropdown">
+    <div class="hamburger-container aletho-dropdown-content mb-1" id="hamb-cont">
         <?php if(isset($_SESSION['user']) && $_SESSION['user']['canEdit']): ?>
             <!-- /* Hamburger menu items for admin users */ -->
             <input class="aletho-buttons" id="boek-add-button" type="submit" value="Boek Toevoegen">

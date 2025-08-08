@@ -1,5 +1,5 @@
-<div class="collapse aletho-dropdown-body aletho-search-container" id="customSearchDropdown">
-    <div class="" id="search-cont">
+<div class="collapse aletho-dropdown-body" id="customSearchDropdown">
+    <div class="aletho-dropdown-content" id="search-cont">
         <label class="aletho-labels search-label" for="search-options">Boek zoeken:</label>
         <form class="needs-validation" id="search-form" novalidate>
             <select class="aletho-inputs form-select-sm" name="search-method" id="search-options">
