@@ -24,9 +24,10 @@ App::boot($dbConfig, $schemaDir, $lockFile);
 
 try {
     if(App::run()) {
+        session_start(); // temp testing session
         // 5) Main entry point – replace with your Router or Runner
         $router = require BASE_PATH . '/config/routes.php';
-        $router->dispatch();
+        $router->dispatch();    
     } else {
         echo 'App initialization failed.';
     }
