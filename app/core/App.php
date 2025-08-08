@@ -3,7 +3,7 @@ namespace App\Core;
 
 use App\Core\Input\Request;
 use App\Core\ServiceContainer;
-use App\Core\Auth\UserPermissions;
+use App\Core\Auth\AuthService;
 use App\Core\Database\{Database, Installer};
 
 /**
@@ -64,7 +64,7 @@ class App {
         // Hardcoded services:
         $this->services->register('database', fn() => new Database($this->dbConfig));
         $this->services->register('request', fn() => new Request(array_merge($_GET, $_POST)));
-        $this->services->register('perm', fn() => new UserPermissions());
+        $this->services->register('auth', fn() => new AuthService(App::get('database')));
 
         // Load defined intances in 'services.php'
         $bindings = require __DIR__ . '/service/services.php';
