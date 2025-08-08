@@ -22,7 +22,7 @@ $(function() {
     setupPopin('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
 
     // Password reset pop-in
-    setupPopin('#password-reset-button', '#password-reset-popin', '#close-password-reset-popin');
+    setupPopin('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
 
     // Change book status pop-in
     setupPopin('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
@@ -198,6 +198,22 @@ $(function() {
 
         // Re-append in new order
         cards.forEach(card => $wrapper.append(card));
+    });
+
+    // status periode change events
+    $('#periode-wijz-button').on('click', function() {
+        $('#status-period-popin').show();
+    });
+
+    $('#close-status-period-popin').on('click', function() {
+        $('#status-period-popin').hide();
+    });
+    
+    // Optional: Hide modal when clicking outside the modal-content
+    $('#status-period-popin').on('click', function(e) {
+        if (e.target === this) {
+            $(this).hide();
+        }
     });
 });
 

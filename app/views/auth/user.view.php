@@ -1,8 +1,3 @@
-<?php
-    // Required authentication logic
-    $canEdit = $perm->canEdit();                                        // is admin and can edit
-?>
-
 <!-- /* View content container, to style/position the main content. */ -->
 <div class="view-container container-fluid" id="view-container">
 

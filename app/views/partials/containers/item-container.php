@@ -1,6 +1,5 @@
-<?php    // Should be evaluate via session data in the controlller
-    // Book view specific logic.
-    $canEditOffice = $perm->canEditOffice($book['office_id']);          // Can edit book office location
+<?php
+    $canEditOffice = FALSE;
 
     // Set this books current status
     foreach($statuses as $status) {
@@ -26,24 +25,23 @@
     <!-- Detailed item info, based on user type -->
     <div class="collapse aletho-dropdown-body" id="customItemDropdown-<?= $book['id'] ?>">
         <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="get" action="/">
-            <!-- Name and Author container -->
-            <?php if ($canEdit): ?>
+            <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
                 <input type="text" class="aletho-inputs extra-input-style" id="book-name-<?= $book['id'] ?>" name="book-name" value="<?= htmlspecialchars($book['name']) ?>" disabled>
                 <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#book-name-<?= $book['id'] ?>" aria-label="Edit Book Name">✏️</button>
             </div>
             <?php endif; ?>
 
+            <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
                 <input type="text" class="aletho-inputs extra-input-style" id="book-writer-<?= $book['id'] ?>" name="book_writer" value="<?= htmlspecialchars($book['author'] ?? '') ?>" disabled>
-                <?php if ($canEdit): ?>
                 <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#book-writer-<?= $book['id'] ?>" aria-label="Edit Author">✏️</button>
-                <?php endif; ?>
             </div>
+            <?php else: ?>
+            <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['author'] ?? '') ?>" disabled>
+            <?php endif; ?>
 
-
-            <!-- Genre -->
-            <?php if ($canEdit): ?>
+            <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
                 <!-- Genre Select -->
                 <select class="aletho-inputs form-select-sm extra-input-style" id="genre-input-<?= $book['id'] ?>" name="genre_id" disabled>
@@ -51,15 +49,13 @@
                     <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>> <?= htmlspecialchars($genre['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
-
                 <!-- Edit button -->
                 <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#genre-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
             </div>
             <?php else: ?>
-            <div class="aletho-inputs form-control-sm bg-light text-muted"><?= htmlspecialchars($book['genre'] ?? 'Onbekend') ?></div>
+            <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genre'] ?? 'Onbekend') ?>" disabled>
             <?php endif; ?>
 
-            <!-- Office -->
             <?php if ($canEditOffice): ?>
             <div class="input-group input-group-sm">
                 <!-- Office Select -->
@@ -71,35 +67,41 @@
                 <!-- Edit button -->
                 <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
             </div>
-            <?php else: ?>
-            <div class="aletho-inputs form-control-sm bg-light text-muted">
-                <?php
-                    foreach ($offices as $office):
-                        if($office['id'] === $book['office_id']) : 
-                            echo htmlspecialchars($office['name']);
-                        endif;
-                    endforeach; ?>
-            </div>
+            <?php else:
+                $bOffice = "";
+                foreach ($offices as $office) {
+                    if($office['id'] === $book['office_id']) {
+                        $bOffice = $office['name'];
+                    }
+                } ?>
+            <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($bOffice) ?>" disabled>
             <?php endif; ?>
 
-            <!-- Status Field -->
+            <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
                 <span class="aletho-labels extra-popin-style">Status</span>
                 <div type="button" class="extra-fake-button"></div>
-                <input type="text" class="aletho-inputs extra-popin-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($huidigeStatus) ?>" disabled>
+                <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($huidigeStatus) ?>" disabled>
                 <div type="button" class="extra-fake-button"></div>
             </div>
+            <?php else : ?>
+            <span class="aletho-labels extra-popin-style">Status</span>
+            <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($huidigeStatus) ?>" disabled>
+            <?php endif; ?>
 
-            <!-- Expiry Field -->
+            <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
                 <span class="aletho-labels extra-popin-style">Verloopt</span>
                 <div type="button" class="extra-fake-button"></div>
-                <input type="date" class="aletho-inputs extra-popin-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusExp) ?>" disabled>
+                <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusExp) ?>" disabled>
                 <div type="button" class="extra-fake-button"></div>
             </div>
+            <?php else : ?>
+            <span class="aletho-labels extra-popin-style">Verloopt</span>
+            <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusExp) ?>" disabled>
+            <?php endif; ?>
 
-            <?php if($canEdit): ?>
-            <!-- Loaner history (Admin only) -->
+            <?php if($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
                 <span class="aletho-labels extra-popin-style">Vorige Leners</span>
                 <div type="button" class="extra-fake-button"></div>
@@ -114,21 +116,16 @@
             </div>
             <?php endif; ?>
 
-            <!-- Admin controlle buttons -->
-            <!-- <div class="d-flex flex-column flex-md-row mt-2"> -->
+            <?php if($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm mt-1">
-                <?php if($canEdit): ?>
                 <button id="boek-status-button" type="button" name="action" class="aletho-buttons">Status Aanpassen</button>
                 <div type="button" class="extra-fake-button"></div>
-
                 <button id="save-changes-<?= $book['id'] ?>" type="submit" name="save-item" class="aletho-buttons">Wijzigingen Opslaan</button>
                 <div type="button" class="extra-fake-button"></div>
-
                 <button type="submit" name="action" class="aletho-buttons">Boek Verwijderen</button>
                 <div type="button" class="extra-fake-button"></div>
-                <?php endif; ?>
             </div>
-            <!-- </div> -->
+            <?php endif; ?>
         </form>
     </div>
 </div>

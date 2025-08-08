@@ -1,4 +1,3 @@
-<!-- app/views/partials/popins/add-book-popin.php -->
 <div id="add-book-popin" class="modal" tabindex="-1" style="display:none;">
     <div class="modal-dialog modal-dialog-centered" style="max-width:90vw; margin:auto;">
         <div class="modal-content aletho-modal-content">

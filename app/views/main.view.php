@@ -3,7 +3,7 @@
 	require viewPath('partials\templates\banner.php');
 ?>
 	<main class="flex-fill">
-		<?php if(! isset($user) ): ?>
+		<?php if(! isset($_SESSION['user']) ): ?>
 			<?php require viewPath('auth\login.view.php'); ?>
 		<?php else: ?>
 			<?php require viewPath('auth\user.view.php'); ?>
