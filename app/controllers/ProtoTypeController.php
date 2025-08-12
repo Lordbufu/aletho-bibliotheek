@@ -6,15 +6,15 @@ use App\Core\App;
 
 class ProtoTypeController {
     public function home() {
-        //unset($_SESSION['user']);
+        // unset($_SESSION);
         // Init user test data
-        //App::get('auth')->check();
-        //App::get('auth')->login('test', 'test');
+        // debugData(App::get('auth')->check());
+        App::get('auth')->login('test', 'test');
 
         // Testing status expire data display/formating
         $dateObj = new \DateTime('25-01-1873');
         $bookStatusExp = $dateObj->format('Y-m-d');
-        //$error = "Uw inlog gegevens zijn niet correct, probeer het nogmaals!";
+        // $error = "Uw inlog gegevens zijn niet correct, probeer het nogmaals!";
         $error ='';
 
 
@@ -34,7 +34,7 @@ class ProtoTypeController {
             'error' => $error
         ];
 
-        //debugData($_SESSION);
+        // debugData($_SESSION);
 
         return App::view('main.view', $data);
     }

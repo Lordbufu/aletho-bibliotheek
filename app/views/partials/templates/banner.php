@@ -1,7 +1,6 @@
-<!-- /* Header container, for the header menus and text. */ -->
-<nav class="aletho-header container-xxl p-1 align-items-center banner-nav">
+<nav class="aletho-header banner-nav">
 	<?php if(!isset($_SESSION['user'])) : ?>
-	<image class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
+	<img class="banner-image" alt="Alétho Logo" src="/images/huisstijl/Logo-bibliotheek-Wit-RGB.png">
 	<?php else : ?>
     <button id="hamburger-button" class="aletho-menu-buttons fas fa-bars" type="button"
     	data-bs-toggle="collapse" data-bs-target="#customHamburgerDropdown"

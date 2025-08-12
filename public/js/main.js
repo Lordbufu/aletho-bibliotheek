@@ -75,7 +75,7 @@ $(function() {
         closeSearchDropdown();
 
         // Close all other open details
-        $('.item-details.collapse.show').each(function() {
+        $('.collapse.aletho-item-dropdown.show').each(function() {
             if ('#' + $(this).attr('id') !== targetId) {
                 bootstrap.Collapse.getOrCreateInstance(this, {toggle: false}).hide();
             }
@@ -84,35 +84,41 @@ $(function() {
 
     /* Book details edit\submit logic events */
     // single click-handler for all edit buttons
-    $(document).on('click', '.edit-field-btn', function() {
+    $(document).on('click', '.extra-button-style', function() {
         const selector   = $(this).data('swapTargets');
         const $field     = $(selector);
 
-        // only act if the field is currently disabled
-        if($field.prop('disabled')) {
-            // Enable field
+        /* Only act if the field is currently disabled, enable field, mark as editable and save org value, then set focus. */
+        if ($field.prop('disabled')) {
             $field.prop('disabled', false);
-
-            // Mark editable & save org value.
             $field.addClass('field-editable').data('originalValue', $field.val());
-
-            // set focus
             $field.focus();
         }
     });
 
-    // Book details on input change event for input and select
-    $(document).on('input change', 'input, select', function() {
-        let $this = $(this);
+    // Input/Change listener for editable fields
+    $(document).on('input change', 'input.field-editable, select.field-editable', function() {
+        const $field = $(this);
+        const original = $field.data('originalValue');
+        const current = $field.val();
+        const $form = $field.closest('form.book-edit-form');
+        const $saveBtn = $form.find('button[id^="save-changes-"]');
 
-        // only mark if we previously unlocked it
-        if ($this.hasClass('field-editable')) {
-            $this.addClass('field-edited');
+        if (current !== original) {
+            $field.addClass('field-changed');
+            $saveBtn.addClass('needs-save');
+        } else {
+            $field.removeClass('field-changed');
+
+            // Check if ANY field is still dirty
+            if ($form.find('.field-changed').length === 0) {
+                $saveBtn.removeClass('needs-save');
+            }
         }
     });
 
     // Book details 'click' event for the submit button 
-    $(document).on('click', '[id^="save-change-"]', function(e) {
+    $(document).on('click', '[id^="save-changes-"]', function(e) {
         e.preventDefault();
 
         // 1) Find this button’s form
@@ -121,18 +127,13 @@ $(function() {
 
         // 2) Disable & cleanup only fields in *this* form
         $form.find('input.field-editable, select.field-editable').each(function() {
-            const $fld      = $(this);
-            const original  = $fld.data('originalValue');
-            const current   = $fld.val();
-
-            // mark if changed
-            if (current !== original) {
-                $fld.addClass('edited');
-            }
-
-            // disable & reset markers
-            $fld.prop('disabled', true).removeClass('field-editable').removeData('originalValue');
+            const $fld = $(this);
+            $fld.prop('disabled', true)
+                .removeClass('field-editable field-changed')
+                .removeData('originalValue');
         });
+
+        $btn.removeClass('needs-save');
 
         // 3) (Re)submit or AJAX-post the form if needed:
         // $form.submit();
@@ -213,6 +214,20 @@ $(function() {
     $('#status-period-popin').on('click', function(e) {
         if (e.target === this) {
             $(this).hide();
+        }
+    });
+
+    // Temp soulution 1: specific keydopwn to prevent a form submit.    // uncomment later
+    // $('.book-edit-form input').on('keydown', function(e) {
+    //     if (e.key === 'Enter') {
+    //         e.preventDefault(); // Stops Enter from submitting the form
+    //     }
+    // });
+
+    // Temp stealth solution: dont submit any form when enter is pressed // comment out later
+    $('form').on('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
         }
     });
 });
@@ -330,7 +345,6 @@ function stringChecker($type, $value) {
 
 /* changeSearchText(e): Change the search placeholder text, of the search input below the dropdown menu. */
 function changeSearchText(e) {
-    // e is a native event or jQuery event
     let $input = $(e.target).next();
     $input.attr('placeholder', ' Zoek op ' + $(e.target).val() + ' ...');
 }

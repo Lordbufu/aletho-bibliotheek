@@ -24,5 +24,5 @@
 		<!-- PHP code for device specific styles etc goes here -->
 	</head>
 
-	<!-- /* Body to set the main page style and size. */ -->
-	<body class="aletho-background d-flex flex-column min-vh-100 p-1">
+	<!-- Body to set the main page style and size -->
+	<body class="aletho-background">

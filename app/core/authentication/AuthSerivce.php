@@ -41,9 +41,9 @@ class AuthService {
 
     public function login(string $name, string $password): bool {
         // Temp test data
-        $row1 = ['name' => 'user', 'password' => '#redacted#', 'email' => null, 'is_loaner' => 1, 'is_office_admin' => 0, 'is_global_admin' => 0, 'created_at' => '01-01-1979', 'updated_at' => '08-08-2025', 'active' => 1];
-        //$row1 = ['name' => 'office_admin', 'password' => '#redacted#', 'email' => 'bibliotheek@aletho.nl', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1, 'created_at' => '01-01-1979', 'updated_at' => '08-08-2025', 'active' => 1];
-        //$row1 = ['name' => 'globaleAdmin', 'password' => '#redacted#', 'email' => null, 'is_loaner' => 0, 'is_office_admin' => 0, 'is_global_admin' => 1, 'created_at' => '01-01-1979', 'updated_at' => '08-08-2025', 'active' => 1];
+        // $row1 = ['name' => 'user', 'password' => '#redacted#', 'email' => null, 'is_loaner' => 1, 'is_office_admin' => 0, 'is_global_admin' => 0, 'created_at' => '01-01-1979', 'updated_at' => '08-08-2025', 'active' => 1];
+        // $row1 = ['name' => 'office_admin', 'password' => '#redacted#', 'email' => 'bibliotheek@aletho.nl', 'is_loaner' => 0, 'is_office_admin' => 1, 'is_global_admin' => 0, 'office_id' => 1, 'created_at' => '01-01-1979', 'updated_at' => '08-08-2025', 'active' => 1];
+        $row1 = ['name' => 'globaleAdmin', 'password' => '#redacted#', 'email' => null, 'is_loaner' => 0, 'is_office_admin' => 0, 'is_global_admin' => 1, 'created_at' => '01-01-1979', 'updated_at' => '08-08-2025', 'active' => 1];
 
         // 1. fetch the entire DB row by username (uncommneted for testing reasons)
         //$row = $this->db->query('users', 'name', $name)->fetch();
@@ -62,10 +62,14 @@ class AuthService {
             'canEdit' => (bool) $this->canEdit($row1),
         ];
 
+        // debugData($_SESSION);
+
         // 3. Add office_id if user has a office (needs db query cause linking tables)
         if(isset($row1['office_id'])) {
-            $_SESSION[self::SESSION_KEY] = ['office_id' => $row1['office_id'] ];
+            $_SESSION[self::SESSION_KEY]['office_id'] = $row1['office_id'];
         }
+
+        // debugData($_SESSION);
 
         return true;
     }

@@ -23,7 +23,7 @@
     </div>
 
     <!-- Detailed item info, based on user type -->
-    <div class="collapse aletho-dropdown-body" id="customItemDropdown-<?= $book['id'] ?>">
+    <div class="collapse aletho-item-dropdown" id="customItemDropdown-<?= $book['id'] ?>">
         <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="get" action="/">
             <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
@@ -56,17 +56,29 @@
             <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genre'] ?? 'Onbekend') ?>" disabled>
             <?php endif; ?>
 
-            <?php if ($canEditOffice): ?>
-            <div class="input-group input-group-sm">
-                <!-- Office Select -->
-                <select class="aletho-inputs form-select-sm extra-input-style" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
-                    <?php foreach ($offices as $office): ?>
-                    <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <!-- Edit button -->
-                <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
-            </div>
+            <?php if ($_SESSION['user']['canEdit']): ?>
+                <?php if ($canEditOffice): ?>
+                <div class="input-group input-group-sm">
+                    <!-- Office Select -->
+                    <select class="aletho-inputs form-select-sm extra-input-style" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
+                        <?php foreach ($offices as $office): ?>
+                        <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <!-- Edit button -->
+                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
+                </div>
+                <?php else : ?>
+                <div class="input-group input-group-sm">
+                    <!-- Office Select -->
+                    <select class="aletho-inputs form-select-sm extra-input-style" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
+                        <?php foreach ($offices as $office): ?>
+                        <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div type="button" class="extra-fake-button"></div>
+                </div>
+                <?php endif; ?>
             <?php else:
                 $bOffice = "";
                 foreach ($offices as $office) {
@@ -81,6 +93,8 @@
             <div class="input-group input-group-sm">
                 <span class="aletho-labels extra-popin-style">Status</span>
                 <div type="button" class="extra-fake-button"></div>
+            </div>                
+            <div class="input-group input-group-sm">
                 <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($huidigeStatus) ?>" disabled>
                 <div type="button" class="extra-fake-button"></div>
             </div>
@@ -93,6 +107,8 @@
             <div class="input-group input-group-sm">
                 <span class="aletho-labels extra-popin-style">Verloopt</span>
                 <div type="button" class="extra-fake-button"></div>
+            </div>                
+            <div class="input-group input-group-sm">
                 <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($statusExp) ?>" disabled>
                 <div type="button" class="extra-fake-button"></div>
             </div>
@@ -105,6 +121,8 @@
             <div class="input-group input-group-sm">
                 <span class="aletho-labels extra-popin-style">Vorige Leners</span>
                 <div type="button" class="extra-fake-button"></div>
+            </div>                
+            <div class="input-group input-group-sm">
                 <select class="aletho-inputs extra-popin-style" aria-label="Laatste lener">
                 <?php foreach($loanerHistory as $index => $loaner): ?>
                     <option value="<?= $loaner['id'] ?>" <?= $index === 0 ? 'selected' : 'disabled' ?>>
@@ -117,12 +135,16 @@
             <?php endif; ?>
 
             <?php if($_SESSION['user']['canEdit']): ?>
+            <div class="input-group input-group-sm mt-2">
+                <button id="boek-status-button" type="button" name="action" class="aletho-buttons extra-popin-style">Status Aanpassen</button>
+                <div type="button" class="extra-fake-button"></div>
+            </div>                
             <div class="input-group input-group-sm mt-1">
-                <button id="boek-status-button" type="button" name="action" class="aletho-buttons">Status Aanpassen</button>
+                <button id="save-changes-<?= $book['id'] ?>" type="submit" name="save-item" class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
                 <div type="button" class="extra-fake-button"></div>
-                <button id="save-changes-<?= $book['id'] ?>" type="submit" name="save-item" class="aletho-buttons">Wijzigingen Opslaan</button>
-                <div type="button" class="extra-fake-button"></div>
-                <button type="submit" name="action" class="aletho-buttons">Boek Verwijderen</button>
+            </div>                
+            <div class="input-group input-group-sm mt-1">
+                <button type="submit" name="action" class="aletho-buttons extra-popin-style">Boek Verwijderen</button>
                 <div type="button" class="extra-fake-button"></div>
             </div>
             <?php endif; ?>
