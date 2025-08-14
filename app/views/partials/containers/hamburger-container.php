@@ -1,16 +1,13 @@
-<!-- /* Hamburger dropdown menu, and the associated user based content. */ -->
-<div class="collapse aletho-dropdown-body" id="customHamburgerDropdown">
-    <div class="hamburger-container mb-1" id="hamb-cont">
+<div class="aletho-dropdown-body collapse" id="customHamburgerDropdown">
+    <div class="hamburger-container" id="hamb-cont">
 
-            <?php if(isset($_SESSION['user']) && $_SESSION['user']['canEdit']): ?>
-            <!-- /* Hamburger menu items for admin users */ -->
+        <?php if(isset($_SESSION['user']) && $_SESSION['user']['canEdit']): ?>
             <input class="aletho-buttons" id="boek-add-button" type="submit" value="Boek Toevoegen">
             <input class="aletho-buttons" id="status-periode-button" type="submit" value="Periode Wijzigen">
             <input class="aletho-buttons" id="password-change-button" type="submit" value="Wachtwoord Wijzigen">
-            <?php endif; ?>
+        <?php endif; ?>
 
-            <!-- /* Hamburger menu items for all users */ -->
-            <input class="aletho-buttons" id="logoff-button" type="submit" value="Uitloggen">
+        <input class="aletho-buttons" id="logoff-button" type="submit" value="Uitloggen">
             
     </div>
 </div>

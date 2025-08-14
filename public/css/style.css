@@ -42,6 +42,7 @@
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
+	font-size: 16px;
 }
 
 ::placeholder {
@@ -88,7 +89,7 @@ body {
 	background-color: var(--color-primary-2);
 	text-align: center;
 	padding: 0.2rem;
-	border-radius: 0.375rem !important;
+	border-radius: 0.375rem;
 	margin: 0.1rem 0 0.1rem 0;
 	font-family: Quicksand;
 	font-weight: bold;
@@ -97,7 +98,7 @@ body {
 
 .aletho-item-container {
 	display: inline-block;
-	width: 372px;
+	width: 23.25rem;
 	vertical-align: top;
 	padding: 0.25rem;
 	font-size: 0.9rem;
@@ -121,11 +122,12 @@ body {
 
 .aletho-dropdown-body {
 	background-color: var(--color-primary-1);
-	width: 300px;
-	max-width: 300px;
-	padding: 0.1rem !important;
+	width: 100%;
+	max-width: 23.25rem;
+	padding: 0.5rem;
 	text-align: center;
 	border-radius: 0 0 0.375rem 0.375rem;
+	margin: 0 auto;
 }
 
 .aletho-dropdown-content {
@@ -175,11 +177,22 @@ body {
 	font-family: Quicksand;
 	font-weight: normal;
 	text-align: center;
-	font-size: .75rem;
-	padding: 0.2rem;
-	margin: 0.2rem;
-	border: 0;
-	position: relative;
+	font-size: 0.85rem;
+	padding: 0.4rem;
+	margin: 0.3rem auto;
+	border: 1px solid var(--color-sec-1);
+	border-radius: 0.25rem;
+	display: block;
+	width: 100%;
+	max-width: 320px;
+}
+
+.aletho-select {
+    min-width: 8rem;
+    max-width: 14rem;
+    font-family: inherit;
+    font-size: inherit;
+    text-align: center;
 }
 
 .aletho-inputs:focus {
@@ -274,8 +287,8 @@ body {
 	align-items: center;
 	min-height: 100vh;
 	width: 100%;
-	padding: 0.75rem 0;
 	box-sizing: border-box;
+	border: solid 0.1rem var(--color-sec-2);
 }
 
 .view-stack {
@@ -288,8 +301,20 @@ body {
 	gap: 0.75rem;
 }
 
-.search-container, .hamburger-container, .sort-container, .items-list {
-  width: 100%;
+.form-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.form-row select {
+	width: 7.5rem;
+	flex: 0 0 auto;
+}
+
+.form-row input[type="text"] {
+  flex: 1;
+  min-width: 6rem;
 }
 
 .items-list {
@@ -300,47 +325,44 @@ body {
 
 /* Dropdown style additions, combined with housestyle and bootstrap */
 .hamburger-container {
-	justify-content: center;
+    display: flex;
+    flex-direction: column;
+	align-items: center;
 	gap: 0.1rem;
-	max-width: 300px;
 	margin: auto;
 }
 
 .hamburger-container input {
-	margin-top: 0.2rem;
-	width: 75%;
-}
-
-#customHamburgerDropdown, #customSearchDropdown {
-	max-width: 720px;
-	margin: auto !important;
-	border: solid 0.1rem var(--color-sec-2);
+	width: 70%;
 }
 
 /* Search input element */
 .search-label {
-	background-color: transparent;
-	color: var(--color-text-1);
-	font-weight: 500;
-	font-size: 0.95rem;
+  	background-color: transparent;
+  	color: var(--color-text-1);
+  	font-weight: 500;
+  	font-size: 1rem;
 }
 
 /* Sort elements */
 .sort-container {
-	display: flex;
-	justify-content: center;
-	font-size: 0.9rem;
-	font-family: Quicksand;
-	font-weight: bold;
+    display: flex;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-family: Quicksand;
+    font-weight: bold;
+    max-width: 23.25rem;
+    margin: 1rem auto;
 }
 
 .sort-group {
-	gap: .5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.sort-group .form-select {
-	min-width: 8rem;
-	max-width: 14rem;
+.sort-group label {
+	margin: 0;
 }
 
 /* Pop-in styles for alignment */
@@ -415,7 +437,9 @@ button:disabled.needs-save {
 
 /* Responsive styles */
 @media (min-width: 768px) {
-    .aletho-background { padding: 0.25rem; }
+    .aletho-background {
+		padding: 0.25rem;
+	}
 
 	.item-details {
 		max-width: 720px;
@@ -424,27 +448,49 @@ button:disabled.needs-save {
 
     .view-container {
         flex-direction: row;
-        max-width: 960px;
         margin-inline: auto;
-        padding: 0.25rem;
     }
+
+  	.aletho-labels {
+    	display: inline-block;
+    	background-color: transparent;
+    	margin: 0.2rem;
+  	}
+
+	.aletho-inputs {
+		display: inline-block;
+		width: auto;
+		max-width: none;
+	}
 }
 
 /* Not entirely sure if useful or required */ 
 @media (min-width: 992px) {
-	.aletho-header .aletho-menu-buttons { margin-inline: 0.5rem; }
-	#hamburger-button { order: 1; }
-	.banner-image { order: 2; }
-	#search-button { order: 3; }
+	.aletho-header .aletho-menu-buttons {
+		margin-inline: 0.5rem;
+	}
+
+	#hamburger-button {
+		order: 1;
+	}
+
+	.banner-image {
+		order: 2;
+	}
+
+	#search-button {
+		order: 3;
+	}
 }
 
 @media (min-width: 1200px) {
-    .aletho-background { padding: 0.25rem; }
+    .aletho-background {
+		padding: 0.25rem;
+	}
 }
 
 /* Test code */
 
-/* Temp Code */
 /* Temp status dot styles for prototype reasons */
 .status-dot {
 	height: 18px;
@@ -454,8 +500,18 @@ button:disabled.needs-save {
 	margin-right: 0.2rem !important;
 }
 
-.statusOne { background-color: rgb(41, 126, 38); }
-.statusTwo { background-color: rgb(255, 56, 35); }
-.statusThree { background-color: rgb(121, 117, 19); }
-.statusFour { background-color: rgb(105, 103, 103); }
+.statusOne {
+	background-color: rgb(41, 126, 38);
+}
 
+.statusTwo {
+	background-color: rgb(255, 56, 35);
+}
+
+.statusThree {
+	background-color: rgb(121, 117, 19);
+}
+
+.statusFour {
+	background-color: rgb(105, 103, 103);
+}
