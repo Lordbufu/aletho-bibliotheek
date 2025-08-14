@@ -1,18 +1,7 @@
-<?php
-    $canEditOffice = FALSE;
+<?php $canEditOffice = FALSE; foreach($statuses as $status) { if($status['id'] === $book['status_id']) { $huidigeStatus = $status['type']; } } ?>
 
-    // Set this books current status
-    foreach($statuses as $status) {
-        if($status['id'] === $book['status_id']) {
-            $huidigeStatus = $status['type'];
-        }
-    }
-?>
+<div class="aletho-item-container" id="item-container-<?= $book['id'] ?>">
 
-<!-- /* Item container example, with a dropdown for potentially editable details and user based content. */ -->
-<div class="aletho-item-container container-sm" id="item-container-<?= $book['id'] ?>">
-
-    <!-- Top bar (always visible) -->
     <div class="aletho-item">
         <button class="aletho-dropdown-buttons" id="itemButton-<?= $book['id'] ?>" type="button"
                 data-bs-toggle="collapse" data-bs-target="#customItemDropdown-<?= $book['id'] ?>"
@@ -22,7 +11,6 @@
         <span class="status-dot statusOne d-flex justify-content-end" id="status-dot-<?= $book['id'] ?>"></span>
     </div>
 
-    <!-- Detailed item info, based on user type -->
     <div class="collapse aletho-item-dropdown" id="customItemDropdown-<?= $book['id'] ?>">
         <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="get" action="/">
             <?php if ($_SESSION['user']['canEdit']): ?>
@@ -43,13 +31,11 @@
 
             <?php if ($_SESSION['user']['canEdit']): ?>
             <div class="input-group input-group-sm">
-                <!-- Genre Select -->
                 <select class="aletho-inputs form-select-sm extra-input-style" id="genre-input-<?= $book['id'] ?>" name="genre_id" disabled>
                     <?php foreach ($genres as $genre): ?>
                     <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>> <?= htmlspecialchars($genre['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
-                <!-- Edit button -->
                 <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#genre-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
             </div>
             <?php else: ?>
@@ -59,18 +45,15 @@
             <?php if ($_SESSION['user']['canEdit']): ?>
                 <?php if ($canEditOffice): ?>
                 <div class="input-group input-group-sm">
-                    <!-- Office Select -->
                     <select class="aletho-inputs form-select-sm extra-input-style" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
                         <?php foreach ($offices as $office): ?>
                         <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <!-- Edit button -->
                     <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
                 </div>
                 <?php else : ?>
                 <div class="input-group input-group-sm">
-                    <!-- Office Select -->
                     <select class="aletho-inputs form-select-sm extra-input-style" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
                         <?php foreach ($offices as $office): ?>
                         <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>

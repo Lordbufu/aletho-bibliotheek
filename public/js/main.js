@@ -1,5 +1,8 @@
 // This file is part of the Aletho Bibliotheek project.
 let popinIsOpen = false;
+// Scroll lock helpers
+let __bodyScrollY = 0;
+let __bodyPadRight = '';
 
 $(function() {
     /* Login input elements & events: */
@@ -61,7 +64,7 @@ $(function() {
     $('#status-type').trigger('change');
 
     // When any popin is triggered, close the hamburger dropdown only
-    $('#boek-toev-button, #periode-wijz-button, #wachtwoord-wijz-button, #boek-status-wijz-button').on('click', function() {
+    $('#boek-add-button, #periode-wijz-button, #wachtwoord-wijz-button, #boek-status-wijz-button').on('click', function() {
         closeHamburgerDropdown();
     });
 
@@ -144,7 +147,7 @@ $(function() {
         const query  = $(this).val().toLowerCase().trim();
         const method = $('#search-options').val(); // title | writer | genre
 
-        $('.item-container').each(function() {
+        $('.aletho-item-container').each(function() {
             const $card = $(this);
             let textToSearch = '';
 
@@ -236,13 +239,20 @@ $(function() {
 function openPopin(selector) {
     $(selector).show();
     popinIsOpen = true;
+    lockBodyScroll();
     closeHamburgerDropdown();
 }
 
 // Close popin function with popinIsOpen flag
 function closePopin(selector) {
     $(selector).hide();
-    popinIsOpen = false;
+    // If no other popins are visible, unlock the body
+    if ($('.modal:visible').length === 0) {
+        popinIsOpen = false;
+        unlockBodyScroll();
+    } else {
+        popinIsOpen = true;
+    }
 }
 
 // Helper to close the hamburger dropdown only, but still allowing custom logic.
@@ -262,6 +272,44 @@ function closeDropdown(selector) {
     if ($dropdown.hasClass('show')) {
         bootstrap.Collapse.getOrCreateInstance($dropdown[0], {toggle: false}).hide();
     }
+}
+
+function lockBodyScroll() {
+    // Save current scroll
+    __bodyScrollY = window.scrollY || window.pageYOffset;
+
+    // Compensate for scrollbar to avoid layout shift
+    const scrollbarW = window.innerWidth - document.documentElement.clientWidth;
+    __bodyPadRight = document.body.style.paddingRight;
+
+    if (scrollbarW > 0) {
+        document.body.style.paddingRight = `${scrollbarW}px`;
+    }
+
+    // Lock with fixed positioning (prevents content jump)
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${__bodyScrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+
+    // For good measure and consistency with Bootstrap
+    document.body.classList.add('modal-open');
+}
+
+function unlockBodyScroll() {
+    document.body.classList.remove('modal-open');
+
+    // Restore body styles
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.style.paddingRight = __bodyPadRight;
+
+    // Restore scroll position
+    window.scrollTo(0, __bodyScrollY || 0);
 }
 
 /* inputCheck(e): Check the input and add bootstrap styling if valid or invalid based on stringChecker(). */
