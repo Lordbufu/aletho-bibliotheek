@@ -1,0 +1,18 @@
+<?php
+
+return [
+    // Core router service
+    'router' => [
+        'class' => \App\Router::class,
+        'config' => BASE_PATH . '/ext/config/routes.php'
+    ],
+    // Core database service
+    'database' => [
+        'class'  => \App\Database::class,
+        'config' => BASE_PATH . '/ext/config/database.php'
+    ],
+    // Core logger service
+    'logger' => [
+        'class'  => \App\Logger::class
+    ]
+];
