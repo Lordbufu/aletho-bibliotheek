@@ -14,5 +14,9 @@ return [
     // Core logger service
     'logger' => [
         'class'  => \App\Logger::class
+    ],
+    // Core authentication service
+    'auth' => [
+        'class'  => \App\Auth\Auth::class
     ]
 ];
