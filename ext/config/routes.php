@@ -1,6 +1,12 @@
 <?php
+/* User-Managment routes */
+$router->get(   '/',        'LoginController@landing');
+$router->get(   '/login',   'LoginController@showform');
+$router->post(  '/login',   'LoginController@authenticate');
+$router->post(  '/logout',  'LoginController@logout');
 
-$router->get('/', 'ProtoTypeController@landing');
+/* App view routes */
+$router->get(   '/home',     'ViewController@landing');
 
 /* Router testing: routes */
 // $router->get('/test/{id}', 'ProtoTypeController@guid');

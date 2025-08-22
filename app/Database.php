@@ -20,7 +20,7 @@ class Database {
     protected Installer $installer;   // Installer for schema/data
 
     /**
-     * @param array $config Database configuration array
+     * @param array $config Database configuration arrays
      */
     public function __construct(array $config) {
         try {

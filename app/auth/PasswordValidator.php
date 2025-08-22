@@ -25,7 +25,7 @@ class PasswordValidator {
      * @param string $password
      * @return bool True if valid, false otherwise
      */
-    public static function isValid(string $password): bool {
+    public function isValid(string $password): bool {
         if (strlen($password) < self::MIN_LENGTH) {
             App::getService('logger')->warning("Password validation failed: too short", 'auth');
             return false;
@@ -59,7 +59,7 @@ class PasswordValidator {
      *
      * @return array<string, mixed>
      */
-    public static function getRequirements(): array {
+    public function getRequirements(): array {
         return [
             'min_length'      => self::MIN_LENGTH,
             'require_upper'   => self::REQUIRE_UPPER,

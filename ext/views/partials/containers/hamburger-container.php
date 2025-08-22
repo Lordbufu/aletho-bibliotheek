@@ -7,7 +7,11 @@
             <input class="aletho-buttons" id="password-change-button" type="submit" value="Wachtwoord Wijzigen">
         <?php endif; ?>
 
-        <input class="aletho-buttons" id="logoff-button" type="submit" value="Uitloggen">
+        <form action="/logout" method="post">
+            <button type="submit" class="aletho-buttons" id="logoff-button">
+                Uitloggen
+            </button>
+        </form>
             
     </div>
 </div>

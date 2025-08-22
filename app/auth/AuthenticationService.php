@@ -11,29 +11,29 @@ use Exception;
  */
 class AuthenticationService {
     protected $permissionsMap;
+    protected PasswordValidator $passwordValidator;
 
-    public function __construct() {
+    public function __construct(PasswordValidator $passwordValidator = null) {
         $this->permissionsMap = include BASE_PATH . '/ext/config/permissions.php';
+        $this->passwordValidator = $passwordValidator ?? new PasswordValidator();
 
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
 
-
     /**
-     * Attempt to log in a user by email and password.
+     * Attempt to log in a user by name and password.
      */
-    public function login(string $email, string $password): bool {
-        $stmt = App::getService('database')->prepare("SELECT * FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    public function login(string $name, string $password): bool {
+        $user = App::getService('database')
+            ->query()
+            ->fetchOne("SELECT * FROM users WHERE name = ?", [$name]);
 
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user'] = [
                 'id'        => $user['id'],
-                'role'      => $user['role'],
-                'office_id' => $user['office_id']
+                'type'      => $user['type']
             ];
 
             App::getService('logger')->warning("User {$user['id']} logged in", 'auth');
@@ -75,7 +75,7 @@ class AuthenticationService {
             throw new Exception('UNAUTHORIZED');
         }
 
-        if (!PasswordValidator::isValid($newPassword)) {
+        if (!$this->passwordValidator->isValid($newPassword)) {
             throw new Exception('WEAK_PASSWORD');
         }
 
@@ -111,7 +111,7 @@ class AuthenticationService {
             throw new Exception('UNAUTHORIZED');
         }
 
-        if (!PasswordValidator::isValid($newPassword)) {
+        if (!$this->passwordValidator->isValid($newPassword)) {
             throw new Exception('WEAK_PASSWORD');
         }
 
@@ -125,5 +125,33 @@ class AuthenticationService {
         }
 
         return $success;
+    }
+
+    /**
+     * Returns the current password policy requirements.
+     *
+     * This method acts as a single point of access for retrieving the
+     * application's active password rules (e.g., minimum length, required
+     * character types, etc.). It delegates to the underlying PasswordValidator,
+     * but keeps that implementation detail hidden so calling code does not need
+     * to know or depend on it directly.
+     *
+     * Useful for:
+     *  - Displaying password guidelines in UI forms or API responses
+     *  - Ensuring consistent validation rules across the application
+     *  - Allowing future changes to password policy without touching callers
+     *
+     * @return array<string, mixed> An associative array describing the rules.
+     */
+    public function passwordRequirements(): array {
+        return $this->passwordValidator->getRequirements();
+    }
+
+    public function check(): bool {
+        return isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? 'guest') !== 'guest';
+    }
+
+    public function guest(): bool {
+        return !$this->check();
     }
 }

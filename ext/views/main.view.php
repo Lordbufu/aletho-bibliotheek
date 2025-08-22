@@ -1,19 +1,9 @@
-<?php require viewPath('partials\templates\header.php'); ?>
-
+<?php use App\App;
+	require viewPath('partials\templates\header.php'); ?>
 <div class="page-wrapper">
-
 	<?php require viewPath('partials\templates\banner.php'); ?>
-
 		<main class="flex-grow-1 d-flex flex-column flex-md-row">
-
-			<?php if( $_SESSION['user']['type'] === 'guest' ) {
-				require viewPath('auth\login.view.php');
-			} else {
-				require viewPath('auth\user.view.php');
-			} ?>
-
+			<?php require viewPath('auth\user.view.php'); ?>
 		</main>
-
 	<?php require viewPath('partials\templates\footer.php'); ?>
-
 </div>
