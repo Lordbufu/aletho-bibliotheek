@@ -6,25 +6,33 @@ use DirectoryIterator;
 use Throwable;
 use App\App;
 
+/**
+ * Handles initial database setup by executing schema and optional seed data scripts.
+ * Uses a lock file to prevent reinstallation and verifies required tables exist.
+ */
 class Installer {
-    protected Connection $connection;
-    protected Query $query;
-    protected string $schemaPath;
-    protected string $dataPath;
-    protected string $lockFile;
+    protected Connection $connection; // Active DB connection
+    protected Query $query;           // Query runner
+    protected string $schemaPath;     // Path to schema SQL files
+    protected string $dataPath;       // Path to seed data SQL files
+    protected string $lockFile;       // Path to installation lock file
 
+    /**
+     * @param Connection $connection Active DB connection instance
+     * @param string|null $schemaPath Optional override for schema directory path
+     */
     public function __construct(Connection $connection, ?string $schemaPath = null) {
         $this->connection = $connection;
         $this->query      = new \App\Database\Query($this->connection);
 
-        // Resolve paths
+        // Resolve paths for schema, data, and lock file
         $this->schemaPath = realpath($schemaPath ?? dirname(__DIR__, 2) . '/ext/schema') ?: '';
         $this->dataPath   = $this->schemaPath . '/data';
         $this->lockFile   = dirname(__DIR__, 2) . '/.installed.lock';
 
-        // Defensive check
+        // Defensive check: schema directory must exist
         if (!$this->schemaPath || !is_dir($this->schemaPath)) {
-            App::getService('logger')->error(
+            App::getServiceSafeLogger()->error(
                 "Schema directory not found at: {$this->schemaPath}",
                 'installer'
             );
@@ -32,8 +40,10 @@ class Installer {
     }
 
     /**
-     * Determine required table names by scanning schema directory.
+     * Scan schema directory for required table names.
      * Matches files like "001_users.sql" → "users".
+     *
+     * @return array List of required table names
      */
     protected function requiredTables(): array {
         $tables = [];
@@ -59,12 +69,15 @@ class Installer {
     }
 
     /**
-     * Execute all SQL scripts in a given path.
-     * Returns an array of metadata about executed files.
+     * Execute all SQL scripts in a given directory.
+     *
+     * @param string $path Directory containing SQL files
+     * @return array Metadata about executed files
      */
     protected function runScripts(string $path): array {
         $executed = [];
 
+        // Warn if directory doesn't exist
         if (!is_dir($path)) {
             App::getService('logger')->warning("Script path does not exist: {$path}", 'installer');
             return $executed;
@@ -82,6 +95,7 @@ class Installer {
             return $executed;
         }
 
+        // Sort files in natural order to ensure correct execution sequence
         sort($files, SORT_NATURAL | SORT_FLAG_CASE);
 
         foreach ($files as $filePath) {
@@ -111,18 +125,21 @@ class Installer {
     }
 
     /**
-     * Install schema and (optionally) seed data.
+     * Perform installation of schema and optional seed data.
+     *
+     * @param bool $withData Whether to also install seed data
      */
     public function install(bool $withData = false): void {
         try {
             $manifest = [];
-            // If installed but also not withData tag was included, log and skip.
+
+            // Skip if already installed and no data seeding requested
             if ($this->isInstalled() && !$withData) {
                 App::getService('logger')->warning("Install skipped: already installed", 'installer');
                 return;
             } 
 
-            // If not installed, install tables regardless of the withData tag.
+            // Install schema if not already installed
             if (!$this->isInstalled()) {
                 App::getService('logger')->warning("Starting installation...", 'installer');
                 $executedSchema = $this->runScripts($this->schemaPath);
@@ -130,11 +147,13 @@ class Installer {
                 $manifest['schema_files'] = $executedSchema;
             }
 
-            if($withData) {
+            // Optionally install seed data
+            if ($withData) {
                 $executedData = $this->runScripts($this->dataPath);
                 $manifest['data_files'] = $executedData;
             }
 
+            // Write lock file to mark installation
             if (file_put_contents(
                 $this->lockFile,
                 json_encode($manifest, JSON_PRETTY_PRINT)
@@ -153,9 +172,12 @@ class Installer {
     }
 
     /**
-     * Check if the system is already installed by:
-     * 1. Presence of lock file.
-     * 2. All required tables existing in the DB.
+     * Check if the system is already installed.
+     * Conditions:
+     * 1. Lock file exists.
+     * 2. All required tables exist in the database.
+     *
+     * @return bool True if installed, false otherwise
      */
     public function isInstalled(): bool {
         if (!file_exists($this->lockFile)) {

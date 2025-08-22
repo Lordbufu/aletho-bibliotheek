@@ -17,6 +17,6 @@ return [
     ],
     // Core authentication service
     'auth' => [
-        'class'  => \App\Auth\Auth::class
+        'class'  => \App\Auth::class
     ]
 ];

@@ -4,7 +4,7 @@ require __DIR__ . '/../bootstrap.php';
 use App\App;
 
 if (!App::boot()) {
-    // die(var_dump(App::getBootErrors()));
+    // dd(App::getBootErrors());
     handleBootFailure(App::getBootErrors());
     exit;
 }
