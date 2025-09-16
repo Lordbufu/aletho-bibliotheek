@@ -1,35 +1,21 @@
-# Dependencies
+# Folder exclusions
+.vscode/
 /vendor/
-/node_modules/
+ext/storage/
 
-# Environment / sensitive config data
+# File exclusions
 .env
-.env.local
+*.log
+.installed.lock
 
-# PHPUnit and testing artifacts
+
+# PHPUnit and testing artifacts, will clean these up later ?
 /phpunit.xml
 /phpunit.xml.dist
 /tests/_output/
 /build/
 *.phpunit.result.cache
 
-# Logs / caches
-*.log
-/storage/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Editor / OS temp
-.vscode/
-.idea/
-/*.sw?
-*.swp
-*.bak
-*~
-
-# temp exclusions, will clean these up later
+# Temp exclusions, will clean these up later
 /docs/
 /old/
-.installed.lock
