@@ -3,8 +3,6 @@
 namespace App\Auth;
 
 use App\App;
-use PDO;
-use Exception;
 
 /**
  * Handles user authentication, authorization, and password management.
@@ -26,21 +24,27 @@ class AuthenticationService {
      * Attempt to log in a user by name and password.
      */
     public function login(string $name, string $password): bool {
-        $user = App::getService('database')
-            ->query()
-            ->fetchOne("SELECT * FROM users WHERE name = ?", [$name]);
+        $user = App::getService('database')->query()->fetchOne("SELECT * FROM users WHERE name = ?", [$name]);
 
         if ($user && password_verify($password, $user['password'])) {
+            $role = $user['is_global_admin'] 
+                ? 'Global Admin' 
+                : ($user['is_office_admin'] ? 'Office Admin' : 'User');
+
             $_SESSION['user'] = [
-                'id'        => $user['id'],
-                'type'      => $user['type']
+                'id' => $user['id'],
+                'name' => $user['name'],
+                'role' => $role,
+                'canEdit' => ($role === 'Global Admin' || $role === 'Office Admin')
             ];
 
             App::getService('logger')->warning("User {$user['id']} logged in", 'auth');
+
             return true;
         }
 
-        App::getService('logger')->warning("Failed login attempt for {$email}", 'auth');
+        App::getService('logger')->warning("Failed login attempt for {$name}", 'auth');
+        
         return false;
     }
 
@@ -49,6 +53,7 @@ class AuthenticationService {
      */
     public function logout(): void {
         session_destroy();
+        $_SESSION = [];
         App::getService('logger')->warning("User logged out", 'auth');
     }
 
@@ -56,7 +61,7 @@ class AuthenticationService {
      * Check if the current user has a given permission.
      */
     public function can(string $permission): bool {
-        $role = $_SESSION['user']['role'] ?? 'guest';
+        $role = $_SESSION['user']['role'] ?? 'Guest';
         return in_array($permission, $this->permissionsMap[$role] ?? []);
     }
 
@@ -64,40 +69,50 @@ class AuthenticationService {
      * Get the current logged-in user data.
      */
     public function currentUser(): array {
-        return $_SESSION['user'] ?? ['role' => 'guest'];
+        return $_SESSION['user'] ?? ['role' => 'Guest'];
     }
 
     /**
-     * Allow a user to change their own password.
+     * Allow a office admins to change their own password.
+     * Logs minor issues as warnings, but exceptions as errors.
      */
-    public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): bool {
+    public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): mixed {
         if (!$this->can('manage_account')) {
-            throw new Exception('UNAUTHORIZED');
+            App::getService('logger')->error('UNAUTHORIZED', 'auth');
+            return false;
         }
 
         if (!$this->passwordValidator->isValid($newPassword)) {
-            throw new Exception('WEAK_PASSWORD');
+            App::getService('logger')->error('WEAK_PASSWORD', 'auth');
+            return false;
         }
 
-        $stmt = App::getService('database')->prepare("SELECT password FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $storedHash = $stmt->fetchColumn();
+        $storedHash = App::getService('database')
+            ->query()
+            ->value("SELECT password FROM users WHERE id = ?", [$userId]);
 
         if (!$storedHash || !password_verify($currentPassword, $storedHash)) {
-            throw new Exception('INVALID_CREDENTIALS');
+            App::getService('logger')->error('INVALID_CREDENTIALS', 'auth');
+            return false;
         }
 
         if ($currentPassword === $newPassword) {
-            throw new Exception('PASSWORD_UNCHANGED');
+            App::getService('logger')->error('PASSWORD_UNCHANGED', 'auth');
+            return false;
         }
 
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $update = App::getService('database')->prepare("UPDATE users SET password = ? WHERE id = ?");
-        $success = $update->execute([$hash, $userId]);
+        $success = App::getService('database')
+            ->query()
+            ->fetchAll("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
 
         if ($success) {
-            App::getService('logger')->warning("User {$userId} changed their password", 'auth');
+            App::getService('logger')->warning("{$_SESSION['user']['role']} changed their own password", 'auth');
             session_regenerate_id(true);
+        }
+
+        if(!$success && empty($success)) {
+            $success = ["message" => "Your password was changed, and can now be used to login !!"];
         }
 
         return $success;
@@ -105,23 +120,34 @@ class AuthenticationService {
 
     /**
      * Allow an admin to reset another user's password.
+     * Logs minor issues as warnings, but exceptions as errors.
      */
-    public function resetUserPassword(int $targetUserId, string $newPassword): bool {
-        if (!$this->can('manage_accounts')) {
-            throw new Exception('UNAUTHORIZED');
+    public function resetUserPassword(string $targetUserName, string $newPassword): array {
+        if (!$this->can('manage_account')) {
+            App::getService('logger')->error('UNAUTHORIZED', 'auth');
+            return false;
         }
 
         if (!$this->passwordValidator->isValid($newPassword)) {
-            throw new Exception('WEAK_PASSWORD');
+            App::getService('logger')->error('WEAK_PASSWORD', 'auth');
+            return false;
         }
 
+        $tId = App::getService('database')
+            ->query()
+            ->value("SELECT id FROM users WHERE name = ?", [$targetUserName]);
+
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $update = App::getService('database')->prepare("UPDATE users SET password = ? WHERE id = ?");
-        $success = $update->execute([$hash, $targetUserId]);
+        $success = App::getService('database')
+            ->query()
+            ->fetchAll("UPDATE users SET password = ? WHERE id = ?", [$hash, $tId]);
 
         if ($success) {
-            $adminId = $_SESSION['user']['id'] ?? 'unknown';
-            App::getService('logger')->warning("Admin {$adminId} reset password for user {$targetUserId}", 'auth');
+            App::getService('logger')->warning("{$_SESSION['user']['role']} reset password for: {$targetUserName}", 'auth');
+        }
+
+        if(!$success && empty($success)) {
+            $success = ["message" => "Password for: {$targetUserName}, was changed !!"];
         }
 
         return $success;
@@ -148,10 +174,6 @@ class AuthenticationService {
     }
 
     public function check(): bool {
-        return isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? 'guest') !== 'guest';
-    }
-
-    public function guest(): bool {
-        return !$this->check();
+        return isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? 'Guest') !== 'Guest';
     }
 }

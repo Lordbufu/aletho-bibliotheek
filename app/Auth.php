@@ -26,10 +26,6 @@ class Auth {
         return $this->service->check();
     }
 
-    public function guest(): bool {
-        return $this->service->guest();
-    }
-
     public function user(): ?array {
         return $this->service->currentUser();
     }
@@ -42,12 +38,12 @@ class Auth {
         return $this->service->can($permission);
     }
 
-    public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): bool {
+    public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): array {
         return $this->service->resetOwnPassword($userId, $currentPassword, $newPassword);
     }
 
-    public function resetUserPassword(int $targetUserId, string $newPassword): bool {
-        return $this->service->resetUserPassword($targetUserId, $newPassword);
+    public function resetUserPassword(string $targetUserName, string $newPassword): array {
+        return $this->service->resetUserPassword($targetUserName, $newPassword);
     }
 
     public function passwordRequirements(): array {
