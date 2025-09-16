@@ -1,5 +1,4 @@
-<?php use App\App;
-	require viewPath('partials\templates\header.php'); ?>
+<?php require viewPath('partials\templates\header.php'); ?>
 <div class="page-wrapper">
 	<?php require viewPath('partials\templates\banner.php'); ?>
 		<main class="flex-grow-1 d-flex flex-column flex-md-row">

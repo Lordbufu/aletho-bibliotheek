@@ -1,16 +1,20 @@
 <?php
 /* User-Managment routes */
-$router->get(   '/',        'LoginController@landing');
-$router->get(   '/login',   'LoginController@showform');
-$router->post(  '/login',   'LoginController@authenticate');
-$router->post(  '/logout',  'LoginController@logout');
+$router->get(       '/',                'ViewController@landing');
+$router->get(       '/login',           'AuthController@showform');
+$router->post(      '/login',           'AuthController@authenticate');
+$router->post(      '/logout',          'AuthController@logout');
 
 /* App view routes */
-$router->get(   '/home',     'ViewController@landing');
+$router->get(       '/home',            'ViewController@userLogin');
+
+/* App update routes */
+$router->patch(    '/resetPassword',   'AuthController@resetPassword');
+
 
 /* Router testing: routes */
-// $router->get('/test/{id}', 'ProtoTypeController@guid');
-// $router->get('/test/{id:\d+}', 'ProtoTypeController@guid');
-// $router->get('/quick', function ($request, $response) {
-//     $response->setContent('Hello world')->send();
-// });
+    // $router->get('/test/{id}', 'ProtoTypeController@guid');
+    // $router->get('/test/{id:\d+}', 'ProtoTypeController@guid');
+    // $router->get('/quick', function ($request, $response) {
+    //     $response->setContent('Hello world')->send();
+    // });

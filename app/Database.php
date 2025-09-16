@@ -4,7 +4,6 @@ namespace App;
 
 use App\App;
 use App\Database\{Connection, Query, Installer};
-use Throwable;
 
 /**
  * Database service container.

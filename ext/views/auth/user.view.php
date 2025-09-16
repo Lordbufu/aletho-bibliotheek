@@ -20,7 +20,10 @@
         </div>
 
         <div class="items-list">
-            <?php foreach ($books as $book) { require viewPath('partials/containers/item-container.php'); } ?>
+            <?php foreach ($books as $book) {
+                // dd($book);
+                require viewPath('partials/containers/item-container.php');
+            } ?>
         </div>
 
         <?php

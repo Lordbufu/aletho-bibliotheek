@@ -5,7 +5,6 @@
 <div class="page-wrapper">
 	<?php require viewPath('partials\templates\banner.php'); ?>
 		<main class="flex-grow-1 d-flex flex-column flex-md-row">
-			<?php if( App::getService('auth')->guest() ): ?>
 
 			<div class="centered-view">
 				<div class="login-cont">
@@ -29,18 +28,15 @@
 							title="Minimaal 8 tekens, met minstens één hoofdletter, één kleine letter en één cijfer">
 
 						
-						<?php if(isset($error) && !empty($error)) : ?>
-						<div class="login-error mt-1">Melding:<p class="login-error-text"><?=$error?></p></div>
-						<?php else: ?>
-						<div class="login-error mt-2 mb-2"></div>
-						<?php endif; ?>
+						<?php if(isset($_SESSION['_flash']) && !empty($_SESSION['_flash']['login_error'])) : ?>
+						<div class="login-error mt-1">Melding:<p class="login-error-text"><?=$$_SESSION['_flash']['login_error']?></p></div>
+						<?php unset($_SESSION['_flash']); endif; ?>
 						
 						<input class="aletho-buttons extra-popin-style mt-1 mb-2" id="login-submit" type="submit" value="Inloggen">
 					</form>
 					
 				</div>
 			</div>
-			<?php endif;?>
 
 		</main>
 

@@ -1,20 +1,20 @@
 <?php
 return [
-    'global_admin' => [
+    'Global Admin' => [
         'view_catalog',
         'manage_books',
         'manage_offices',
-        'manage_accounts',
+        'manage_account',
         'receive_notifications'
-    ], 'office_admin' => [
+    ], 'Office Admin' => [
         'view_catalog',
         'manage_books',
         'manage_office',
         'manage_account',
         'receive_notifications'
-    ], 'loaner' => [
+    ], 'User' => [
         'view_catalog',
         'receive_notifications'
-    ], 'guest' => [
+    ], 'Guest' => [
         'view_login'
 ]];

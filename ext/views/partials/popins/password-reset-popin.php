@@ -8,14 +8,11 @@
             </div>
 
             <div class="aletho-modal-body p-1">
-                <form id="password-reset-form mb-1">
-                    <?php if (isset($userType) && $userType === 'global_admin'): ?>
-                    <label for="reset-user" class="aletho-labels extra-popin-style">Account</label>
-                    <select class="aletho-inputs extra-popin-style" id="reset-user" name="reset_user" required>
-                        <?php foreach ($users as $user): ?>
-                        <option value="<?= $user['id'] ?>"><?= htmlspecialchars($user['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                <form id="password-reset-form mb-1" method="POST" action="/resetPassword">
+                    <input type="hidden" name="_method" value="PATCH">
+                    <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Global Admin'): ?>
+                        <label for="user-name" class="aletho-labels extra-popin-style">Account</label>
+                        <input type="text" class="aletho-inputs extra-popin-style" id="user-name" name="user_name" required>
                     <?php else: ?>
                     <label for="current-password" class="aletho-labels extra-popin-style">Huidig Wachtwoord</label>
                     <input type="password" class="aletho-inputs extra-popin-style" id="current-password" name="current_password" required>
@@ -26,6 +23,10 @@
 
                     <label for="confirm-password" class="aletho-labels extra-popin-style">Bevestig Nieuw Wachtwoord</label>
                     <input type="password" class="aletho-inputs extra-popin-style mb-2" id="confirm-password" name="confirm_password" required>
+
+                    <?php if(isset($_SESSION['_flash']) && !empty($_SESSION['_flash']['message'])) : ?>
+                        <div class="login-error mt-1">Melding:<p class="login-error-text"><?=$_SESSION['_flash']['message']?></p></div>
+                    <?php unset($_SESSION['_flash']); endif; ?>
 
                     <button type="submit" class="aletho-buttons extra-popin-style">Resetten</button>
                 </form>
