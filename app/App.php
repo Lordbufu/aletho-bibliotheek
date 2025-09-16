@@ -134,6 +134,15 @@ class App {
     }
 
     /**
+     * Redirect to url, to resume regular routing.
+     * @param string $url the url we want to redirect to
+     */
+    public static function redirect(string $url): void {
+        header("Location: {$url}");
+        exit;
+    }
+
+    /**
      * Get a logger service if available, otherwise a null logger.
      */
     public static function getServiceSafeLogger() {
