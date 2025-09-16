@@ -16,7 +16,7 @@ $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 // If a user agent is set, we consider the user valid, and set a guest tag if no user data is set.
 if ($userAgent) {
     if (empty($_SESSION['user'])) {
-        $_SESSION['user'] = ['type' => 'guest'];
+        $_SESSION['user'] = ['role' => 'Guest'];
     }
 } else {
     echo 'no user-agent found';
