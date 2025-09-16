@@ -1,4 +1,4 @@
--- regular default test user  // password_hash('bib-welcome-25', PASSWORD_DEFAULT)
+-- regular default test user  // password_hash('Bib-welcome-25', PASSWORD_DEFAULT)
 INSERT INTO `users`
     (`id`, `name`, `password`, `email`, `is_loaner`, `is_office_admin`, `is_global_admin`, `create_at`, `updated_at`, `active`)
         VALUES
