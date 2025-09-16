@@ -11,7 +11,13 @@ $(function() {
     // Concept code for the status lights, now using jQuery
     $('.status-dot').on('click', testLights);
 
-    // DRY popin setup
+    /**
+     * setupPopin(openBtn, popinId, closeBtn)
+     * Sets up event handlers for opening and closing modal popins.
+     * - openBtn: Selector for the button that opens the popin.
+     * - popinId: Selector for the popin/modal element.
+     * - closeBtn: Selector for the button that closes the popin.
+     */
     function setupPopin(openBtn, popinId, closeBtn) {
         $(openBtn).on('click', function() { openPopin(popinId); });
         $(closeBtn).on('click', function() { closePopin(popinId); });
@@ -20,13 +26,10 @@ $(function() {
 
     // Add book pop-in
     setupPopin('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
-
     // Change status periode pop-in
     setupPopin('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
-
     // Password reset pop-in
     setupPopin('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
-
     // Change book status pop-in
     setupPopin('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
 
@@ -68,12 +71,16 @@ $(function() {
         closeHamburgerDropdown();
     });
 
-    // Book details dropdown logic: only one open at a time
+    // --- Book Details and Edit Logic ---
+    /**
+     * Book details dropdown logic
+     * Ensures only one book details dropdown is open at a time.
+     * Closes hamburger and search dropdowns when a book details button is clicked.
+     */
     $('[id^="itemButton-"]').on('click', function(e) {
         let targetId = $(this).attr('data-bs-target');
 
         e.stopPropagation();
-        // Close hamburger and search dropdowns
         closeHamburgerDropdown();
         closeSearchDropdown();
 
@@ -85,8 +92,10 @@ $(function() {
         });
     });
 
-    /* Book details edit\submit logic events */
-    // single click-handler for all edit buttons
+    /**
+     * Edit button handler for book details
+     * Enables the targeted input/select field for editing and stores its original value.
+     */
     $(document).on('click', '.extra-button-style', function() {
         const selector   = $(this).data('swapTargets');
         const $field     = $(selector);
@@ -99,7 +108,10 @@ $(function() {
         }
     });
 
-    // Input/Change listener for editable fields
+    /**
+     * Input/change listener for editable fields
+     * Tracks changes, applies 'field-changed' class, and enables/disables the save button.
+     */
     $(document).on('input change', 'input.field-editable, select.field-editable', function() {
         const $field = $(this);
         const original = $field.data('originalValue');
@@ -120,15 +132,19 @@ $(function() {
         }
     });
 
-    // Book details 'click' event for the submit button 
+    /**
+     * Save changes button handler
+     * Disables edited fields, removes edit classes, and (optionally) submits the form.
+     */
     $(document).on('click', '[id^="save-changes-"]', function(e) {
+        // 1) Disable the form submit first.
         e.preventDefault();
 
-        // 1) Find this button’s form
+        // 2) Find this button’s form
         const $btn  = $(this);
         const $form = $btn.closest('form.book-edit-form');
 
-        // 2) Disable & cleanup only fields in *this* form
+        // 3) Disable & cleanup only fields in *this* form
         $form.find('input.field-editable, select.field-editable').each(function() {
             const $fld = $(this);
             $fld.prop('disabled', true)
@@ -142,7 +158,11 @@ $(function() {
         // $form.submit();
     });
 
-    // 1) On each keystroke, filter item containers
+    // --- Search and Sort Logic ---
+    /**
+     * Search input handler
+     * Filters book cards based on the selected search method (title, writer, genre).
+     */
     $('#search-inp').on('input', function() {
         const query  = $(this).val().toLowerCase().trim();
         const method = $('#search-options').val(); // title | writer | genre
@@ -173,7 +193,10 @@ $(function() {
         });
     });
 
-    // Adjust search placeholder labels on change
+    /**
+     * Search options change handler
+     * Updates the search input placeholder text based on selected search method.
+     */
     $('#search-options').on('change', function() {
         const method = $(this).val();
         const labels = {
@@ -185,7 +208,10 @@ $(function() {
         $('#search-inp').attr('placeholder', labels[method] || labels.title).val('').trigger('input');
     });
 
-    // 2) On sort‐select change, reorder .item-container
+    /**
+     * Sort options change handler
+     * Sorts book cards in the container based on selected field and direction.
+     */
     $('#sort-options').on('change', function() {
         const [field, direction] = $(this).val().split('-');  // e.g. ['title','asc']
         const $wrapper = $('#view-container');               // parent of .item-container
@@ -233,9 +259,26 @@ $(function() {
             e.preventDefault();
         }
     });
+
+    /**
+     * Check if a URL hash was set during a PhP redirect, and open the popin associated with it.
+     * As a bonus feature, we also clean up the URL again, so the adress bar stays nice and clean.
+     */
+    if (window.location.hash) {
+        var popinId = window.location.hash;
+        var $popin = $(popinId);
+
+        if ($popin.length) {
+            openPopin(popinId);
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+    }
 });
 
-// Open popin function with popinIsOpen flag
+/**
+ * openPopin(selector)
+ * Opens a modal popin, locks body scroll, and closes hamburger dropdown.
+ */
 function openPopin(selector) {
     $(selector).show();
     popinIsOpen = true;
@@ -243,7 +286,10 @@ function openPopin(selector) {
     closeHamburgerDropdown();
 }
 
-// Close popin function with popinIsOpen flag
+/**
+ * closePopin(selector)
+ * Closes a modal popin and unlocks body scroll if no other popins are open.
+ */
 function closePopin(selector) {
     $(selector).hide();
     // If no other popins are visible, unlock the body
@@ -255,17 +301,26 @@ function closePopin(selector) {
     }
 }
 
-// Helper to close the hamburger dropdown only, but still allowing custom logic.
+/**
+ * closeHamburgerDropdown()
+ * Closes the hamburger menu dropdown using the generic closeDropdown helper.
+ */
 function closeHamburgerDropdown() {
     closeDropdown('#customHamburgerDropdown');
 }
 
-// Helper to close the search dropdown only, but still allowing custom logic.
+/**
+ * closeSearchDropdown()
+ * Closes the search dropdown using the generic closeDropdown helper.
+ */
 function closeSearchDropdown() {
     closeDropdown('#customSearchDropdown');
 }
 
-// Generic function to close any dropdown by selector, using the Bootstrap Collapse instance.
+/**
+ * closeDropdown(selector)
+ * Closes any dropdown (e.g., hamburger, search) by selector using Bootstrap's Collapse API.
+ */
 function closeDropdown(selector) {
     let $dropdown = $(selector);
 
@@ -274,6 +329,10 @@ function closeDropdown(selector) {
     }
 }
 
+/**
+ * lockBodyScroll()
+ * Locks the body scroll when a modal is open to prevent background scrolling.
+ */
 function lockBodyScroll() {
     // Save current scroll
     __bodyScrollY = window.scrollY || window.pageYOffset;
@@ -297,6 +356,10 @@ function lockBodyScroll() {
     document.body.classList.add('modal-open');
 }
 
+/**
+ * unlockBodyScroll()
+ * Unlocks the body scroll when all modals are closed.
+ */
 function unlockBodyScroll() {
     document.body.classList.remove('modal-open');
 
@@ -312,7 +375,12 @@ function unlockBodyScroll() {
     window.scrollTo(0, __bodyScrollY || 0);
 }
 
-/* inputCheck(e): Check the input and add bootstrap styling if valid or invalid based on stringChecker(). */
+// W.I.P.
+/**
+ * inputCheck(e)
+ * Validates login form inputs and applies Bootstrap validation classes.
+ * Uses stringChecker for custom validation logic.
+ */
 function inputCheck(e) {
     let check;
 
@@ -358,22 +426,11 @@ function inputCheck(e) {
     }
 }
 
-// Utility: extract sort key from a card
-function getSortValue($card, field) {
-    switch (field) {
-        case 'writer':
-            return ($card.find('input[name="book_writer"]').val() || '').toLowerCase();
-        case 'genre':
-            return ($card.find('select[name="genre_id"] option:selected').text() || '').toLowerCase();
-
-        case 'title':
-        default:
-            return ($card.find('.mn-main-col').text() || '').toLowerCase();
-    }
-}
-
-// W.I.P.
-/* stringChecker($type, $value): This needs to be a global function with a all various string length checks. */
+/**
+ * stringChecker(type, value)
+ * Checks string length for username ('name') and password ('pass').
+ * Returns true if valid, false otherwise.
+ */
 function stringChecker($type, $value) {
     switch($type) {
         case 'name':
@@ -391,13 +448,38 @@ function stringChecker($type, $value) {
     }
 }
 
-/* changeSearchText(e): Change the search placeholder text, of the search input below the dropdown menu. */
+// Utility: --- Search and Sort Logic ---
+/**
+ * getSortValue($card, field)
+ * Utility to extract the sort key from a book card for sorting.
+ */
+function getSortValue($card, field) {
+    switch (field) {
+        case 'writer':
+            return ($card.find('input[name="book_writer"]').val() || '').toLowerCase();
+        case 'genre':
+            return ($card.find('select[name="genre_id"] option:selected').text() || '').toLowerCase();
+
+        case 'title':
+        default:
+            return ($card.find('.mn-main-col').text() || '').toLowerCase();
+    }
+}
+
+/* Other W.I.P. functions */
+/**
+ * changeSearchText(e)
+ * Updates the search input placeholder text (legacy, may be replaced by #search-options handler).
+ */
 function changeSearchText(e) {
     let $input = $(e.target).next();
     $input.attr('placeholder', ' Zoek op ' + $(e.target).val() + ' ...');
 }
 
-/* Concept code of how to change the status light for each item, based on the current status style. */
+/**
+ * testLights(e)
+ * Cycles through status light classes for book items (demo/UX concept).
+ */
 function testLights(e) {
     let $el = $(e.target);
     if ($el.hasClass('statusOne')) {
