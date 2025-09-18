@@ -6,8 +6,6 @@ use App\App;
 
 class AuthController {
     public function showForm() {
-        // $error = $_SESSION['login_error'] ?? null;
-        // unset($_SESSION['login_error']);
         return App::view('auth/login');
     }
 
@@ -16,7 +14,6 @@ class AuthController {
         $password = $_POST['userPw'] ?? '';
 
         if (App::getService('auth')->login($username, $password)) {
-
             return App::redirect('/home');
         }
 
