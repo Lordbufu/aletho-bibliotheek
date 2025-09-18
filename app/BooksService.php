@@ -1,0 +1,69 @@
+<?php
+
+namespace App;
+
+use App\App;
+use App\Libs\{BookRepo, GenreRepo, WriterRepo, StatusRepo, OfficeRepo};
+
+class BooksService {
+    protected BookRepo   $books;
+    protected GenreRepo  $genres;
+    protected WriterRepo $writers;
+    protected StatusRepo $status;
+    protected OfficeRepo $offices;
+
+    /**
+     * Construct all associated library classes.
+     * And log what was constructed as part of service log warnings.
+     */
+    public function __construct() {
+        $this->books   = new BookRepo();
+        $this->genres  = new GenreRepo();
+        $this->writers = new WriterRepo();
+        $this->status  = new StatusRepo();
+        $this->offices = new OfficeRepo();
+
+        App::getService('logger')->warning(
+            "Service 'books' has constructed 'BookRepo', 'GenreRepo', 'WriterRepo', 'StatusRepo' and 'OfficeRepo'",
+            'services'
+        );
+    }
+
+    /**
+     * Get all books as an array, processed and formatted for views.
+     * 
+     * @return array
+     */
+    public function getAllForDisplay(): array {
+        $rows = $this->books->findAll();
+        $out  = [];
+
+        foreach ($rows as $row) {
+            $out[] = [
+                'id'     => (int)$row['id'],
+                'title'  => $row['title'],
+                'writers' => $this->writers->getWriterNamesByBookId((int)$row['id']),
+                'genres' => $this->genres->getGenreNamesByBookId((int)$row['id']),
+                'office' => $this->offices->getOfficeNamesById((int)$row['office_id']),
+                'status' => $this->status->getDisplayStatusByBookId((int)$row['id']),
+            ];
+        }
+
+        return $out;
+    }
+
+    /** W.I.P. (potentially obsolete)
+     * @return array
+     */
+    public function getOneForDisplay(int $id): array {
+        $row = $this->books->findOne($id);
+
+        return [
+            'id'     => (int)$row['id'],
+            'title'  => $row['title'],
+            'genres' => $this->genres->getGenreNamesByBookId($id),
+            'writers' => $this->writers->getWriterNamesByBookId($id),
+            'status' => $this->status->getDisplayStatusByBookId($id),
+        ];
+    }
+}

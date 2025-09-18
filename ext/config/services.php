@@ -18,5 +18,9 @@ return [
     // Core authentication service
     'auth' => [
         'class'  => \App\Auth::class
+    ],
+    // Core Books Service
+    'books' => [
+        'class' => \App\BooksService::class
     ]
 ];
