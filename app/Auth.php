@@ -16,6 +16,11 @@ class Auth {
     public function __construct(array $config = []) {
         $this->validator = new PasswordValidator();
         $this->service = new AuthenticationService($this->validator);
+
+        App::getService('logger')->warning(
+            "Service facade 'Auth' constructed 'PasswordValidator' and 'AuthenticationService'",
+            'services'
+        );
     }
 
     public function login(string $email, string $password): bool {
