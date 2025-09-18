@@ -15,6 +15,11 @@ class Logger {
         if(!is_dir($this->logDir)) {
             mkdir($this->logDir, 0775, true);
         }
+
+        $this->warning(
+            "Service 'Logger' constructed",
+            'services'
+        );
     }
 
     /**
