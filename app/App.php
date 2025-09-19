@@ -15,7 +15,7 @@ use App\Exceptions\BootException;
  *  - Providing global access to services and views
  */
 class App {
-    protected static Services $services;
+    protected static Services $container;
     protected static array $bootErrors = [];
 
     /**
@@ -45,7 +45,7 @@ class App {
             unset($definition);
 
             // Pass 2: build container
-            static::$services = new Services($serviceDefinitions);
+            static::$container = new Services($serviceDefinitions);
             self::getServiceSafeLogger()->warning("Service container created", 'app');
 
             // Pass 3: eager‑load only critical services
@@ -53,7 +53,7 @@ class App {
 
             foreach ($criticalServices as $name) {
                 try {
-                    $instance = static::$services->get($name);
+                    $instance = static::$container->get($name);
 
                     if ($name === 'router') {
                         $routerConfig = $serviceDefinitions[$name]['config'] ?? null;
@@ -63,7 +63,6 @@ class App {
                             self::getServiceSafeLogger()->warning("Router configured from {$routerConfig}", 'app');
                         }
                     }
-
                     if ($name === 'database') {
                         if (!$instance->installer()->isInstalled()) {
                             $instance->installer()->install(true);
@@ -84,7 +83,6 @@ class App {
             );
 
             return $success;
-
         } catch (\Throwable $t) {
             static::$bootErrors[] = $t;
             self::getServiceSafeLogger()->error("Fatal boot error: {$t->getMessage()}", 'app');
@@ -99,16 +97,7 @@ class App {
      * @return mixed
      */
     public static function getService(string $name) {
-        return static::$services->get($name);
-    }
-
-    /**
-     * Get boot error messages.
-     *
-     * @return string[]
-     */
-    public static function getBootErrors(): array {
-        return array_map(fn($err) => $err->getMessage(), static::$bootErrors);
+        return self::$container->get($name);
     }
 
     /**
@@ -118,12 +107,12 @@ class App {
      * @param array  $data Variables to extract into the view scope
      * @throws \Exception If the view file is not found
      */
-    public static function view(string $name, array $data = []): void {
+    public static function view(string $template, array $data = []) {
         $baseDir = __DIR__ . '/../ext/views/';
-        $file = $baseDir . $name . '.view.php';
+        $file = $baseDir . $template . '.view.php';
 
         if (!file_exists($file)) {
-            throw new \Exception("View '{$name}' not found at {$file}");
+            throw new \Exception("View '{$template}' not found at {$file}");
         }
 
         if (!empty($data)) {
@@ -134,22 +123,22 @@ class App {
     }
 
     /**
-     * Redirect to url, to resume regular routing.
-     * @param string $url the url we want to redirect to
+     * Redirect to a given URL.
      */
-    public static function redirect(string $url): void {
+    public static function redirect(string $url) {
         header("Location: {$url}");
         exit;
     }
 
+    // Need to refactor stuff to clean these up later.
     /**
      * Get a logger service if available, otherwise a null logger.
      */
     public static function getServiceSafeLogger() {
         try {
             // Only return the real logger if it's already been created
-            if (isset(static::$services) && static::$services->hasInstance('logger')) {
-                return static::$services->get('logger');
+            if (isset(static::$container) && static::$container->hasInstance('logger')) {
+                return static::$container->get('logger');
             }
         } catch (\Throwable) {
             // ignore and fall through to null logger
@@ -160,6 +149,15 @@ class App {
             public function warning($msg) {}
             public function error($msg) {}
         };
+    }
+
+    /**
+     * Get boot error messages.
+     *
+     * @return string[]
+     */
+    public static function getBootErrors(): array {
+        return array_map(fn($err) => $err->getMessage(), static::$bootErrors);
     }
 
     public function hasInstance(string $name): bool {

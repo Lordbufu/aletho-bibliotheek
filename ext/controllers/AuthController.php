@@ -1,47 +1,79 @@
 <?php
 
-namespace ext\controllers;
+namespace Ext\Controllers;
 
-use App\App;
+use App\{App, Auth};
 
+/**
+ * Handles authentication-related HTTP requests.
+ */
 class AuthController {
+    protected Auth $auth;
+
+    public function __construct() {
+        $this->auth = new Auth();
+    }
+
+    /**
+     * Show the login form.
+     */
     public function showForm() {
         return App::view('auth/login');
     }
 
+    /**
+     * Handle login submission.
+     */
     public function authenticate() {
         $username = trim($_POST['userName'] ?? '');
         $password = $_POST['userPw'] ?? '';
 
-        if (App::getService('auth')->login($username, $password)) {
-            return App::redirect('/home');
+        if ($username === '' || $password === '') {
+            App::getService('logger')->warning('Login attempt with missing credentials', 'auth');
+            return App::view('auth/login', ['error' => 'Please enter both username and password.']);
         }
 
-        $_SESSION['_flash']['login_error'] = 'Ongeldige gebruikersnaam of wachtwoord.';
-        return App::redirect('/login');
+        if ($this->auth->login($username, $password)) {
+            App::getService('logger')->info("User {$username} logged in", 'auth');
+            return App::redirect('/'); // Redirect to home or dashboard
+        }
+
+        App::getService('logger')->warning("Failed login for {$username}", 'auth');
+        return App::view('auth/login', ['error' => 'Invalid username or password.']);
     }
 
+    /**
+     * Handle logout.
+     */
     public function logout() {
-        App::getService('auth')->logout();
+        $this->auth->logout();
+        App::getService('logger')->info('User logged out', 'auth');
         return App::redirect('/login');
     }
 
+    /**
+     * Handle password reset (for own account).
+     */
     public function resetPassword() {
-        if (isset($_POST['current_password'])) {    // Office Admin
-            $message = App::getService('auth')
-                ->resetOwnPassword(
-                    $_SESSION['user']['id'],
-                    $_POST['current_password'],
-                    $_POST['new_password']);
-            $_SESSION['_flash'] = $message;
+        $userId         = $_SESSION['user']['id'] ?? null;
+        $currentPw      = $_POST['currentPw'] ?? '';
+        $newPw          = $_POST['newPw'] ?? '';
+        $confirmNewPw   = $_POST['confirmNewPw'] ?? '';
+
+        if (!$userId) {
+            App::getService('logger')->error('Password reset attempted without user session', 'auth');
+            $_SESSION['_flash'] = ['error' => 'Not logged in.'];
         }
 
-        if (isset($_POST['user_name'])) {       // Global Admin
-            $message = App::getService('auth')
-                ->resetUserPassword(
-                    $_POST['user_name'],
-                    $_POST['new_password'],
-                    $_POST['confirm_password']);
+        if ($newPw !== $confirmNewPw) {
+            $_SESSION['_flash'] = ['error' => 'New passwords do not match.'];
+        }
+
+        if (!isset($_SESSION['flash']['error'])) {
+            $result = $this->auth->resetOwnPassword($userId, $currentPw, $newPw);
+        }
+
+        if (isset($result['error'])) {
             $_SESSION['_flash'] = $message;
         }
 

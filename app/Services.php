@@ -100,7 +100,6 @@ class Services {
             );
 
             return $this->instances[$name];
-
         } catch (Throwable $e) {
             App::getService('logger')->error(
                 "Error creating service '{$name}': {$e->getMessage()}",

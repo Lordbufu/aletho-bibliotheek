@@ -46,6 +46,10 @@ class BooksService {
                 'genres' => $this->genres->getGenreNamesByBookId((int)$row['id']),
                 'office' => $this->offices->getOfficeNamesById((int)$row['office_id']),
                 'status' => $this->status->getDisplayStatusByBookId((int)$row['id']),
+                'canEditOffice' => (
+                    $_SESSION['user']['office'] === 'All'
+                    || $_SESSION['user']['office'] === $row['office_id']
+                    ) ? 1 : 0,
             ];
         }
 

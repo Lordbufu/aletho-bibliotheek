@@ -8,7 +8,7 @@ class OfficeRepo {
     protected array $userLinks;
 
     /**
-     * 
+     * Get -> Set all `offices` table data.
      */
     public function getAllOffices(): array {
         if (!isset($this->offices)) {
@@ -21,7 +21,7 @@ class OfficeRepo {
     }
 
     /**
-     * 
+     * Get -> Set all `user_office` table data
      */
     public function getAllUserLinks(): array {
         if (!isset($this->userLinks)) {
@@ -34,7 +34,7 @@ class OfficeRepo {
     }
 
     /**
-     * 
+     * Return the users office name
      */
     public function getOfficeNamesById(int $id): string {
         $mapNames = array_column($this->getAllOffices(), 'name', 'id');

@@ -64,6 +64,7 @@ class Request {
      */
     protected function detectPath(): string {
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
+        
         if (!isset($_SERVER['REQUEST_URI'])) {
             App::getService('logger')->warning("REQUEST_URI not set, defaulting to '/'", 'router');
         }
@@ -78,14 +79,17 @@ class Request {
     protected function detectHeaders(): array {
         if (function_exists('getallheaders')) {
             $headers = getallheaders() ?: [];
+
             if (empty($headers)) {
                 App::getService('logger')->warning("No HTTP headers detected", 'router');
             }
+
             return $headers;
         }
 
         // Fallback for environments without getallheaders()
         $headers = [];
+
         foreach ($_SERVER as $key => $value) {
             if (str_starts_with($key, 'HTTP_')) {
                 $name = str_replace('_', '-', substr($key, 5));

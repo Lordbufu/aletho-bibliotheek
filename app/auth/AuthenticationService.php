@@ -8,44 +8,87 @@ use App\App;
  * Handles user authentication, authorization, and password management.
  */
 class AuthenticationService {
-    protected $permissionsMap;
+    protected array $permissionsMap;
     protected PasswordValidator $passwordValidator;
 
     public function __construct(PasswordValidator $passwordValidator = null) {
         $this->permissionsMap = include BASE_PATH . '/ext/config/permissions.php';
         $this->passwordValidator = $passwordValidator ?? new PasswordValidator();
+    }
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+    /**
+     * Determine the user's role for permissions.
+     * Returns the highest privilege role.
+     */
+    private function getRole(array $user): string {
+        if (!empty($user['is_global_admin'])) return 'Global Admin';
+        if (!empty($user['is_office_admin'])) return 'Office Admin';
+        if (!empty($user['is_loaner'])) return 'User';
+        return 'Guest';
+    }
+
+    /**
+     * Check if the current user has a given permission.
+     */
+    private function can(string $permission): bool {
+        $role = $_SESSION['user']['role'] ?? 'Guest';
+        return in_array($permission, $this->permissionsMap[$role] ?? []);
+    }
+
+    /**
+     * Fetch a user by name.
+     */
+    private function findUserByName(string $name): ?array {
+        return App::getService('database')
+            ->query()
+            ->fetchOne("SELECT * FROM users WHERE name = ?", [$name]);
+    }
+
+    /**
+     * Resolve the office assignment for a user.
+     * Returns 'All' if user has multiple offices, otherwise office id or 0.
+     */
+    private function resolveOffice(array $user) {
+        if (empty($user['is_global_admin']) && empty($user['is_office_admin'])) {
+            return 0;
         }
+
+        $userOffices = App::getService('database')
+            ->query()
+            ->fetchAll("SELECT * FROM user_office WHERE user_id = ?", [$user['id']]);
+
+        if (empty($userOffices)) {
+            return 0;
+        }
+
+        return count($userOffices) > 1 ? 'All' : $userOffices[0]['office_id'];
     }
 
     /**
      * Attempt to log in a user by name and password.
+     * Returns true on success, false on failure.
      */
     public function login(string $name, string $password): bool {
-        $user = App::getService('database')->query()->fetchOne("SELECT * FROM users WHERE name = ?", [$name]);
+        $user = $this->findUserByName($name);
 
-        if ($user && password_verify($password, $user['password'])) {
-            $role = $user['is_global_admin'] 
-                ? 'Global Admin' 
-                : ($user['is_office_admin'] ? 'Office Admin' : 'User');
-
-            $_SESSION['user'] = [
-                'id' => $user['id'],
-                'name' => $user['name'],
-                'role' => $role,
-                'canEdit' => ($role === 'Global Admin' || $role === 'Office Admin')
-            ];
-
-            App::getService('logger')->warning("User {$user['id']} logged in", 'auth');
-
-            return true;
+        if (!$user || !password_verify($password, $user['password'])) {
+            App::getService('logger')->warning("Failed login attempt for {$name}", 'auth');
+            return false;
         }
 
-        App::getService('logger')->warning("Failed login attempt for {$name}", 'auth');
-        
-        return false;
+        $role = $this->getRole($user);
+        $office = $this->resolveOffice($user);
+
+        $_SESSION['user'] = [
+            'id'      => $user['id'],
+            'name'    => $user['name'],
+            'role'    => $role,
+            'office'  => $office,
+            'canEdit' => in_array($role, ['Global Admin', 'Office Admin'], true),
+        ];
+
+        App::getService('logger')->info("User {$user['id']} logged in as {$role}", 'auth');
+        return true;
     }
 
     /**
@@ -54,37 +97,22 @@ class AuthenticationService {
     public function logout(): void {
         session_destroy();
         $_SESSION = [];
-        App::getService('logger')->warning("User logged out", 'auth');
+        App::getService('logger')->info("User logged out", 'auth');
     }
 
     /**
-     * Check if the current user has a given permission.
+     * Allow office admins to change their own password.
+     * Returns array with status message.
      */
-    public function can(string $permission): bool {
-        $role = $_SESSION['user']['role'] ?? 'Guest';
-        return in_array($permission, $this->permissionsMap[$role] ?? []);
-    }
-
-    /**
-     * Get the current logged-in user data.
-     */
-    public function currentUser(): array {
-        return $_SESSION['user'] ?? ['role' => 'Guest'];
-    }
-
-    /**
-     * Allow a office admins to change their own password.
-     * Logs minor issues as warnings, but exceptions as errors.
-     */
-    public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): mixed {
+    public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): array {
         if (!$this->can('manage_account')) {
-            App::getService('logger')->error('UNAUTHORIZED', 'auth');
-            return false;
+            App::getService('logger')->error('UNAUTHORIZED password reset attempt', 'auth');
+            return ['error' => 'Unauthorized'];
         }
 
         if (!$this->passwordValidator->isValid($newPassword)) {
             App::getService('logger')->error('WEAK_PASSWORD', 'auth');
-            return false;
+            return ['error' => 'Weak password'];
         }
 
         $storedHash = App::getService('database')
@@ -93,87 +121,73 @@ class AuthenticationService {
 
         if (!$storedHash || !password_verify($currentPassword, $storedHash)) {
             App::getService('logger')->error('INVALID_CREDENTIALS', 'auth');
-            return false;
+            return ['error' => 'Invalid credentials'];
         }
 
         if ($currentPassword === $newPassword) {
-            App::getService('logger')->error('PASSWORD_UNCHANGED', 'auth');
-            return false;
+            App::getService('logger')->warning('PASSWORD_UNCHANGED', 'auth');
+            return ['error' => 'Password unchanged'];
         }
 
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $success = App::getService('database')
             ->query()
-            ->fetchAll("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
+            ->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
 
         if ($success) {
-            App::getService('logger')->warning("{$_SESSION['user']['role']} changed their own password", 'auth');
+            App::getService('logger')->info("User {$userId} changed their own password", 'auth');
             session_regenerate_id(true);
+            return ['message' => 'Your password was changed and can now be used to login.'];
         }
 
-        if(!$success && empty($success)) {
-            $success = ["message" => "Your password was changed, and can now be used to login !!"];
-        }
-
-        return $success;
+        App::getService('logger')->error('PASSWORD_UPDATE_FAILED', 'auth');
+        return ['error' => 'Password update failed'];
     }
 
     /**
      * Allow an admin to reset another user's password.
-     * Logs minor issues as warnings, but exceptions as errors.
+     * Returns array with status message.
      */
-    public function resetUserPassword(string $targetUserName, string $newPassword): array {
+    public function resetUserPassword(string $targetUserName, string $newPassword, string $confirmPassword): array {
         if (!$this->can('manage_account')) {
-            App::getService('logger')->error('UNAUTHORIZED', 'auth');
-            return false;
+            App::getService('logger')->error('UNAUTHORIZED password reset attempt', 'auth');
+            return ['error' => 'Unauthorized'];
+        }
+
+        if ($newPassword !== $confirmPassword) {
+            App::getService('logger')->error('PASSWORD_MISMATCH', 'auth');
+            return ['error' => 'Passwords do not match'];
         }
 
         if (!$this->passwordValidator->isValid($newPassword)) {
             App::getService('logger')->error('WEAK_PASSWORD', 'auth');
-            return false;
+            return ['error' => 'Weak password'];
         }
 
-        $tId = App::getService('database')
-            ->query()
-            ->value("SELECT id FROM users WHERE name = ?", [$targetUserName]);
+        $user = $this->findUserByName($targetUserName);
+        if (!$user) {
+            App::getService('logger')->error("User {$targetUserName} not found", 'auth');
+            return ['error' => 'User not found'];
+        }
 
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $success = App::getService('database')
             ->query()
-            ->fetchAll("UPDATE users SET password = ? WHERE id = ?", [$hash, $tId]);
+            ->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $user['id']]);
 
         if ($success) {
-            App::getService('logger')->warning("{$_SESSION['user']['role']} reset password for: {$targetUserName}", 'auth');
+            App::getService('logger')->info("Admin reset password for: {$targetUserName}", 'auth');
+            return ['message' => "Password for {$targetUserName} was changed."];
         }
 
-        if(!$success && empty($success)) {
-            $success = ["message" => "Password for: {$targetUserName}, was changed !!"];
-        }
-
-        return $success;
+        App::getService('logger')->error('PASSWORD_UPDATE_FAILED', 'auth');
+        return ['error' => 'Password update failed'];
     }
 
     /**
      * Returns the current password policy requirements.
-     *
-     * This method acts as a single point of access for retrieving the
-     * application's active password rules (e.g., minimum length, required
-     * character types, etc.). It delegates to the underlying PasswordValidator,
-     * but keeps that implementation detail hidden so calling code does not need
-     * to know or depend on it directly.
-     *
-     * Useful for:
-     *  - Displaying password guidelines in UI forms or API responses
-     *  - Ensuring consistent validation rules across the application
-     *  - Allowing future changes to password policy without touching callers
-     *
-     * @return array<string, mixed> An associative array describing the rules.
      */
     public function passwordRequirements(): array {
         return $this->passwordValidator->getRequirements();
-    }
-
-    public function check(): bool {
-        return isset($_SESSION['user']) && ($_SESSION['user']['role'] ?? 'Guest') !== 'Guest';
     }
 }

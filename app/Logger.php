@@ -16,10 +16,7 @@ class Logger {
             mkdir($this->logDir, 0775, true);
         }
 
-        $this->warning(
-            "Service 'Logger' constructed",
-            'services'
-        );
+        $this->info("Service 'Logger' constructed", 'services');
     }
 
     /**
@@ -56,6 +53,16 @@ class Logger {
     }
 
     /**
+     * Log an info message.
+     *
+     * @param string $message The message to log.
+     * @param string $context The context of the log (e.g., 'app', 'db').
+     */
+    public function info(string $message, string $context = 'app'): void {
+        $this->writeLog('info', $message, $context);
+    }
+
+    /**
      * Log a warning message unless in production environment.
      * In production, warning logs are deleted to keep log storage clean.
      *
@@ -78,5 +85,16 @@ class Logger {
      */
     public function error(string $message, string $context = 'app'): void {
         $this->writeLog('error', $message, $context);
+    }
+
+    /**
+     * Log a message with a custom type.
+     *
+     * @param string $type The type of log (e.g., 'error', 'warning', 'info').
+     * @param string $message The message to log.
+     * @param string $context The context of the log (e.g., 'app', 'db').
+     */
+    public function log(string $type, string $message, string $context = 'app'): void {
+        $this->writeLog($type, $message, $context);
     }
 }
