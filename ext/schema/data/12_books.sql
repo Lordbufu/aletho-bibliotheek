@@ -1,4 +1,4 @@
--- Test data for books
+-- Test data for books (not correctly filled in yet)
 INSERT INTO `books` (`id`, `title`, `office_id`, `active`) VALUES
     (NULL, 'test book 001', '1', '1'),
     (NULL, 'test book 002', '2', '1'),
