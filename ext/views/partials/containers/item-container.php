@@ -37,11 +37,7 @@
             <?php if ($_SESSION['user']['canEdit']): ?>
                 <!-- Genre Name for editing -->
                 <div class="input-group input-group-sm">
-                    <select class="aletho-inputs form-select-sm extra-input-style" id="genre-input-<?= $book['id'] ?>" name="genre_id" disabled>
-                        <?php foreach ($genres as $genre): ?>
-                        <option value="<?= $genre['id'] ?>" <?= $book['genre'] === $genre['name'] ? 'selected' : '' ?>> <?= htmlspecialchars($genre['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genres'][0] ?? 'Onbekend') ?>" disabled>
                     <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#genre-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
                 </div>
             <?php else: ?>
@@ -52,12 +48,8 @@
             <?php if ($_SESSION['user']['canEdit'] && $book['canEditOffice']): ?>
                 <!-- Office Name for editing -->
                 <div class="input-group input-group-sm">
-                    <select class="aletho-inputs form-select-sm extra-input-style" id="office-input-<?= $book['id'] ?>" name="office_id" disabled>
-                        <?php foreach ($offices as $office): ?>
-                        <option value="<?= $office['id'] ?>"<?= $book['office_id'] == $office['id'] ? 'selected' : '' ?>><?= htmlspecialchars($office['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
+                    <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
+                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Office">✏️</button>
                 </div>
             <?php else: ?>
                 <!-- Office Name for viewing -->
@@ -71,7 +63,7 @@
                     <div type="button" class="extra-fake-button"></div>
                 </div>                
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($book['status']) ?>" disabled>
+                    <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($book['status']['status_name']) ?>" disabled>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
             <?php else : ?>
@@ -104,15 +96,7 @@
                 </div>
 
                 <div class="input-group input-group-sm">
-                    <select class="aletho-inputs extra-popin-style" aria-label="Laatste lener">
-
-                    <?php foreach($loanerHistory as $index => $loaner): ?>
-                        <option value="<?= $loaner['id'] ?>" <?= $index === 0 ? 'selected' : 'disabled' ?>>
-                            <?= htmlspecialchars($loaner['name'], ENT_QUOTES, 'UTF-8') ?>
-                        </option>
-                    <?php endforeach; ?>
-
-                    </select>
+                    <!-- Need to refactor this, based on the new books array-->
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
