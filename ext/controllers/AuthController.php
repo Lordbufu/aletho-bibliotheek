@@ -48,7 +48,13 @@ class AuthController {
     public function logout() {
         $this->auth->logout();
         App::getService('logger')->info('User logged out', 'auth');
-        return App::redirect('/login');
+
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['user']['role'] = 'Guest';
+            App::getService('logger')->info("User role reset to 'Guest'", 'auth');
+        }
+        
+        return App::redirect('/');
     }
 
     /**

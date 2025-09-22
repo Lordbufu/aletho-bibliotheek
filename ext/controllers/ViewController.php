@@ -41,13 +41,16 @@ class ViewController {
      * Home/dashboard view for authenticated users.
      */
     public function home() {
-        // Example: Render the main dashboard view
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
+            return App::redirect('/');
+        }
 
         $books = App::getService('books')->getAllForDisplay();
-        // dd($books);
 
-        return App::view('main', [
-            'books' => $books ?? null
-        ]);
+        if (!is_array($books) || $books === []) {
+            App::getService('logger')->error("The 'ViewController' din't get the expected 'books' data", 'controllers');
+        }
+
+        return App::view('main', ['books' => $books ?? null]);
     }
 }
