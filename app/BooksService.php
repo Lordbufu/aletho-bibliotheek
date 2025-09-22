@@ -23,9 +23,9 @@ class BooksService {
         $this->status  = new StatusRepo();
         $this->offices = new OfficeRepo();
 
-        App::getService('logger')->warning(
+        App::getService('logger')->info(
             "Service 'books' has constructed 'BookRepo', 'GenreRepo', 'WriterRepo', 'StatusRepo' and 'OfficeRepo'",
-            'services'
+            'bookservices'
         );
     }
 
@@ -51,6 +51,22 @@ class BooksService {
                     || $_SESSION['user']['office'] === $row['office_id']
                     ) ? 1 : 0,
             ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Get all writer names, for frontend autocomplete JQuery.
+     * 
+     * @return array
+     */
+    public function getWritersForDisplay(): array {
+        $temp = $this->writers->getAllWriters();
+        $out = [];
+        
+        foreach ($temp as $writer) {
+            $out[] = $writer['name'];
         }
 
         return $out;
