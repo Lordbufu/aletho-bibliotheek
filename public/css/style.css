@@ -16,27 +16,10 @@
 }
 
 /* Alétho homestyle tekst definitions.
-.titel-tekst {
-	font-family: "bc-alphapipe", sans-serif;
-	font-weight: 400;
-	font-style: normal;
-}
-
-.ondertitel-tekst {
-	font-family: "bc-alphapipe", sans-serif;
-	font-weight: 700;
-	font-style: normal;
-}
-
-.tussenkoppen-tekst {
-	font-family: Quicksand;
-	font-weight: bold;
-}
-
-.overige-tekst {
-	font-family: Quicksand;
-	font-style: normal;
-} */
+.titel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 400; font-style: normal; }
+.ondertitel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 700; font-style: normal; }
+.tussenkoppen-tekst { font-family: Quicksand; font-weight: bold; }
+.overige-tekst { font-family: Quicksand; font-style: normal; } */
 
 /* Your basic wildcards to reset default styles */
 * {
@@ -537,6 +520,46 @@ button:disabled.needs-save {
 
 /* Test code */
 
+/* AI suggested make-up */
+.writer-tag {
+    display: inline-flex;
+    background: #e0e0e0;
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin: 2px;
+    font-size: 0.85em;
+}
+
+.writer-tag button {
+	display: none;
+    border: none;
+    background: transparent;
+    margin-left: 4px;
+    cursor: pointer;
+}
+
+.writer-suggestions {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 0;
+    z-index: 1000;
+    max-height: 150px;
+    overflow-y: auto;
+    width: 200px; /* match your input width */
+}
+
+.writer-suggestions li {
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.writer-suggestions li:hover {
+    background: #f0f0f0;
+}
+
 /* Temp status dot styles for prototype reasons */
 .status-dot {
 	height: 18px;
@@ -546,18 +569,7 @@ button:disabled.needs-save {
 	margin-right: 0.2rem !important;
 }
 
-.statusOne {
-	background-color: rgb(41, 126, 38);
-}
-
-.statusTwo {
-	background-color: rgb(255, 56, 35);
-}
-
-.statusThree {
-	background-color: rgb(121, 117, 19);
-}
-
-.statusFour {
-	background-color: rgb(105, 103, 103);
-}
+.statusOne { background-color: rgb(41, 126, 38); }
+.statusTwo { background-color: rgb(255, 56, 35); }
+.statusThree { background-color: rgb(121, 117, 19); }
+.statusFour { background-color: rgb(105, 103, 103); }

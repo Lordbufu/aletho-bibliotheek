@@ -13,7 +13,7 @@
         <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="post" action="/editBook">
 
             <?php if ($_SESSION['user']['canEdit']): ?>
-                <input type="hidden" name="_method" value="UPDATE">
+                <input type="hidden" name="_method" value="PATCH">
                 <input type="hidden" name="book_id" value="<?= $book['id'] ?>">
 
                 <!-- Book Name for editing -->
@@ -24,25 +24,40 @@
             <?php endif; ?>
 
             <?php if ($_SESSION['user']['canEdit']): ?>
-                <!-- Author Name for editing -->
+                <!-- Writer name for editing -->
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" id="book-writer-<?= $book['id'] ?>" name="book_writer" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
-                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#book-writer-<?= $book['id'] ?>" aria-label="Edit Writer">✏️</button>
+                    <!-- Writers input as a taggable field -->
+                    <input type="text"
+                        class="aletho-inputs extra-input-style writer-input"
+                        id="book-writer-<?= $book['id'] ?>"
+                        name="book_writers[]"
+                        value="<?= htmlspecialchars($book['writers'] ?? '') ?>"
+                        placeholder="Type writer names and press Enter"
+                        data-book-id="<?= $book['id'] ?>"
+                        autocomplete="off"
+                        disabled>
+                    <button type="button"
+                            class="btn btn-link extra-button-style"
+                            data-swap-targets="#book-writer-<?= $book['id'] ?>"
+                            aria-label="Edit Writer">✏️</button>
                 </div>
+                <small class="form-text text-muted">
+                    You can add writer by pressing 'Enter', it will autocomplete writers that are already known.
+                </small>
             <?php else: ?>
-                <!-- Author Name for viewing -->
+                <!-- Writer name for viewing -->
                 <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
             <?php endif; ?>
 
             <?php if ($_SESSION['user']['canEdit']): ?>
                 <!-- Genre Name for editing -->
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genres'][0] ?? 'Onbekend') ?>" disabled>
+                    <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>" disabled>
                     <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#genre-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
                 </div>
             <?php else: ?>
                 <!-- Genre Name for viewing -->
-                <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genres'][0] ?? 'Onbekend') ?>" disabled>
+                <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>" disabled>
             <?php endif; ?>
 
             <?php if ($_SESSION['user']['canEdit'] && $book['canEditOffice']): ?>

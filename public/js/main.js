@@ -7,9 +7,7 @@ let __bodyPadRight = '';
 $(function() {
     /* Login input elements & events: */
     $('#login-name, #login-passw').on('input', inputCheck);
-
-    // Concept code for the status lights, now using jQuery
-    $('.status-dot').on('click', testLights);
+    $('.status-dot').on('click', testLights);                                                                   // Concept code for the status lights, now using jQuery
 
     /**
      * setupPopin(openBtn, popinId, closeBtn)
@@ -24,14 +22,10 @@ $(function() {
         $(popinId).on('click', function(e) { if (e.target === this) closePopin(popinId); });
     }
 
-    // Add book pop-in
-    setupPopin('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
-    // Change status periode pop-in
-    setupPopin('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
-    // Password reset pop-in
-    setupPopin('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
-    // Change book status pop-in
-    setupPopin('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
+    setupPopin('#boek-add-button', '#add-book-popin', '#close-add-book-popin');                               // Add book pop-in
+    setupPopin('#status-periode-button', '#status-period-popin', '#close-status-period-popin');                 // Change status periode pop-in
+    setupPopin('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');              // Password reset pop-in
+    setupPopin('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');          // Change book status pop-in
 
     $(document).on('click', function(event) {
         // If a popin is open, only close the hamburger dropdown if click is outside any popin
@@ -46,14 +40,9 @@ $(function() {
         }
 
         // Hamburger dropdown: close if open and click is outside
-        if (! $(event.target).closest('#customHamburgerDropdown, #hamburgerButton').length) {
-            closeHamburgerDropdown();
-        }
-
+        if (! $(event.target).closest('#customHamburgerDropdown, #hamburgerButton').length) { closeHamburgerDropdown(); }
         // Search dropdown: close if open and click is outside
-        if (! $(event.target).closest('#customSearchDropdown, #searchButton').length) {
-            closeSearchDropdown();
-        }
+        if (! $(event.target).closest('#customSearchDropdown, #searchButton').length) { closeSearchDropdown(); }
     });
 
     $('#status-type').on('change', function() {
@@ -65,11 +54,8 @@ $(function() {
 
     // Trigger change on load to pre-fill with the first status
     $('#status-type').trigger('change');
-
     // When any popin is triggered, close the hamburger dropdown only
-    $('#boek-add-button, #periode-wijz-button, #wachtwoord-wijz-button, #boek-status-wijz-button').on('click', function() {
-        closeHamburgerDropdown();
-    });
+    $('#boek-add-button, #periode-wijz-button, #wachtwoord-wijz-button, #boek-status-wijz-button').on('click', function() { closeHamburgerDropdown(); });
 
     // --- Book Details and Edit Logic ---
     /**
@@ -100,11 +86,15 @@ $(function() {
         const selector   = $(this).data('swapTargets');
         const $field     = $(selector);
 
-        /* Only act if the field is currently disabled, enable field, mark as editable and save org value, then set focus. */
         if ($field.prop('disabled')) {
-            $field.prop('disabled', false);
-            $field.addClass('field-editable').data('originalValue', $field.val());
-            $field.focus();
+            $field.prop('disabled', false)
+                .addClass('field-editable')
+                .data('originalValue', $field.val())
+                .focus();
+
+            $field.siblings('.writer-tag')
+                .find('button')
+                .show();
         }
     });
 
@@ -116,18 +106,38 @@ $(function() {
         const $field = $(this);
         const original = $field.data('originalValue');
         const current = $field.val();
-        const $form = $field.closest('form.book-edit-form');
-        const $saveBtn = $form.find('button[id^="save-changes-"]');
 
         if (current !== original) {
-            $field.addClass('field-changed');
-            $saveBtn.addClass('needs-save');
+            markFieldChanged($field);
         } else {
-            $field.removeClass('field-changed');
+            clearFieldChanged($field);
+        }
+    });
 
-            // Check if ANY field is still dirty
-            if ($form.find('.field-changed').length === 0) {
-                $saveBtn.removeClass('needs-save');
+    // Convert displayed 'writers' input into tags
+    $('.writer-input').each(function() {
+        const $input = $(this);
+        const existing = $input.val();
+
+        if (existing) {
+            // Split by comma and trim
+            existing.split(',').map(name => name.trim()).forEach(name => {
+                if (name) { addWriterTag($input, name, false); }
+            });
+            // Clear the raw string so only tags remain
+            $input.val('');
+        }
+    });
+
+    // Handle submit for the writer input only
+    $(document).on('keydown', '.writer-input', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const $input = $(this);
+            const value  = $input.val().trim();
+            if (value) {
+                addWriterTag($input, value);
+                $input.val('');
             }
         }
     });
@@ -145,17 +155,30 @@ $(function() {
         const $form = $btn.closest('form.book-edit-form');
 
         // 3) Disable & cleanup only fields in *this* form
-        $form.find('input.field-editable, select.field-editable').each(function() {
+        $form.find('input.field-editable, select.field-editable .writer-input').each(function() {
             const $fld = $(this);
-            $fld.prop('disabled', true)
-                .removeClass('field-editable field-changed')
-                .removeData('originalValue');
+            $fld.closest('.input-group').removeClass('writer-editable');
+            $fld.prop('disabled', true).removeClass('field-editable field-changed').removeData('originalValue');
         });
 
         $btn.removeClass('needs-save');
 
         // 3) (Re)submit or AJAX-post the form if needed:
-        // $form.submit();
+        $form.submit();
+    });
+
+    $(document).on('input', '.writer-input', function() {
+        const $input = $(this);
+        const query = $input.val().trim();
+
+        if (query.length < 2) {
+            closeSuggestions($input);
+            return;
+        }
+
+        $.getJSON('/writers', { query: query }, function(suggestions) {
+            showSuggestions($input, suggestions);
+        });
     });
 
     // --- Search and Sort Logic ---
@@ -230,35 +253,13 @@ $(function() {
         cards.forEach(card => $wrapper.append(card));
     });
 
-    // status periode change events
-    $('#periode-wijz-button').on('click', function() {
-        $('#status-period-popin').show();
-    });
-
-    $('#close-status-period-popin').on('click', function() {
-        $('#status-period-popin').hide();
-    });
-    
-    // Optional: Hide modal when clicking outside the modal-content
-    $('#status-period-popin').on('click', function(e) {
-        if (e.target === this) {
-            $(this).hide();
-        }
-    });
-
-    // Temp soulution 1: specific keydopwn to prevent a form submit.    // uncomment later
-    // $('.book-edit-form input').on('keydown', function(e) {
-    //     if (e.key === 'Enter') {
-    //         e.preventDefault(); // Stops Enter from submitting the form
-    //     }
-    // });
-
-    // Temp stealth solution: dont submit any form when enter is pressed // comment out later
-    $('form').on('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-        }
-    });
+    /* status periode change events */
+    $('#periode-wijz-button').on('click', function() { $('#status-period-popin').show(); });
+    $('#close-status-period-popin').on('click', function() { $('#status-period-popin').hide(); });
+    /* Optional: Hide modal when clicking outside the modal-content */
+    $('#status-period-popin').on('click', function(e) { if (e.target === this) { $(this).hide(); } });
+    /* Temp stealth solution: dont submit any form when enter is pressed // comment out later */
+    $('form').on('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); } });
 
     /**
      * Check if a URL hash was set during a PhP redirect, and open the popin associated with it.
@@ -275,6 +276,7 @@ $(function() {
     }
 });
 
+// Popin & dropdown related helper functions:
 /**
  * openPopin(selector)
  * Opens a modal popin, locks body scroll, and closes hamburger dropdown.
@@ -329,6 +331,103 @@ function closeDropdown(selector) {
     }
 }
 
+// Form editing related helper functions:
+/**
+ * Generic helper to mark a field as changed and toggle save button state.
+ * Can be called from any input/select/tag logic.
+ */
+function markFieldChanged($field) {
+    const $form   = $field.closest('form.book-edit-form');
+    const $saveBtn = $form.find('button[id^="save-changes-"]');
+
+    $field.addClass('field-changed');
+    $saveBtn.addClass('needs-save');
+}
+
+/**
+ * Generic helper to clear change state if no fields are dirty.
+ */
+function clearFieldChanged($field) {
+    const $form   = $field.closest('form.book-edit-form');
+    const $saveBtn = $form.find('button[id^="save-changes-"]');
+    
+    $field.removeClass('field-changed');
+
+    if ($form.find('.field-changed').length === 0) {
+        $saveBtn.removeClass('needs-save');
+    }
+}
+
+function addWriterTag($input, text, markChanged = true) {
+    // Normalize text (trim, case-insensitive)
+    const normalized = text.trim().toLowerCase();
+
+    // Check if this writer already exists in tags
+    let exists = false;
+    $input.siblings('.writer-tag').each(function() {
+        const existing = $(this).clone().children().remove().end().text().trim().toLowerCase();
+        if (existing === normalized) {
+            exists = true;
+            return false; // break loop
+        }
+    });
+
+    if (exists) {
+        // Optionally flash the existing tag to show it's already there
+        $input.siblings('.writer-tag').filter(function() {
+            return $(this).clone().children().remove().end().text().trim().toLowerCase() === normalized;
+        }).addClass('duplicate-flash');
+        setTimeout(() => {
+            $input.siblings('.writer-tag').removeClass('duplicate-flash');
+        }, 500);
+        return;
+    }
+
+    // Otherwise, create the tag
+    const $tag = $('<span class="writer-tag">').text(text);
+
+    const $remove = $('<button type="button">×</button>')
+        .on('click', function() {
+            $tag.remove();
+            markFieldChanged($input);
+        });
+
+    $tag.append($remove);
+
+    // Insert before the input
+    $input.before($tag);
+
+    // Hidden input for form submission
+    const $hidden = $('<input type="hidden" name="book_writers[]">').val(text);
+    $tag.append($hidden);
+
+    if (markChanged) {
+        markFieldChanged($input);
+    }
+}
+
+function showSuggestions($input, suggestions) {
+    closeSuggestions($input);
+
+    const $list = $('<ul class="writer-suggestions">');
+    suggestions.forEach(name => {
+        const $item = $('<li>').text(name);
+        $item.on('click', function() {
+            addWriterTag($input, name);
+            $input.val('');
+            closeSuggestions($input);
+        });
+        $list.append($item);
+    });
+
+    $input.after($list);
+}
+
+function closeSuggestions($input) {
+    $input.siblings('.writer-suggestions').remove();
+}
+
+// Scroll related helper functions:
 /**
  * lockBodyScroll()
  * Locks the body scroll when a modal is open to prevent background scrolling.
