@@ -53,7 +53,7 @@ class Auth {
     /**
      * Get password requirements.
      */
-    public function passwordRequirements(): array {
-        return $this->validator->getRequirements();
-    }
+    // public function passwordRequirements(): array {
+    //     return $this->validator->getRequirements();
+    // }
 }

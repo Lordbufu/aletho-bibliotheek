@@ -187,7 +187,7 @@ class AuthenticationService {
     /**
      * Returns the current password policy requirements.
      */
-    public function passwordRequirements(): array {
-        return $this->passwordValidator->getRequirements();
-    }
+    // public function passwordRequirements(): array {
+    //     return $this->passwordValidator->getRequirements();
+    // }
 }
