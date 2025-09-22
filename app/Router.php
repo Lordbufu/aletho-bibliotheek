@@ -56,7 +56,7 @@ class Router {
     protected function addRoute(string $method, string $path, $handler): void {
         $this->routes[$method][] = new Route($method, $path, $handler);
 
-        App::getService('logger')->warning(
+        App::getService('logger')->info(
             "Route registered: {$method} {$path}",
             'router'
         );
@@ -69,7 +69,7 @@ class Router {
         $request  ??= new Request();
         $response ??= new Response();
 
-        App::getService('logger')->warning(
+        App::getService('logger')->info(
             "Dispatching {$request->getMethod()} {$request->getPath()}",
             'router'
         );
@@ -87,7 +87,6 @@ class Router {
             'router'
         );
 
-        // dd('test');
         $response->setStatusCode(404)->setContent('Not Found')->send();
     }
 
@@ -101,7 +100,7 @@ class Router {
             // Convert "Controller@method" to callable
             if (is_string($handler) && str_contains($handler, '@')) {
                 [$class, $method] = explode('@', $handler, 2);
-                $fqcn = "Ext\\Controllers\\{$class}"; // <-- Fix namespace case here
+                $fqcn = "Ext\\Controllers\\{$class}";
                 $controller = new $fqcn();
                 $handler = [$controller, $method];
             }
@@ -115,7 +114,7 @@ class Router {
             $args[] = $request;
             $args[] = $response;
 
-            App::getService('logger')->warning(
+            App::getService('logger')->info(
                 "Executing handler for {$request->getMethod()} {$request->getPath()}",
                 'router'
             );
