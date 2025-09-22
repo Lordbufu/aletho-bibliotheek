@@ -74,7 +74,7 @@ class Route {
                     array_flip(array_filter(array_keys($matches), 'is_string'))
                 );
 
-                App::getService('logger')->warning(
+                App::getService('logger')->info(
                     "Route matched: {$this->method} {$this->path} → Params: " . json_encode($this->params),
                     'router'
                 );

@@ -104,31 +104,40 @@ class Request {
         return $headers;
     }
 
-    /** Get the HTTP method. */
+    /**
+     * Get the HTTP method.
+     */
     public function getMethod(): string {
         return $this->method;
     }
 
-    /** Get the normalized request path. */
+    /**
+     * Get the normalized request path.
+     */
     public function getPath(): string {
         return $this->path;
     }
 
-    /** Get query string parameters. */   
+    /**
+     * Get query string parameters.
+     */   
     public function getQuery(): array {
         return $this->query;
     }
 
-    /** Get POST/PUT body parameters. */
+    /**
+     * Get POST/PUT body parameters.
+     */
     public function getBody(): array {
         return $this->body;
     }
 
-    /** Get HTTP request headers. */
+    /**
+     * Get HTTP request headers.
+     */
     public function getHeaders(): array {
         return $this->headers;
     }
-
 
     /**
      * Retrieve a single input value from body or query parameters.
