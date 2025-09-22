@@ -21,6 +21,13 @@ class WriterRepo {
                 ->fetchAll("SELECT * FROM writers");
         }
 
+        if (!is_array($this->writers) || $this->writers === []) {
+            App::getService('logger')->error(
+                "The 'WriterRepo' dint get any writers from the database",
+                'bookservice'
+            );
+        }
+
         return $this->writers;
     }
 
@@ -32,6 +39,13 @@ class WriterRepo {
             $this->links = App::getService('database')
                 ->query()
                 ->fetchAll("SELECT * FROM book_writers");
+        }
+
+        if (!is_array($this->links) || $this->links === []) {
+            App::getService('logger')->error(
+                "The 'WriterRepo' dint get any writer-links from the database",
+                'bookservice'
+            );
         }
 
         return $this->links;

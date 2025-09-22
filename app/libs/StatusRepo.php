@@ -17,9 +17,7 @@ class StatusRepo {
         $dt = new \DateTimeImmutable($startDate);
         $interval = new \DateInterval("P{$days}D");
 
-        return $dt
-            ->add($interval)
-            ->format('Y-m-d');
+        return $dt->add($interval)->format('Y-m-d');
     }
 
     /** All default status data:
@@ -37,6 +35,13 @@ class StatusRepo {
             $this->status = App::getService('database')
                 ->query()
                 ->fetchAll("SELECT * FROM status");
+        }
+
+        if (!is_array($this->status) || $this->status === []) {
+            App::getService('logger')->error(
+                "The 'StatusRepo' dint get any statuses from the database",
+                'bookservice'
+            );
         }
 
         return $this->status;
@@ -60,6 +65,13 @@ class StatusRepo {
                 ->fetchAll("SELECT * FROM book_status");
         }
 
+        if (!is_array($this->links) || $this->links === []) {
+            App::getService('logger')->error(
+                "The 'StatusRepo' dint get any status-links from the database",
+                'bookservice'
+            );
+        }
+
         return $this->links;
     }
 
@@ -81,11 +93,18 @@ class StatusRepo {
                 ->fetchAll("SELECT * FROM book_sta_meta");
         }
 
+        if (!is_array($this->meta) || $this->meta === []) {
+            App::getService('logger')->error(
+                "The 'StatusRepo' dint get any status-meta-links from the database",
+                'bookservice'
+            );
+        }
+
         return $this->meta;
     }
 
-    /** W.I.P.
-     * 
+    /**
+     * This function filters out the status data required for displaying a book.
      */
     public function getDisplayStatusByBookId(int $bookId): array {
         $statusMap = array_column($this->getAllStatus(), null, 'id');

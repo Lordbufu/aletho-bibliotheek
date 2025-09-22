@@ -17,6 +17,13 @@ class OfficeRepo {
                 ->fetchAll("SELECT * FROM offices");
         }
 
+        if (!is_array($this->offices) || $this->offices === []) {
+            App::getService('logger')->error(
+                "The 'OfficeRepo' dint get any offices from the database",
+                'bookservice'
+            );
+        }
+
         return $this->offices;
     }
 
@@ -28,6 +35,13 @@ class OfficeRepo {
             $this->userLinks = App::getService('database')
                 ->query()
                 ->fetchAll("SELECT * FROM user_office");
+        }
+
+        if (!is_array($this->userLinks) || $this->userLinks === []) {
+            App::getService('logger')->error(
+                "The 'OfficeRepo' dint get any offices-links from the database",
+                'bookservice'
+            );
         }
 
         return $this->userLinks;
