@@ -89,12 +89,20 @@ $(function() {
         if ($field.prop('disabled')) {
             $field.prop('disabled', false)
                 .addClass('field-editable')
-                .data('originalValue', $field.val())
                 .focus();
 
-            $field.siblings('.writer-tag')
-                .find('button')
-                .show();
+            // ⬇️ This is where you store the original value
+            if ($field.hasClass('writer-input')) {
+                // Collect current tags into an array
+                const tags = $field.siblings('.writer-tag').map(function() {
+                    return $(this).clone().children().remove().end().text().trim();
+                }).get();
+
+                $field.data('originalValue', tags.sort().join(','));
+            } else {
+                // For normal text inputs
+                $field.data('originalValue', $field.val());
+            }
         }
     });
 
@@ -129,6 +137,21 @@ $(function() {
         }
     });
 
+    // Get writers and give autofill option if applicable.
+    $(document).on('input', '.writer-input', function() {
+        const $input = $(this);
+        const query = $input.val().trim();
+
+        if (query.length < 2) {
+            closeSuggestions($input);
+            return;
+        }
+
+        $.getJSON('/writers', { query: query }, function(suggestions) {
+            showSuggestions($input, suggestions);
+        });
+    });
+
     // Handle submit for the writer input only
     $(document).on('keydown', '.writer-input', function(e) {
         if (e.key === 'Enter') {
@@ -142,43 +165,51 @@ $(function() {
         }
     });
 
+    // on blur event to close edit states ?
+    $(document).on('blur', 'input.field-editable, select.field-editable, .writer-input', function() {
+        const $field = $(this);
+        const original = $field.data('originalValue');
+        let current;
+
+        if ($field.hasClass('writer-input')) {
+            // Collect current tags
+            current = $field.siblings('.writer-tag').map(function() {
+                return $(this).clone().children().remove().end().text().trim();
+            }).get().sort().join(',');
+        } else {
+            current = $field.val();
+        }
+
+        if (current === original) {
+            // No change → reset
+            $field.prop('disabled', true)
+                .removeClass('field-editable field-changed')
+                .removeData('originalValue');
+            clearFieldChanged($field);
+        }
+    });
+
     /**
      * Save changes button handler
      * Disables edited fields, removes edit classes, and (optionally) submits the form.
      */
     $(document).on('click', '[id^="save-changes-"]', function(e) {
-        // 1) Disable the form submit first.
         e.preventDefault();
-
-        // 2) Find this button’s form
         const $btn  = $(this);
         const $form = $btn.closest('form.book-edit-form');
 
-        // 3) Disable & cleanup only fields in *this* form
-        $form.find('input.field-editable, select.field-editable .writer-input').each(function() {
-            const $fld = $(this);
-            $fld.closest('.input-group').removeClass('writer-editable');
-            $fld.prop('disabled', true).removeClass('field-editable field-changed').removeData('originalValue');
+        $form.off('submit._cleanup').on('submit._cleanup', function () {
+            setTimeout(() => {
+                $form.find('input.field-editable, select.field-editable, .writer-input').each(function() {
+                    const $fld = $(this);
+                    $fld.closest('.input-group').removeClass('writer-editable');
+                    $fld.prop('disabled', true).removeClass('field-editable field-changed').removeData('originalValue');
+                    $btn.removeClass('needs-save');
+                });
+            }, 0);
         });
-
-        $btn.removeClass('needs-save');
-
-        // 3) (Re)submit or AJAX-post the form if needed:
-        $form.submit();
-    });
-
-    $(document).on('input', '.writer-input', function() {
-        const $input = $(this);
-        const query = $input.val().trim();
-
-        if (query.length < 2) {
-            closeSuggestions($input);
-            return;
-        }
-
-        $.getJSON('/writers', { query: query }, function(suggestions) {
-            showSuggestions($input, suggestions);
-        });
+        
+        $form.trigger('submit');
     });
 
     // --- Search and Sort Logic ---
@@ -259,7 +290,7 @@ $(function() {
     /* Optional: Hide modal when clicking outside the modal-content */
     $('#status-period-popin').on('click', function(e) { if (e.target === this) { $(this).hide(); } });
     /* Temp stealth solution: dont submit any form when enter is pressed // comment out later */
-    $('form').on('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); } });
+    // $('form').on('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); } });
 
     /**
      * Check if a URL hash was set during a PhP redirect, and open the popin associated with it.

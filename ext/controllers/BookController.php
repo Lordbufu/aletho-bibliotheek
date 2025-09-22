@@ -34,8 +34,8 @@ class BookController {
      * Expected book data format:
      *      [_method] => PATCH
      *      [book_id] => 1
+     *      [book_name] => Text Book 001
      *      [book_writers] => Array ( [0] => Test Writer 001, )
-     * 
      */
     public function edit() {
         if (!isset($_POST['_method'])) {

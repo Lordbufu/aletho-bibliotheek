@@ -18,7 +18,7 @@
 
                 <!-- Book Name for editing -->
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" id="book-name-<?= $book['id'] ?>" name="book-name" value="<?= htmlspecialchars($book['title']) ?>" disabled>
+                    <input type="text" class="aletho-inputs extra-input-style" id="book-name-<?= $book['id'] ?>" name="book_name" value="<?= htmlspecialchars($book['title']) ?>" disabled>
                     <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#book-name-<?= $book['id'] ?>" aria-label="Edit Book Name">✏️</button>
                 </div>
             <?php endif; ?>
@@ -118,15 +118,15 @@
             <?php endif; ?>
 
             <?php if($_SESSION['user']['canEdit']): ?>
-                <!-- Status Edit pop-in button -->
-                <div class="input-group input-group-sm mt-2">
-                    <button id="boek-status-button" type="button" name="action" class="aletho-buttons extra-popin-style">Status Aanpassen</button>
-                    <div type="button" class="extra-fake-button"></div>
-                </div>
-
                 <!-- Save Book Edits button (form submit) -->
                 <div class="input-group input-group-sm mt-1">
                     <button id="save-changes-<?= $book['id'] ?>" type="submit" name="save-item" class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
+                    <div type="button" class="extra-fake-button"></div>
+                </div>
+
+                <!-- Status Edit pop-in button -->
+                <div class="input-group input-group-sm mt-2">
+                    <button id="boek-status-button" type="button" name="action" class="aletho-buttons extra-popin-style">Status Aanpassen</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
