@@ -41,9 +41,6 @@
                             data-swap-targets="#book-writer-<?= $book['id'] ?>"
                             aria-label="Edit Writer">✏️</button>
                 </div>
-                <small class="form-text text-muted">
-                    You can add writer by pressing 'Enter', it will autocomplete writers that are already known.
-                </small>
             <?php else: ?>
                 <!-- Writer name for viewing -->
                 <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
@@ -52,8 +49,19 @@
             <?php if ($_SESSION['user']['canEdit']): ?>
                 <!-- Genre Name for editing -->
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>" disabled>
-                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#genre-input-<?= $book['id'] ?>" aria-label="Edit Genre">✏️</button>
+                    <input type="text"
+                        class="aletho-inputs extra-input-style genre-input"
+                        id="book-genre-<?= $book['id'] ?>"
+                        value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>"
+                        placeholder="Type een genre en druk op Enter"
+                        data-book-id="<?= $book['id'] ?>"
+                        autocomplete="off"
+                        disabled>
+                    <button
+                        type="button"
+                        class="btn btn-link extra-button-style"
+                        data-swap-targets="#genre-input-<?= $book['id'] ?>"
+                        aria-label="Edit Genre">✏️</button>
                 </div>
             <?php else: ?>
                 <!-- Genre Name for viewing -->
@@ -70,6 +78,10 @@
                 <!-- Office Name for viewing -->
                 <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
             <?php endif; ?>
+
+            <!-- <small class="form-text text-muted">
+                Je kan schrijvers en genres toevoegen door op enter te drukken, mogelijkheden worden automatische aangevult.
+            </small> -->
 
             <?php if ($_SESSION['user']['canEdit']): ?>
                 <!-- Book Status for editing -->
@@ -120,19 +132,28 @@
             <?php if($_SESSION['user']['canEdit']): ?>
                 <!-- Save Book Edits button (form submit) -->
                 <div class="input-group input-group-sm mt-1">
-                    <button id="save-changes-<?= $book['id'] ?>" type="submit" name="save-item" class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
+                    <button id="save-changes-<?= $book['id'] ?>"
+                        type="submit"
+                        name="save-item"
+                        class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
                 <!-- Status Edit pop-in button -->
                 <div class="input-group input-group-sm mt-2">
-                    <button id="boek-status-button" type="button" name="action" class="aletho-buttons extra-popin-style">Status Aanpassen</button>
+                    <button id="boek-status-button"
+                        type="button"
+                        name="action"
+                        class="aletho-buttons extra-popin-style">Status Aanpassen</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
                 <!-- Delete Book button (form submmit ?) -->
                 <div class="input-group input-group-sm mt-1">
-                    <button id="remove-book-<?= $book['id'] ?>" type="submit" name="action" class="aletho-buttons extra-popin-style">Boek Verwijderen</button>
+                    <button id="remove-book-<?= $book['id'] ?>"
+                        type="submit"
+                        name="action"
+                        class="aletho-buttons extra-popin-style">Boek Verwijderen</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
             <?php endif; ?>
