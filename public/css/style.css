@@ -531,7 +531,6 @@ button:disabled.needs-save {
 }
 
 .writer-tag button {
-	display: none;
     border: none;
     background: transparent;
     margin-left: 4px;

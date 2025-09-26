@@ -21,6 +21,9 @@
 		<script src="js/jquery-3.7.1.min.js"></script>
 		<!-- Homemade frontend code: -->
 		<script src="js/main.js"></script>
+		<script src="js/modules/popins.js"></script>
+		<script src="js/modules/dropdowns.js"></script>
+		<script src="js/modules/writers.js"></script>
 		<!-- PHP code for device specific styles etc goes here -->
 	</head>
 

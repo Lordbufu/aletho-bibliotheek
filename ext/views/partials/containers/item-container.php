@@ -1,10 +1,14 @@
 <div class="aletho-item-container" id="item-container-<?= $book['id'] ?>">
 
     <div class="aletho-item">
-        <button class="aletho-dropdown-buttons" id="itemButton-<?= $book['id'] ?>" type="button"
-                data-bs-toggle="collapse" data-bs-target="#customItemDropdown-<?= $book['id'] ?>"
-                aria-expanded="false" aria-controls="customItemDropdown-<?= $book['id'] ?>"
-        >▼</button>
+        <button class="aletho-dropdown-buttons"
+            id="itemButton-<?= $book['id'] ?>"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#customItemDropdown-<?= $book['id'] ?>"
+            aria-expanded="false"
+            aria-controls="customItemDropdown-<?= $book['id'] ?>">▼
+        </button>
         <span class="dropdown-item flex-fill text-center mn-main-col"> <?= htmlspecialchars($book['title']) ?> </span>
         <span class="status-dot statusOne d-flex justify-content-end" id="status-dot-<?= $book['id'] ?>"></span>
     </div>
@@ -18,8 +22,17 @@
 
                 <!-- Book Name for editing -->
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" id="book-name-<?= $book['id'] ?>" name="book_name" value="<?= htmlspecialchars($book['title']) ?>" disabled>
-                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#book-name-<?= $book['id'] ?>" aria-label="Edit Book Name">✏️</button>
+                    <input type="text"
+                        class="aletho-inputs extra-input-style"
+                        id="book-name-<?= $book['id'] ?>"
+                        name="book_name"
+                        value="<?= htmlspecialchars($book['title']) ?>"
+                        disabled>
+                    <button type="button"
+                        class="btn btn-link extra-button-style"
+                        data-swap-targets="#book-name-<?= $book['id'] ?>"
+                        aria-label="Edit Book Name">✏️
+                    </button>
                 </div>
             <?php endif; ?>
 
@@ -78,10 +91,6 @@
                 <!-- Office Name for viewing -->
                 <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
             <?php endif; ?>
-
-            <!-- <small class="form-text text-muted">
-                Je kan schrijvers en genres toevoegen door op enter te drukken, mogelijkheden worden automatische aangevult.
-            </small> -->
 
             <?php if ($_SESSION['user']['canEdit']): ?>
                 <!-- Book Status for editing -->
