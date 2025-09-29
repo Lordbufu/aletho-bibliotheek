@@ -1,5 +1,5 @@
 // modules/popins.js
-const Popins = (() => {
+export const Popins = (() => {
     let isOpen = false;
     let scrollY = 0;
     let padRight = 0;
@@ -66,7 +66,6 @@ const Popins = (() => {
         $(openBtn).on('click', () => open(popinId));
         $(closeBtn).on('click', () => close(popinId));
 
-        // close if clicking backdrop
         $(popinId).on('click', function (e) {
             if (e.target === this) {
                 close(popinId);

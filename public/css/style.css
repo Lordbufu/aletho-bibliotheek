@@ -520,7 +520,14 @@ button:disabled.needs-save {
 
 /* Test code */
 
-/* AI suggested make-up */
+/** AI suggested make-up:
+ *		TODO:
+ *			- Need to go over this, and change px to rem, and add % where this makes sense.
+ */
+ /* .writer-tags-container {
+
+ } */
+
 .writer-tag {
     display: inline-flex;
     background: #e0e0e0;
@@ -547,16 +554,20 @@ button:disabled.needs-save {
     z-index: 1000;
     max-height: 150px;
     overflow-y: auto;
-    width: 200px; /* match your input width */
+    width: 200px;
+	top: 100%;
 }
 
-.writer-suggestions li {
-    padding: 4px 8px;
-    cursor: pointer;
+.writer-suggestion {
+	display: block;
+	width: 100%;
+	padding: 4px 8px;
+	cursor: pointer;
 }
 
-.writer-suggestions li:hover {
+.writer-suggestion:hover {
     background: #f0f0f0;
+	cursor: pointer;
 }
 
 /* Temp status dot styles for prototype reasons */
@@ -568,7 +579,18 @@ button:disabled.needs-save {
 	margin-right: 0.2rem !important;
 }
 
-.statusOne { background-color: rgb(41, 126, 38); }
-.statusTwo { background-color: rgb(255, 56, 35); }
-.statusThree { background-color: rgb(121, 117, 19); }
-.statusFour { background-color: rgb(105, 103, 103); }
+.statusOne {
+	background-color: rgb(41, 126, 38);
+}
+
+.statusTwo {
+	background-color: rgb(255, 56, 35);
+}
+
+.statusThree {
+	background-color: rgb(121, 117, 19);
+}
+
+.statusFour {
+	background-color: rgb(105, 103, 103);
+}

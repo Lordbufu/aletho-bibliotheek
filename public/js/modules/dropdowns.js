@@ -1,5 +1,5 @@
 // modules/dropdowns.js
-const Dropdowns = (() => {
+export const Dropdowns = (() => {
     /**
      * 
      */

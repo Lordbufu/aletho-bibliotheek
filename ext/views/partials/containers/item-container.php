@@ -37,13 +37,15 @@
             <?php endif; ?>
 
             <?php if ($_SESSION['user']['canEdit']): ?>
-                <!-- Writer name for editing -->
+                <!-- Writer tags container, to allow multiple-entries, populated by JQuery events. -->
+                <div class="writer-tags-container" data-book-id="<?= $book['id'] ?>"></div>
+
+                <!-- Writers Input for editing -->
                 <div class="input-group input-group-sm">
                     <!-- Writers input as a taggable field -->
                     <input type="text"
                         class="aletho-inputs extra-input-style writer-input"
                         id="book-writer-<?= $book['id'] ?>"
-                        name="book_writers[]"
                         value="<?= htmlspecialchars($book['writers'] ?? '') ?>"
                         placeholder="Type writer names and press Enter"
                         data-book-id="<?= $book['id'] ?>"
@@ -143,7 +145,6 @@
                 <div class="input-group input-group-sm mt-1">
                     <button id="save-changes-<?= $book['id'] ?>"
                         type="submit"
-                        name="save-item"
                         class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>

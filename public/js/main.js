@@ -6,24 +6,36 @@
  *              All dropdown related function have been offloaded to this module, loaded as a Dropdowns variable.
  *          @Writers    => ..\modules\writers.js
  *              All writer input related functions, that deal with converting and reseting its input/displayed tags.
+ *          @SearchSort => ..\modules\searchSort.js
+ *              All searching and sorting related function and events.
  */
+
+// Import modules first (using this to reduce header clutter):
+import { Popins } from './modules/popins.js';
+import { Dropdowns } from './modules/dropdowns.js';
+import { Writers } from './modules/writers.js';
+import { SearchSort} from './modules/searchSort.js';
 
 /* Document ready loop */
 $(function() {
     // -- Popins: The `popin` array selector map
     const popinSel = [ '#add-book-popin', '#status-period-popin', '#password-reset-popin', '#change-book-status-popin' ];
-
     // -- Popins: Check if a hash was set via PhP, to route to a `popin`.
     Popins.initFromHash();
-
     // -- Popins: Add the event handles for all `popins` via a helper function.
     Popins.setup('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
     Popins.setup('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
     Popins.setup('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
     Popins.setup('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
-
     // -- Writers: Init autocomplete/tagging
-    Writers.init('.writer-input', '#writer-tags-container');
+    Writers.init('.writer-input', '.writer-tags-container');
+    // -- Search: Init the search events handlers
+    SearchSort.initSearch("#search-inp", "#search-options");
+    // -- Sort: Massive TODO here, there is no sort logic atm :P
+    SearchSort.initSort("#sort-options", (value) => {
+        // console.log("Sorting by:", value);
+        // Insert your sorting logic here, e.g. reordering DOM elements or fetching new data
+    });
 
     /* Global on-click event for the entire document. */
     $(document).on('click', function(event) {
@@ -58,8 +70,8 @@ $(function() {
 
         // --- Book details edit button: Make associated field editable, and store its original value.
         if ($detEditBtn.length) {
-            const selector   = $detEditBtn.data('swapTargets');
-            const $field     = $(selector);
+            const selector      = $detEditBtn.data('swapTargets');
+            const $field        = $(selector);
 
             if ($field.prop('disabled')) {
                 $field.prop('disabled', false)
@@ -67,22 +79,22 @@ $(function() {
                     .focus();
 
                 if ($field.hasClass('writer-input')) {
+                    markFieldChanged($field);    
+                    const $container = Writers.getTagsContainer($field);
                     const existing = $field.val();
+
                     if (existing) {
                         existing.split(',')
                             .map(name => name.trim())
                             .forEach(name => {
                                 if (name) {
-                                    Writers.addTag(name, $field);
+                                    Writers.addTag(name, $field, $container)
                                 }
                             });
                     }
 
-                    const tags = $field.closest('.input-group').prevAll('.writer-tag').map(function() {
-                        return $(this).clone().children().remove().end().text().trim();
-                    }).get();
-
-                    $field.data('originalValue', tags.sort().join(','));
+                    const origValues = Writers.getValuesFromContainer($container);
+                    $field.data('originalValue', origValues.join(','));
                 } else {
                     $field.data('originalValue', $field.val());
                 }
@@ -103,21 +115,12 @@ $(function() {
         e.stopPropagation();
         Dropdowns.toggle(['#customHamburgerDropdown', '#customSearchDropdown']);
     });
-
     $('#searchButton').on('click', function(e) {
         e.stopPropagation();
         Dropdowns.toggle(['#customSearchDropdown', '#customHamburgerDropdown']);
     });
 
-
-    /* Trigger change on load to pre-fill with the first status. */
-    $('#status-type').trigger('change');
-
-    // --- Book details and Edit button logic ---
-    /**
-     * Input/change listener for editable fields
-     * Tracks changes, applies 'field-changed' class, and enables/disables the save button.
-     */
+    // --- Book details input and select logic: Input/change listener for editable fields, tracks changes, applies 'field-changed' class, and enables/disables the save button.
     $(document).on('input change', 'input.field-editable, select.field-editable', function() {
         const $field = $(this);
         const original = $field.data('originalValue');
@@ -130,61 +133,52 @@ $(function() {
         }
     });
 
-    /**
-     * On blur event to 'close' the input edit states, when focus is lost and nothing was changed.
-     */
-    $(document).on('blur', 'input.field-editable, select.field-editable, .writer-input', function() {
+    // -- Writers: On blur event handler, to revert the input back to normal if focus is lost and nothing has changed.
+    $(document).on('blur', 'input.field-editable, select.field-editable', function() {
         const $field = $(this);
-        const original = $field.data('originalValue');
-        let current;
 
-        if (Writers.isRemoving()) {
-            return;
-        }
-
-        if ($field.hasClass('writer-input')) {
-            // Collect current tags
-            const $tags = $field.closest('.input-group').prevAll('.writer-tag');
-            current = $tags.map(function() {
-                return $(this).clone().children().remove().end().text().trim();
-            }).get().sort().join(',');
-        } else {
-            current = $field.val();
-        }
-
-        // No change → reset
-        if (current === original) {
-            if ($field.hasClass('writer-input')) {
-                const $tags = $field.closest('.input-group').prevAll('.writer-tag');
-                const tags = $tags.map(function() {
-                    return $(this).clone().children().remove().end().text().trim();
-                }).get();
-
-                $tags.remove();
-                $field.val(tags.join(', '));
+        setTimeout(() => {
+            if (Writers.isRemoving()) {
+                return;
             }
 
-            $field.prop('disabled', true)
-                .removeClass('field-editable field-changed')
-                .removeData('originalValue');
-            clearFieldChanged($field);
-        }
+            const original = $field.data('originalValue');
+            let current;
+
+            if ($field.hasClass('writer-input')) {
+                const $container = Writers.getTagsContainer($field);
+                const currentValues = Writers.getValuesFromContainer($container);
+                current = currentValues.join(',');
+            } else {
+                current = $field.val();
+            }
+
+            if (current === original) {
+                if ($field.hasClass('writer-input')) {
+                    const $container = Writers.getTagsContainer($field);
+                    const names = Writers.getValuesFromContainer($container);
+                    $field.val(names.join(', '));
+                    $container.empty();
+                }
+
+                $field.prop('disabled', true)
+                    .removeClass('field-editable field-changed')
+                    .removeData('originalValue');
+
+                clearFieldChanged($field);
+            }
+        }, 150);
     });
 
-    // --- Search and Sort Logic ---
-    /**
-     * Search input handler
-     * Filters book cards based on the selected search method (title, writer, genre).
-     */
-    $('#search-inp').on('input', function() {
+    // -- Search: Input handler.
+    $('#search-inp').on('input', function () {
         const query  = $(this).val().toLowerCase().trim();
         const method = $('#search-options').val(); // title | writer | genre
 
-        $('.aletho-item-container').each(function() {
+        $('.aletho-item-container').each(function () {
             const $card = $(this);
             let textToSearch = '';
 
-            // pick the right field to search
             switch (method) {
                 case 'writer':
                     textToSearch = $card.find('input[name="book_writer"]').val() || '';
@@ -197,7 +191,6 @@ $(function() {
                     textToSearch = $card.find('.mn-main-col').text() || '';
             }
 
-            // show/hide based on match
             if (textToSearch.toLowerCase().includes(query)) {
                 $card.show();
             } else {
@@ -206,11 +199,8 @@ $(function() {
         });
     });
 
-    /**
-     * Search options change handler
-     * Updates the search input placeholder text based on selected search method.
-     */
-    $('#search-options').on('change', function() {
+    // -- Search: Options change handler.
+    $('#search-options').on('change', function () {
         const method = $(this).val();
         const labels = {
             title:  'Zoek op titel …',
@@ -218,46 +208,40 @@ $(function() {
             genre:  'Zoek op genre …'
         };
 
-        $('#search-inp').attr('placeholder', labels[method] || labels.title).val('').trigger('input');
+        $('#search-inp')
+            .attr('placeholder', labels[method] || labels.title)
+            .val('')
+            .trigger('input');
     });
 
-    /**
-     * Sort options change handler
-     * Sorts book cards in the container based on selected field and direction.
-     */
-    $('#sort-options').on('change', function() {
-        const [field, direction] = $(this).val().split('-');  // e.g. ['title','asc']
-        const $wrapper = $('#view-container');               // parent of .item-container
-        // Pull cards into an array
-        const cards = $wrapper.find('.item-container').get();
+    // -- Sort: Sort handler.
+    $('#sort-options').on('change', function () {
+        const [field, direction] = $(this).val().split('-');
+        const $wrapper = $('#view-container');
+        const $cards = $wrapper.find('.item-container');
 
-        // Sort
-        cards.sort((a, b) => {
-            const va = getSortValue($(a), field);
-            const vb = getSortValue($(b), field);
+        const sorted = $cards.get().sort((a, b) => {
+            const va = SearchSort.extractFieldValue($(a), field);
+            const vb = SearchSort.extractFieldValue($(b), field);
             const cmp = va.localeCompare(vb, 'nl', { sensitivity: 'base' });
             return direction === 'asc' ? cmp : -cmp;
         });
 
-        // Re-append in new order
-        cards.forEach(card => $wrapper.append(card));
+        $wrapper.append(sorted);
     });
 
-    /* Temp stealth solution: dont submit any form when enter is pressed // comment out later */
-    // $('form').on('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); } });
-
+    /* Trigger change on load to pre-fill with the first status. */
+    $('#status-type').trigger('change');
     /* W.I.P. Testing functions */
-    $('#login-name, #login-passw').on('input', inputCheck);     // input length checker
-    $('.status-dot').on('click', testLights);                   // Concept code for the status lights, now using jQuery
+    $('#login-name, #login-passw').on('input', inputCheck);
+    $('.status-dot').on('click', testLights);
 });
 
-
-
 // Form editing related helper functions:
-/**
+/** Exported to used in modules
  * Generic helper: Mark input fields as changed, when a field is made editable.
  */
-function markFieldChanged($field) {
+export function markFieldChanged($field) {
     const $form   = $field.closest('form.book-edit-form');
     const $saveBtn = $form.find('button[id^="save-changes-"]');
 
@@ -265,10 +249,10 @@ function markFieldChanged($field) {
     $saveBtn.addClass('needs-save');
 }
 
-/**
+/** Exported to used in modules
  * Generic helper: Clear field-changed state if no fields are dirty.
  */
-function clearFieldChanged($field) {
+export function clearFieldChanged($field) {
     const $form   = $field.closest('form.book-edit-form');
     const $saveBtn = $form.find('button[id^="save-changes-"]');
     
@@ -349,24 +333,6 @@ function stringChecker($type, $value) {
             } else {
                 return false;
             }
-    }
-}
-
-// Utility: --- Search and Sort Logic ---
-/**
- * getSortValue($card, field)
- * Utility to extract the sort key from a book card for sorting.
- */
-function getSortValue($card, field) {
-    switch (field) {
-        case 'writer':
-            return ($card.find('input[name="book_writer"]').val() || '').toLowerCase();
-        case 'genre':
-            return ($card.find('select[name="genre_id"] option:selected').text() || '').toLowerCase();
-
-        case 'title':
-        default:
-            return ($card.find('.mn-main-col').text() || '').toLowerCase();
     }
 }
 
