@@ -125,20 +125,20 @@
                 <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($book['status']['status_name']) ?>" disabled>
             <?php endif; ?>
 
-            <?php if ($_SESSION['user']['canEdit'] && isset($book['status']['statusExp'])): ?>
-                <!-- Book Status Verloopt Info-->
+            <?php if (isset($book['status']['status_exp']) && $_SESSION['user']['canEdit']) :?>
+                <!-- Book Status Verloopt Info (voor admins) -->
                 <div class="input-group input-group-sm">
                     <span class="aletho-labels extra-popin-style">Verloopt</span>
                     <div type="button" class="extra-fake-button"></div>
-                </div>                
+                </div>
                 <div class="input-group input-group-sm">
-                    <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['status']['statusExp']) ?>" disabled>
+                    <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['status']['status_exp']) ? htmlspecialchars($book['status']['status_exp']) : '' ?>" disabled>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-            <?php elseif (isset($book['status']['statusExp'])) : ?>
+            <?php elseif (isset($book['status']['status_exp'])) : ?>
                 <!-- Book Status Verloopt Info -->
                 <span class="aletho-labels extra-popin-style">Verloopt</span>
-                <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['status']['statusExp']) ? htmlspecialchars($book['status']['statusExp']) : '' ?>" disabled>
+                <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['status']['status_exp']) ? htmlspecialchars($book['status']['status_exp']) : '' ?>" disabled>
             <?php endif; ?>
 
             <?php if($_SESSION['user']['canEdit']): ?>
