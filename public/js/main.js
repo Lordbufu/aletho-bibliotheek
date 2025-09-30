@@ -7,7 +7,7 @@
 // Import modules first (using this to reduce header clutter):
 import { Popins } from './modules/popins.js';
 import { Dropdowns } from './modules/dropdowns.js';
-import { Writers } from './modules/writers.js';
+import { TagInput } from './modules/taginput.js';
 import { SearchSort } from './modules/searchSort.js';
 import { Utility } from './modules/utility.js';
 
@@ -21,7 +21,35 @@ $(function() {
     Popins.setup('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
 
     // Writers: autocomplete/tagging
-    Writers.init('.writer-input', '.writer-tags-container');
+    TagInput.init({
+        inputSelector: '.writer-input',
+        containerSelector: '.writer-tags-container',
+        endpoint: '/bookdata?data=writers',
+        tagClass: 'writer-tag',
+        suggestionClass: 'writer-suggestion',
+        hiddenInputName: 'book_writers[]'
+    });
+
+    // Genres: autocomplete/tagging
+    TagInput.init({
+        inputSelector: '.genre-input',
+        containerSelector: '.genre-tags-container',
+        endpoint: '/bookdata?data=genres',
+        tagClass: 'genre-tag',
+        suggestionClass: 'genre-suggestion',
+        hiddenInputName: 'book_genres[]'
+    });
+
+    // Offices: autocomplete/tagging
+    TagInput.init({
+        inputSelector: '.office-input',
+        containerSelector: '.office-tags-container',
+        endpoint: '/bookdata?data=offices',
+        tagClass: 'office-tag',
+        maxTags: 1,
+        suggestionClass: 'office-suggestion',
+        hiddenInputName: 'book_offices[]'
+    });
 
     // Search & Sort: event handlers
     SearchSort.initSearch('#search-inp', '#search-options');
@@ -53,7 +81,7 @@ $(function() {
             });
         }
 
-        // Book details edit: make field editable and store original value
+        // Book details edit: make field editable and convert input to tags for all taggable fields
         const $detEditBtn = $(event.target).closest('.extra-button-style');
         if ($detEditBtn.length) {
             const selector = $detEditBtn.data('swapTargets');
@@ -62,22 +90,25 @@ $(function() {
                 $field.prop('disabled', false)
                     .addClass('field-editable')
                     .focus();
+                // Writers
                 if ($field.hasClass('writer-input')) {
                     Utility.markFieldChanged($field);
-                    const $container = Writers.getTagsContainer($field);
-                    const existing = $field.val();
-                    if (existing) {
-                        existing.split(',')
-                            .map(name => name.trim())
-                            .forEach(name => {
-                                if (name) {
-                                    Writers.addTag(name, $field, $container)
-                                }
-                            });
-                    }
-                    const origValues = Writers.getValuesFromContainer($container);
-                    $field.data('originalValue', origValues.join(','));
-                } else {
+                    const $container = TagInput.getTagsContainer($field, 'writer-tags-container');
+                    TagInput.restoreTagsFromInput($field, $container, 'writer-tag', 'book_writers[]');
+                }
+                // Genres
+                else if ($field.hasClass('genre-input')) {
+                    Utility.markFieldChanged($field);
+                    const $container = TagInput.getTagsContainer($field, 'genre-tags-container');
+                    TagInput.restoreTagsFromInput($field, $container, 'genre-tag', 'book_genres[]');
+                }
+                // Offices
+                else if ($field.hasClass('office-input')) {
+                    Utility.markFieldChanged($field);
+                    const $container = TagInput.getTagsContainer($field, 'office-tags-container');
+                    TagInput.restoreTagsFromInput($field, $container, 'office-tag', 'book_offices[]');
+                }
+                else {
                     $field.data('originalValue', $field.val());
                 }
             }
@@ -114,33 +145,69 @@ $(function() {
         }
     });
 
-    // Writers: blur event handler to revert input if unchanged
+    // Blur event handler to revert input if unchanged for all taggable fields
     $(document).on('blur', 'input.field-editable, select.field-editable', function() {
         const $field = $(this);
         setTimeout(() => {
-            if (Writers.isRemoving()) {
+            if (TagInput.isRemoving()) {
                 return;
             }
             const original = $field.data('originalValue');
             let current;
+            // Writers
             if ($field.hasClass('writer-input')) {
-                const $container = Writers.getTagsContainer($field);
-                const currentValues = Writers.getValuesFromContainer($container);
+                const $container = TagInput.getTagsContainer($field, 'writer-tags-container');
+                const currentValues = TagInput.getValuesFromContainer($container, 'book_writers[]');
                 current = currentValues.join(',');
-            } else {
-                current = $field.val();
-            }
-            if (current === original) {
-                if ($field.hasClass('writer-input')) {
-                    const $container = Writers.getTagsContainer($field);
-                    const names = Writers.getValuesFromContainer($container);
+                if (current === original) {
+                    const names = TagInput.getValuesFromContainer($container, 'book_writers[]');
                     $field.val(names.join(', '));
                     $container.empty();
+                    $field.prop('disabled', true)
+                        .removeClass('field-editable field-changed')
+                        .removeData('originalValue');
+                    Utility.clearFieldChanged($field);
                 }
-                $field.prop('disabled', true)
-                    .removeClass('field-editable field-changed')
-                    .removeData('originalValue');
-                Utility.clearFieldChanged($field);
+            }
+            // Genres
+            else if ($field.hasClass('genre-input')) {
+                const $container = TagInput.getTagsContainer($field, 'genre-tags-container');
+                const currentValues = TagInput.getValuesFromContainer($container, 'book_genres[]');
+                current = currentValues.join(',');
+                if (current === original) {
+                    const names = TagInput.getValuesFromContainer($container, 'book_genres[]');
+                    $field.val(names.join(', '));
+                    $container.empty();
+                    $field.prop('disabled', true)
+                        .removeClass('field-editable field-changed')
+                        .removeData('originalValue');
+                    Utility.clearFieldChanged($field);
+                }
+            }
+            // Offices
+            else if ($field.hasClass('office-input')) {
+                const $container = TagInput.getTagsContainer($field, 'office-tags-container');
+                const currentValues = TagInput.getValuesFromContainer($container, 'book_offices[]');
+                current = currentValues.join(',');
+                if (current === original) {
+                    const names = TagInput.getValuesFromContainer($container, 'book_offices[]');
+                    $field.val(names.join(', '));
+                    $container.empty();
+                    $field.prop('disabled', true)
+                        .removeClass('field-editable field-changed')
+                        .removeData('originalValue');
+                    Utility.clearFieldChanged($field);
+                }
+            }
+            // Default
+            else {
+                current = $field.val();
+                if (current === original) {
+                    $field.prop('disabled', true)
+                        .removeClass('field-editable field-changed')
+                        .removeData('originalValue');
+                    Utility.clearFieldChanged($field);
+                }
             }
         }, 150);
     });
