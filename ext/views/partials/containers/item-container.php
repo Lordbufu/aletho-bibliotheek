@@ -150,7 +150,7 @@
                 </div>
 
                 <!-- Status Edit pop-in button -->
-                <div class="input-group input-group-sm mt-2">
+                <div class="input-group input-group-sm mt-1">
                     <button id="boek-status-button"
                         type="button"
                         name="action"
