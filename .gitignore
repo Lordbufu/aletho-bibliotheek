@@ -7,6 +7,7 @@ ext/storage/
 .env
 *.log
 .installed.lock
+temp.txt
 
 
 # PHPUnit and testing artifacts, will clean these up later ?
