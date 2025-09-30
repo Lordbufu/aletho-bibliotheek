@@ -1,16 +1,36 @@
-// modules/popins.js
-export const Popins = (() => {
+
+/**
+ * Popins module: Handles modal popin logic for the app.
+ * - Manages opening/closing popins and body scroll lock
+ * - Centralizes popin selectors
+ * - Handles outside click and hash-based popin opening
+ */
+const Popins = (() => {
+    // Centralized selectors for all popins
+    const popinSelectors = [
+        '#add-book-popin',
+        '#status-period-popin',
+        '#password-reset-popin',
+        '#change-book-status-popin'
+    ];
     let isOpen = false;
     let scrollY = 0;
     let padRight = 0;
 
     /**
-     * 
+     * Get all popin selectors as an array.
+     * @returns {string[]}
+     */
+    function getSelectors() {
+        return popinSelectors;
+    }
+
+    /**
+     * Lock body scroll and adjust padding when popin is open.
      */
     function lockBodyScroll() {
         scrollY = window.scrollY;
         padRight = window.innerWidth - document.body.clientWidth;
-
         $('body')
             .addClass('modal-open')
             .css({
@@ -22,7 +42,7 @@ export const Popins = (() => {
     }
 
     /**
-     * 
+     * Unlock body scroll and reset padding when popin is closed.
      */
     function unlockBodyScroll() {
         $('body')
@@ -33,25 +53,23 @@ export const Popins = (() => {
                 width: '',
                 paddingRight: ''
             });
-
         window.scrollTo(0, scrollY);
     }
 
     /**
-     * 
+     * Open a popin by selector, lock scroll, and set open state.
+     * @param {string} selector - Popin selector
      */
     function open(selector) {
-        if (isOpen) {
-            return;
-        }
-
+        if (isOpen) return;
         lockBodyScroll();
         $(selector).show();
         isOpen = true;
     }
 
     /**
-     * 
+     * Close a popin by selector, unlock scroll, and reset open state.
+     * @param {string} selector - Popin selector
      */
     function close(selector) {
         $(selector).hide();
@@ -60,12 +78,14 @@ export const Popins = (() => {
     }
 
     /**
-     * 
+     * Setup open/close event handlers for a popin.
+     * @param {string} openBtn - Selector for open button
+     * @param {string} popinId - Selector for popin
+     * @param {string} closeBtn - Selector for close button
      */
     function setup(openBtn, popinId, closeBtn) {
         $(openBtn).on('click', () => open(popinId));
         $(closeBtn).on('click', () => close(popinId));
-
         $(popinId).on('click', function (e) {
             if (e.target === this) {
                 close(popinId);
@@ -74,13 +94,12 @@ export const Popins = (() => {
     }
 
     /**
-     * 
+     * Open a popin if the URL hash matches a popin selector.
      */
     function initFromHash() {
         if (window.location.hash) {
             const popinId = window.location.hash;
             const $popin = $(popinId);
-
             if ($popin.length) {
                 open(popinId);
                 history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -89,22 +108,28 @@ export const Popins = (() => {
     }
 
     /**
-     * 
+     * Handle outside click: closes dropdowns if click is outside any open popin.
+     * @param {Event} event - Click event
+     * @param {Function} closeDropdownFn - Function to close dropdowns
      */
-    function handleOutsideClick(event, popinSelectors, closeDropdownFn) {
-        if (!isOpen) {
-            return;
-        }
-
+    function handleOutsideClick(event, closeDropdownFn) {
+        if (!isOpen) return;
         const ePopin = $(event.target).closest(popinSelectors.join(',') + ':visible');
-        if (ePopin.length > 0) {
-            return;
-        }
-
+        if (ePopin.length > 0) return;
         if (typeof closeDropdownFn === 'function') {
             closeDropdownFn(['#customHamburgerDropdown', '#customSearchDropdown']);
         }
     }
 
-    return { open, close, setup, initFromHash, handleOutsideClick };
+    // Exported API
+    return {
+        getSelectors,
+        open,
+        close,
+        setup,
+        initFromHash,
+        handleOutsideClick
+    };
 })();
+
+export { Popins };
