@@ -528,7 +528,9 @@ button:disabled.needs-save {
 
  } */
 
-.writer-tag {
+.writer-tag,
+.genre-tag,
+.office-tag {
     display: inline-flex;
     background: #e0e0e0;
     border-radius: 3px;
@@ -537,14 +539,18 @@ button:disabled.needs-save {
     font-size: 0.85em;
 }
 
-.writer-tag button {
+.writer-tag button,
+.genre-tag button,
+.office-tag button {
     border: none;
     background: transparent;
     margin-left: 4px;
     cursor: pointer;
 }
 
-.writer-suggestions {
+.writer-suggestions,
+.genre-suggestions,
+.office-suggestions {
     position: absolute;
     background: white;
     border: 1px solid #ccc;
@@ -558,14 +564,18 @@ button:disabled.needs-save {
 	top: 100%;
 }
 
-.writer-suggestion {
+.writer-suggestion,
+.genre-suggestion,
+.office-suggestion {
 	display: block;
 	width: 100%;
 	padding: 4px 8px;
 	cursor: pointer;
 }
 
-.writer-suggestion:hover {
+.writer-suggestion:hover,
+.genre-suggestion:hover,
+.office-suggestion:hover {
     background: #f0f0f0;
 	cursor: pointer;
 }
