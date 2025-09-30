@@ -56,13 +56,15 @@ class GenreRepo {
     public function getGenreNamesByBookId(int $bookId): string {
         $mapNames = array_column($this->getAllGenres(), 'name', 'id');
         $names = [];
-
+        
         foreach ($this->getAllLinks() as $link) {
-            if ((int)$link['book_id'] === $bookId) {
-                $names[] = $mapNames[$link['genre_id']] ?? 'Unknown';
+            if ((int)$link['book_id'] !== $bookId) {
+                continue;
             }
+
+            $names[] = $mapNames[$link['genre_id']] ?? 'Unknown';
         }
 
-        return $names[0];           // Temp string return, untill i work with multiples.
+        return implode(', ', $names);
     }
 }

@@ -53,6 +53,7 @@ class BooksService {
             ];
         }
 
+        // dd($out);
         return $out;
     }
 
@@ -67,6 +68,38 @@ class BooksService {
         
         foreach ($temp as $writer) {
             $out[] = $writer['name'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Get all genre names, for frontend autocomplete JQuery.
+     * 
+     * @return array
+     */
+    public function getGenresForDisplay(): array {
+        $temp = $this->genres->getAllGenres();
+        $out = [];
+
+        foreach ($temp as $genre) {
+            $out[] = $genre['name'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Get all office names, for frontend autocomplete JQuery.
+     * 
+     * @return array
+     */
+    public function getOfficesForDisplay(): array {
+        $temp = $this->offices->getAllOffices();
+        $out = [];
+
+        foreach ($temp as $office) {
+            $out[] = $office['name'];
         }
 
         return $out;

@@ -23,10 +23,18 @@ class BookController {
      * 
      * @return json (array of strings)
      */
-    public function writers() {
-        $writers = $this->bookS->getWritersForDisplay();
+    public function bookdata() {
+        $type = $_GET['data'] ?? '';
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($writers);
+        if ($type === 'writers') {
+            echo json_encode($this->bookS->getWritersForDisplay());
+        } elseif ($type === 'genres') {
+            echo json_encode($this->bookS->getGenresForDisplay());
+        } elseif ($type === 'offices') {
+            echo json_encode($this->bookS->getOfficesForDisplay());
+        } else {
+            echo json_encode([]);
+        }
         exit;
     }
 
@@ -36,6 +44,8 @@ class BookController {
      *      [book_id] => 1
      *      [book_name] => Text Book 001
      *      [book_writers] => Array ( [0] => Test Writer 001, )
+     *      [book_genres] => Array ( [0] => Programmeren, )
+     *      [book_offices] => Array ( [0] => Assen, )
      */
     public function edit() {
         if (!isset($_POST['_method'])) {

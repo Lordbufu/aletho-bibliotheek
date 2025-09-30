@@ -10,5 +10,5 @@ $router->patch( '/resetPassword',   'AuthController@resetPassword');
 $router->get(   '/home',            'ViewController@home');
 
 /* App book related routes */
-$router->get(   '/writers',         'BookController@writers');
+$router->get(   '/bookdata',        'BookController@bookdata');
 $router->patch( '/editBook',        'BookController@edit');
