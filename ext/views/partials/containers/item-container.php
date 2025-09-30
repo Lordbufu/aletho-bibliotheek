@@ -62,6 +62,9 @@
             <?php endif; ?>
 
             <?php if ($_SESSION['user']['canEdit']): ?>
+                <!-- Genre tags container, to allow multiple-entries, populated by JQuery events. -->
+                <div class="genre-tags-container" data-book-id="<?= $book['id'] ?>"></div>
+
                 <!-- Genre Name for editing -->
                 <div class="input-group input-group-sm">
                     <input type="text"
@@ -72,10 +75,9 @@
                         data-book-id="<?= $book['id'] ?>"
                         autocomplete="off"
                         disabled>
-                    <button
-                        type="button"
+                    <button type="button"
                         class="btn btn-link extra-button-style"
-                        data-swap-targets="#genre-input-<?= $book['id'] ?>"
+                        data-swap-targets="#book-genre-<?= $book['id'] ?>"
                         aria-label="Edit Genre">✏️</button>
                 </div>
             <?php else: ?>
@@ -84,10 +86,23 @@
             <?php endif; ?>
 
             <?php if ($_SESSION['user']['canEdit'] && $book['canEditOffice']): ?>
+                <!-- Office tags container, to allow multiple-entries, populated by JQuery events. -->
+                <div class="office-tags-container" data-book-id="<?= $book['id'] ?>"></div>
+
                 <!-- Office Name for editing -->
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
-                    <button type="button" class="btn btn-link extra-button-style" data-swap-targets="#office-input-<?= $book['id'] ?>" aria-label="Edit Office">✏️</button>
+                    <input type="text"
+                        class="aletho-inputs extra-input-style office-input"
+                        id="book-office-<?= $book['id'] ?>"
+                        value="<?=htmlspecialchars($book['office']) ?>"
+                        placeholder="Type een locatie en druk op Enter"
+                        data-book-id="<?= $book['id'] ?>"
+                        autocomplete="off"
+                        disabled>
+                    <button type="button"
+                        class="btn btn-link extra-button-style"
+                        data-swap-targets="#book-office-<?= $book['id'] ?>"
+                        aria-label="Edit Office">✏️</button>
                 </div>
             <?php else: ?>
                 <!-- Office Name for viewing -->
@@ -132,12 +147,10 @@
                     <span class="aletho-labels extra-popin-style">Vorige Leners</span>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-
                 <div class="input-group input-group-sm">
                     <!-- Need to refactor this, based on the new books array-->
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-
             <?php endif; ?>
 
             <?php if($_SESSION['user']['canEdit']): ?>
@@ -148,7 +161,6 @@
                         class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-
                 <!-- Status Edit pop-in button -->
                 <div class="input-group input-group-sm mt-1">
                     <button id="boek-status-button"
@@ -157,7 +169,6 @@
                         class="aletho-buttons extra-popin-style">Status Aanpassen</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-
                 <!-- Delete Book button (form submmit ?) -->
                 <div class="input-group input-group-sm mt-1">
                     <button id="remove-book-<?= $book['id'] ?>"
