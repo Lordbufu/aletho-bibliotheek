@@ -105,6 +105,28 @@ class BooksService {
         return $out;
     }
 
+    /**
+     * W.I.P. Update book data, using our library classes.
+     */
+    public function updateBook(int $id, array $data) {
+        // Seperate data for the libraries
+        $writData = $data['writers'] ?? [];
+        $genData  = $data['genres'] ?? [];
+        $offData  = $data['offices'] ?? [];
+        $title    = $data['title'] ?? '';
+
+        // Check $title and update book title via BookRepo
+        $newTitle = $this->books->updateBookTitle($id, $title);
+        // Check $genData and update genres via GenreRepo
+        $newGenres = $this->genres->updateBookGenres($id, $genData);
+        // Check $writData and update writers via WriterRepo
+        $newWriters = $this->writers->updateBookWriters($id, $writData);
+        // Update offices via OfficeRepo
+        $newOffices = $this->office->updateBookOffices($id, $offData);
+
+        // Return something meaningfull for user feedback, if all data was processed correctly.
+    }
+
     /** W.I.P. (potentially obsolete)
      * @return array
      */
