@@ -42,7 +42,8 @@ $(function() {
         endpoint: '/bookdata?data=writers',
         tagClass: 'writer-tag',
         suggestionClass: 'writer-suggestion',
-        hiddenInputName: 'book_writers[]'
+        hiddenInputName: 'book_writers[]',
+        maxTags: 3
     });
 
     // Genres: autocomplete/tagging
@@ -52,7 +53,8 @@ $(function() {
         endpoint: '/bookdata?data=genres',
         tagClass: 'genre-tag',
         suggestionClass: 'genre-suggestion',
-        hiddenInputName: 'book_genres[]'
+        hiddenInputName: 'book_genres[]',
+        maxTags: 3
     });
 
     // Offices: autocomplete/tagging
@@ -63,7 +65,8 @@ $(function() {
         tagClass: 'office-tag',
         maxTags: 1,
         suggestionClass: 'office-suggestion',
-        hiddenInputName: 'book_offices[]'
+        hiddenInputName: 'book_offices[]',
+        maxTags: 1
     });
 
     // Initialize writer input in add-book popin
@@ -72,9 +75,9 @@ $(function() {
         containerSelector: '.add-writer-tags-container',
         endpoint: '/bookdata?data=writers',
         tagClass: 'writer-tag',
-        hiddenInputName: 'writers[]',
+        hiddenInputName: 'book_writers[]',
         suggestionClass: 'writer-suggestion',
-        maxTags: 10
+        maxTags: 3
     });
 
     // Later you can do the same for genres and offices:
@@ -83,9 +86,9 @@ $(function() {
         containerSelector: '.add-genre-tags-container',
         endpoint: '/bookdata?data=genres',
         tagClass: 'genre-tag',
-        hiddenInputName: 'genres[]',
+        hiddenInputName: 'book_genres[]',
         suggestionClass: 'genre-suggestion',
-        maxTags: 5
+        maxTags: 3
     });
 
     // For offices, once you replace <select> with an input:
@@ -94,9 +97,9 @@ $(function() {
         containerSelector: '.add-office-tags-container',
         endpoint: '/bookdata?data=offices',
         tagClass: 'office-tag',
-        hiddenInputName: 'offices[]',
+        hiddenInputName: 'book_offices[]',
         suggestionClass: 'office-suggestion',
-        maxTags: 3
+        maxTags: 1
     });
 
     // Search & Sort: event handlers

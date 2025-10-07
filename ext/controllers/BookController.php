@@ -52,6 +52,7 @@ class BookController {
      *      @return void Redirects to the landing page route, so user lands on the default view again.
      */
     public function add() {
+        dd($_POST);
         $this->bookS->addBook([]);
     }
 
