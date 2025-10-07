@@ -66,6 +66,39 @@ $(function() {
         hiddenInputName: 'book_offices[]'
     });
 
+    // Initialize writer input in add-book popin
+    TagInput.init({
+        inputSelector: '#book-writer-add',
+        containerSelector: '.add-writer-tags-container',
+        endpoint: '/bookdata?data=writers',
+        tagClass: 'writer-tag',
+        hiddenInputName: 'writers[]',
+        suggestionClass: 'writer-suggestion',
+        maxTags: 10
+    });
+
+    // Later you can do the same for genres and offices:
+    TagInput.init({
+        inputSelector: '#book-genre-add',
+        containerSelector: '.add-genre-tags-container',
+        endpoint: '/bookdata?data=genres',
+        tagClass: 'genre-tag',
+        hiddenInputName: 'genres[]',
+        suggestionClass: 'genre-suggestion',
+        maxTags: 5
+    });
+
+    // For offices, once you replace <select> with an input:
+    TagInput.init({
+        inputSelector: '#book-office-add',
+        containerSelector: '.add-office-tags-container',
+        endpoint: '/bookdata?data=offices',
+        tagClass: 'office-tag',
+        hiddenInputName: 'offices[]',
+        suggestionClass: 'office-suggestion',
+        maxTags: 3
+    });
+
     // Search & Sort: event handlers
     SearchSort.initSearch('#search-inp', '#search-options');
     SearchSort.initSort('#sort-options');

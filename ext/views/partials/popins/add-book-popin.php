@@ -17,27 +17,35 @@
                         placeholder="Type een boek naam en druk op Enter."
                         required>
 
-                    <div class="writer-tags-container"></div>
+                    <div class="add-writer-tags-container"></div>
                     <label for="writer" class="aletho-labels extra-popin-style">Schrijver</label>
                     <input type="text"
                         class="aletho-inputs extra-input-style writer-input"
                         id="book-writer-add"
+                        name="book_writers"
                         placeholder="Type een schrijver naam, en druk op Enter"
                         autocomplete="off"
                         required>
 
-                    <div class="genre-tags-container"></div>
+                    <div class="add-genre-tags-container"></div>
                     <label for="genre" class="aletho-labels extra-popin-style">Genre</label>
-                    <input type="text" class="aletho-inputs extra-popin-style" id="genre" name="genre" required>
+                    <input type="text"
+                        class="aletho-inputs extra-popin-style genre-input"
+                        id="book-genre-add"
+                        name="book_genre"
+                        placeholder="Type een genre naam, en druk op Enter"
+                        autocomplete="off"
+                        required>
 
-                    <div class="office-tags-container"></div>
+                    <div class="add-office-tags-container"></div>
                     <label for="office" class="aletho-labels extra-popin-style">Locatie</label>
-                    <select class="aletho-inputs extra-popin-style mb-2" id="office" name="office_id" >
-                        <option value="dummy" selected>Maak een selectie ..</option>
-                        <?php foreach ($offices as $office): ?>
-                        <option value="<?= $office['id'] ?>"><?= htmlspecialchars($office['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <input type="text"
+                        class="aletho-inputs extra-popin-style office-input"
+                        id="book-office-add"
+                        name="book_office"
+                        placeholder="Type een locatie naam, en druk op Enter"
+                        autocomplete="off"
+                        required>
 
                     <button type="submit" class="aletho-buttons extra-popin-style">Opslaan</button>
                 </form>

@@ -220,7 +220,14 @@ const TagInput = (() => {
      * 
      */
     function showSuggestions($input, suggestions, suggestionClass) {
-        const $list = $(`<div class="${suggestionClass}s"></div>`);
+        const offset = $input.offset();
+        const $list = $(`<div class="${suggestionClass}s"></div>`).css({
+            position: 'fixed',
+            top: offset.top + $input.outerHeight(),
+            left: offset.left,
+            width: $input.outerWidth(),
+            zIndex: 2000
+        });
         suggestions.forEach(s => {
             $list.append(`<div class="${suggestionClass}">${s}</div>`);
         });
