@@ -9,8 +9,8 @@ class OfficeRepo {
     protected array $links;
     protected array $userLinks;
 
-    /**
-     * Get all offices table data.
+    /** Get all offices table data.
+     *      @return array
      */
     public function getAllOffices(): array {
         if (!isset($this->offices)) {
@@ -20,7 +20,7 @@ class OfficeRepo {
         }
 
         if (!is_array($this->offices) || $this->offices === []) {
-            App::getService('logger')->error(
+            App::getService('logger')->warning(
                 "The 'OfficeRepo' dint get any offices from the database",
                 'bookservice'
             );
@@ -29,8 +29,8 @@ class OfficeRepo {
         return $this->offices;
     }
 
-    /**
-     * Get all book_office link table data (many-to-many relation).
+    /** Get all book_office link table data (many-to-many relation).
+     *      @return array
      */
     public function getAllLinks(): array {
         if (!isset($this->links)) {
@@ -40,7 +40,7 @@ class OfficeRepo {
         }
 
         if (!is_array($this->links) || $this->links === []) {
-            App::getService('logger')->error(
+            App::getService('logger')->warning(
                 "The 'OfficeRepo' dint get any office-links from the database",
                 'bookservice'
             );
@@ -49,8 +49,8 @@ class OfficeRepo {
         return $this->links;
     }
 
-    /**
-     * Get all user_office table data
+    /** Get all user_office table data
+     *      @return array
      */
     public function getAllUserLinks(): array {
         if (!isset($this->userLinks)) {
@@ -60,7 +60,7 @@ class OfficeRepo {
         }
 
         if (!is_array($this->userLinks) || $this->userLinks === []) {
-            App::getService('logger')->error(
+            App::getService('logger')->warning(
                 "The 'OfficeRepo' dint get any offices-links from the database",
                 'bookservice'
             );
@@ -69,26 +69,32 @@ class OfficeRepo {
         return $this->userLinks;
     }
 
-    /**
-     * Return office name(s) for a book. Supports many-to-many if book_office exists, else falls back to office_id in books table.
+    /** Return office name(s) for a book, based on office id for current relations.
+     *      @param int $officeId The office ID.
+     *      @return string
      */
-    public function getOfficeNamesById(int $officeIdOrBookId): string {
+    public function getOfficeNameByOfficeId(int $officeId): string {
+        $mapNames = array_column($this->getAllOffices(), 'name', 'id');
+        return $mapNames[$officeId] ?? 'Unknown';
+    }
+
+    /** Return office name(s) for a book, based on book id for many-to-many relations.
+     *      @param int $bookId The book ID.
+     *      @return string
+     */
+    public function getOfficeNamesByBookId(int $bookId): string {
         $mapNames = array_column($this->getAllOffices(), 'name', 'id');
         $links = $this->getAllLinks();
         $names = [];
 
-        // If book_office table exists and has links, use many-to-many
-        if (is_array($links) && count($links) > 0) {
-            foreach ($links as $link) {
-                if ((int)$link['book_id'] !== $officeIdOrBookId) {
-                    continue;
-                }
-                $names[] = $mapNames[$link['office_id']] ?? 'Unknown';
+        foreach ($links as $link) {
+            if ((int)$link['book_id'] !== $bookId) {
+                continue;
             }
-            return implode(', ', $names);
+
+            $names[] = $mapNames[$link['office_id']] ?? 'Unknown';
         }
         
-        // Else, treat $officeIdOrBookId as office_id from books table
-        return $mapNames[$officeIdOrBookId] ?? 'Unknown';
+        return implode(', ', $names);
     }
 }
