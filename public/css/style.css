@@ -204,6 +204,28 @@ body.modal-open { overflow: hidden; }
 	border-radius: 0.375rem 0.375rem 0 0;
 }
 
+/* Custom alert style */
+.aletho-alert {
+    position: fixed;
+    top: -80px;
+    left: 50%;
+	transform: translateX(-50%);
+    z-index: 9999;
+    display: inline-block;
+    max-width: 90%;
+    min-width: 250px;
+    padding: 0.75rem 1.25rem;
+    color: #fff;
+	font-family: Quicksand;
+	font-style: normal;
+	font-size: 0.92rem;
+    text-align: center;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: top 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+    word-wrap: break-word;
+}
+
 /* custom element specific tags */
 .page-wrapper {
 	width: 100%;
@@ -458,6 +480,11 @@ button:disabled.needs-save {
     text-align: center;
 }
 
+/* Additional custom alert styles & colors */
+.alert-global-show { top: 0; }
+.alert-global-success { background: #2ecc40; }
+.alert-global-failure { background: #e74c3c; }
+
 /* Responsive styles */
 @media (min-width: 768px) {
     .aletho-background {
@@ -524,9 +551,10 @@ button:disabled.needs-save {
  *		TODO:
  *			- Need to go over this, and change px to rem, and add % where this makes sense.
  */
- /* .writer-tags-container {
 
- } */
+/* Alert styles */
+
+
 
 .writer-tag,
 .genre-tag,
