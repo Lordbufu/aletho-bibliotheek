@@ -4,61 +4,89 @@ namespace Ext\Controllers;
 
 use App\{App, Auth};
 
-/**
- * Handles authentication-related HTTP requests.
- */
+/*  Handles authentication-related HTTP requests. */
 class AuthController {
     protected Auth $auth;
 
+    /* Construct Auth as default local service. */
     public function __construct() {
         $this->auth = new Auth();
+
+        App::getService('logger')->info(
+            "Controller 'AuthController' has constructed 'Auth'",
+            'authcontroller'
+        );
     }
 
-    /**
-     * Show the login form.
+    /** Show the login form.
+     *      @return void Renders the login view.
      */
     public function showForm() {
         return App::view('auth/login');
     }
 
-    /**
-     * Handle login submission.
+    /** Handle login submission.
+     *      @return void Redirects or returns view with errors.
      */
     public function authenticate() {
         $username = trim($_POST['userName'] ?? '');
         $password = $_POST['userPw'] ?? '';
 
         if ($username === '' || $password === '') {
-            App::getService('logger')->warning('Login attempt with missing credentials', 'auth');
-            return App::view('auth/login', ['error' => 'Please enter both username and password.']);
+            App::getService('logger')->warning(
+                'Login attempt with missing credentials',
+                'auth'
+            );
+
+            return App::view('auth/login', [
+                'error' => 'Please enter both username and password.'
+            ]);
         }
 
         if ($this->auth->login($username, $password)) {
-            App::getService('logger')->info("User {$username} logged in", 'auth');
-            return App::redirect('/'); // Redirect to home or dashboard
+            App::getService('logger')->info(
+                "User {$username} logged in",
+                'auth'
+            );
+
+            return App::redirect('/');
         }
 
-        App::getService('logger')->warning("Failed login for {$username}", 'auth');
-        return App::view('auth/login', ['error' => 'Invalid username or password.']);
+        App::getService('logger')->warning(
+            "Failed login for {$username}",
+            'auth'
+        );
+
+        return App::view('auth/login', [
+            'error' => 'Invalid username or password.'
+        ]);
     }
 
-    /**
-     * Handle logout.
+    /** Handle logout.
+     *      @return void Redirects to landing page.
      */
     public function logout() {
         $this->auth->logout();
-        App::getService('logger')->info('User logged out', 'auth');
+
+        App::getService('logger')->info(
+            'User logged out',
+            'auth'
+        );
 
         if (!isset($_SESSION['user'])) {
             $_SESSION['user']['role'] = 'Guest';
-            App::getService('logger')->info("User role reset to 'Guest'", 'auth');
+
+            App::getService('logger')->info(
+                "User role reset to 'Guest'",
+                'auth'
+            );
         }
         
         return App::redirect('/');
     }
 
-    /**
-     * Handle password reset (for own account).
+    /** Handle password reset (for own account).
+     *      @return void Redirects back to home->password-reset-popin with a status message.
      */
     public function resetPassword() {
         $userId         = $_SESSION['user']['id'] ?? null;
@@ -67,12 +95,20 @@ class AuthController {
         $confirmNewPw   = $_POST['confirmNewPw'] ?? '';
 
         if (!$userId) {
-            App::getService('logger')->error('Password reset attempted without user session', 'auth');
-            $_SESSION['_flash'] = ['error' => 'Not logged in.'];
+            App::getService('logger')->error(
+                'Password reset attempted without user session',
+                'auth'
+            );
+
+            $_SESSION['_flash'] = [
+                'error' => 'Not logged in.'
+            ];
         }
 
         if ($newPw !== $confirmNewPw) {
-            $_SESSION['_flash'] = ['error' => 'New passwords do not match.'];
+            $_SESSION['_flash'] = [
+                'error' => 'New passwords do not match.'
+            ];
         }
 
         if (!isset($_SESSION['flash']['error'])) {

@@ -1,31 +1,40 @@
 <?php
 
+/*  Dealing with errrors and user feedback:
+ *      $_SESSION['_flash'] = [
+ *          'type'      => 'failure'|'success', 
+ *          'message'   => '...'
+ *      ]
+ */
+
 namespace Ext\Controllers;
 
-use App\{App, BooksService};
+use App\{App, BooksService, ValidationService};
 
-/**
- * Handles books related user logic.
- */
+/** Handles books related user logic. */
 class BookController {
     protected BooksService $bookS;
+    protected ValidationService $valS;
 
-    /**
-     * Construct BooksService as default local service.
-     */
+    /** Construct BooksService as default local service. */
     public function __construct() {
         $this->bookS = new BooksService;
+        $this->valS  = new ValidationService();
+
+        App::getService('logger')->info(
+            "Controller 'BookController' has constructed 'BooksService' and 'ValidationService'",
+            'bookcontroller'
+        );
     }
 
-    /**
-     * Get and return all potentialy known book writers.
-     * For the UI/UX autocomplete features on the admin side of things.
-     * 
-     * @return json (array of strings)
+    /** Get and return all potentialy known book writers/genres/offices, for form autocomplete features.
+     *      @return void Outputs JSON and exits.
      */
     public function bookdata() {
         $type = $_GET['data'] ?? '';
+
         header('Content-Type: application/json; charset=utf-8');
+
         if ($type === 'writers') {
             echo json_encode($this->bookS->getWritersForDisplay());
         } elseif ($type === 'genres') {
@@ -35,46 +44,73 @@ class BookController {
         } else {
             echo json_encode([]);
         }
+
         exit;
     }
 
-    /**
-     * Expected book data format:
-     *      [_method] => PATCH
-     *      [book_id] => 1
-     *      [book_name] => Text Book 001
-     *      [book_writers] => Array ( [0] => Test Writer 001, )
-     *      [book_genres] => Array ( [0] => Programmeren, )
-     *      [book_offices] => Array ( [0] => Assen, )
+    /** Filter and process book add form data, and call the add functions in the BooksService.
+     *      @return void Redirects to the landing page route, so user lands on the default view again.
+     */
+    public function add() {
+        $this->bookS->addBook([]);
+    }
+
+    /** Filter and process book edit form data, and call the update function in the BooksService.
+     *      @return void Redirects to the landing page route, so user lands on the default view again.
      */
     public function edit() {
-        if (!isset($_POST['_method']) || $_POST['_method'] !== 'PATCH' || $_POST['book_id'] < 1) {
+        $hasError   = false;
+        $newData    = [];
+        $result     = false;
+
+        // Filter out unauthorized users first.
+        if (!App::getService('auth')->canUpdateInfo()) {
+            $hasError = setFlash([
+                'type'      => 'failure',
+                'message'   => 'Je hebt geen rechten om deze actie uit te voeren.'
+            ]);
             return App::redirect('/');
         }
 
-        $bookId = isset($_POST['book_id']) ? (int)$_POST['book_id'] : 0;
-        $bookName = isset($_POST['book_name']) ? trim(strip_tags($_POST['book_name'])) : '';
-        $writers = isset($_POST['book_writers']) && is_array($_POST['book_writers']) ? array_map('strip_tags', $_POST['book_writers']) : [];
-        $genres = isset($_POST['book_genres']) && is_array($_POST['book_genres']) ? array_map('strip_tags', $_POST['book_genres']) : [];
-        $offices = isset($_POST['book_offices']) && is_array($_POST['book_offices']) ? array_map('strip_tags', $_POST['book_offices']) : [];
-
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
-            return App::redirect('/');
+        // Check if POST data exists and is 'sanitized'.
+        if (empty($_POST) || !$this->valS->sanitizeInput($_POST)) {
+            $bookId = isset($_POST['book_id']) && is_numeric($_POST['book_id']) ? (int)$_POST['book_id'] : 0;
+            $hasError = setFlash([
+                'type'      => 'failure',
+                'message'   => $this->valS->valErrors(),
+                'old'       => ['book_id' => $bookId]
+            ]);
+        } else {
+            $newData = $this->valS->sanData();
         }
 
-        if (! $_SESSION['user']['canEdit']) {
-            return App::redirect('/home');
+        //  Validate input, and return errors and old input on failure.
+        if (!$hasError && !$this->valS->validateBookForm($newData, 'edit')) {
+            $hasError = setFlash([
+                'type'      => 'failure',
+                'message'   => $this->valS->valErrors(),
+                'old'       => $newData
+            ]);
         }
 
-        // TODO: Write update function, and adjust associated libraries as well, to support the data and its links.
-        $result = $this->bookS->updateBook($bookId, [
-            'title' => $bookName,
-            'writers' => $writers,
-            'genres' => $genres,
-            'offices' => $offices
-        ]);
+        // Attempt to update book data if no errosr where set.
+        if (!$hasError) {
+            $result = $this->bookS->updateBook($newData);
+            
+            if (!$result) {
+                $hasError = setFlash([
+                    'type'      => 'failure',
+                    'message'   => 'Boekgegevens zijn niet bijgewerkt.',
+                    'old'       => $newData
+                ]);
+            } else {
+                $hasError = setFlash([
+                    'type'      => 'success',
+                    'message'   => 'Boekgegevens zijn bijgewerkt.'
+                ]);
+            }
+        }
 
-        // TODO: Add user feedback.
-        return App::redirect('/home');
+        return App::redirect('/');
     }
 }

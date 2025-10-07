@@ -4,27 +4,35 @@ namespace Ext\Controllers;
 
 use App\App;
 
-/**
- * Handles general view rendering and redirects.
- */
+/* Handles general view rendering and redirects. */
 class ViewController {
-    /**
-     * Initial landing view, redirecting guests to the login view.
+    /** Initial landing view, redirecting guests to the login view.
+     *     @return void Redirects to login or home.
      */
     public function landing() {
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
         if (!$userAgent) {
-            App::getService('logger')->warning('No user-agent found', 'system');
+            App::getService('logger')->warning(
+                'No user-agent found',
+                'system'
+            );
+
             return App::redirect('/login');
         }
 
         if (empty($_SESSION['user'])) {
-            $_SESSION['user'] = ['role' => 'Guest'];
+            $_SESSION['user'] = [
+                'role' => 'Guest'
+            ];
         }
 
         if (!isset($_SESSION['user']['role'])) {
-            App::getService('logger')->error('Session missing user role', 'system');
+            App::getService('logger')->error(
+                'Session missing user role',
+                'system'
+            );
+
             return App::redirect('/login');
         }
 
@@ -37,8 +45,8 @@ class ViewController {
         return $this->home();
     }
 
-    /**
-     * Home/dashboard view for authenticated users.
+    /** Home/dashboard view for authenticated users.
+     *    @return void Renders the home view with book data.
      */
     public function home() {
         if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
@@ -48,9 +56,14 @@ class ViewController {
         $books = App::getService('books')->getAllForDisplay();
 
         if (!is_array($books) || $books === []) {
-            App::getService('logger')->error("The 'ViewController' din't get the expected 'books' data", 'controllers');
+            App::getService('logger')->error(
+                "The 'ViewController' din't get the expected 'books' data",
+                'controllers'
+            );
         }
 
-        return App::view('main', ['books' => $books ?? null]);
+        return App::view('main', [
+            'books' => $books ?? null
+        ]);
     }
 }
