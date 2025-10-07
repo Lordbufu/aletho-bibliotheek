@@ -11,4 +11,5 @@ $router->get(   '/home',            'ViewController@home');
 
 /* App book related routes */
 $router->get(   '/bookdata',        'BookController@bookdata');
+$router->post(  '/addBook',         'BookController@add');
 $router->patch( '/editBook',        'BookController@edit');

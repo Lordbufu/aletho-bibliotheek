@@ -1,12 +1,11 @@
 import { Utility } from './utility.js';
 
-/**
- * TagInput module: Generic tag input for autocomplete, tag management, and suggestion filtering.
- * - Fetches all options once on page load (writers, genres, offices, etc.)
- * - Filters suggestions client-side
- * - Manages tag add/remove and input state
- * - Supports limiting the number of tags (maxTags)
- * - Shows a tooltip if user tries to exceed maxTags
+/** TagInput module: Generic tag input for autocomplete, tag management, and suggestion filtering:
+ *      - Fetches all options once on page load (writers, genres, offices, etc.)
+ *      - Filters suggestions client-side
+ *      - Manages tag add/remove and input state
+ *      - Supports limiting the number of tags (maxTags)
+ *      - Shows a tooltip if user tries to exceed maxTags
  *
  * Usage:
  *   TagInput.init({
@@ -23,16 +22,15 @@ const TagInput = (() => {
     let removingTag = false;
     let selectingSuggestion = false;
 
-    /**
-     * Initialize tag input and tag container.
-     * @param {Object} config - Configuration object
-     * @param {string} config.inputSelector - Selector for the input field(s)
-     * @param {string} config.containerSelector - Selector for the tag container(s)
-     * @param {string} config.endpoint - API endpoint to fetch options
-     * @param {string} config.tagClass - CSS class for tags
-     * @param {string} config.suggestionClass - CSS class for suggestions
-     * @param {string} config.hiddenInputName - Name for hidden input(s)
-     * @param {number} [config.maxTags] - Optional: maximum number of tags allowed
+    /** Initialize tag input and tag container.
+     *      @param {Object} config - Configuration object
+     *      @param {string} config.inputSelector - Selector for the input field(s)
+     *      @param {string} config.containerSelector - Selector for the tag container(s)
+     *      @param {string} config.endpoint - API endpoint to fetch options
+     *      @param {string} config.tagClass - CSS class for tags
+     *      @param {string} config.suggestionClass - CSS class for suggestions
+     *      @param {string} config.hiddenInputName - Name for hidden input(s)
+     *      @param {number} [config.maxTags] - Optional: maximum number of tags allowed
      */
     function init(config) {
         const $input = $(config.inputSelector);
@@ -112,11 +110,10 @@ const TagInput = (() => {
         $(document).on('mousedown', `.remove-${config.tagClass}`, () => setRemoving(true));
     }
 
-    /**
-     * Debounce helper: limits function execution rate.
-     * @param {Function} fn - Function to debounce
-     * @param {number} delay - Delay in ms
-     * @returns {Function}
+    /** Debounce helper: limits function execution rate.
+     *      @param {Function} fn - Function to debounce
+     *      @param {number} delay - Delay in ms
+     *      @returns {Function}
      */
     function debounce(fn, delay) {
         let timer;
@@ -129,15 +126,14 @@ const TagInput = (() => {
     function setRemoving(val) { removingTag = val; }
     function isRemoving() { return removingTag; }
 
-    /**
-     * Add a tag to the container, if not already present and maxTags not exceeded.
-     * Shows a tooltip if maxTags is reached.
-     * @param {string} name - Tag value to add
-     * @param {jQuery} $input - Input field
-     * @param {jQuery} $container - Tag container
-     * @param {string} tagClass - CSS class for tags
-     * @param {string} hiddenInputName - Name for hidden input(s)
-     * @param {number} [maxTags] - Optional: maximum number of tags allowed
+    /** Add a tag to the container, if not already present and maxTags not exceeded.
+     *  Shows a tooltip if maxTags is reached.
+     *      @param {string} name - Tag value to add
+     *      @param {jQuery} $input - Input field
+     *      @param {jQuery} $container - Tag container
+     *      @param {string} tagClass - CSS class for tags
+     *      @param {string} hiddenInputName - Name for hidden input(s)
+     *      @param {number} [maxTags] - Optional: maximum number of tags allowed
      */
     function addTag(name, $input, $container, tagClass, hiddenInputName, maxTags) {
         if ($container.find(`.${tagClass}[data-name="${name}"]`).length) {
@@ -159,11 +155,10 @@ const TagInput = (() => {
         Utility.markFieldChanged($input);
     }
 
-    /**
-     * Show a tooltip near the input if user tries to add more than allowed tags.
-     * Tooltip auto-hides after 1.8 seconds.
-     * @param {jQuery} $input - Input field
-     * @param {number} maxTags - Maximum allowed tags
+    /** Show a tooltip near the input if user tries to add more than allowed tags.
+     *  Tooltip auto-hides after 1.8 seconds.
+     *      @param {jQuery} $input - Input field
+     *      @param {number} maxTags - Maximum allowed tags
      */
     function showTagLimitWarning($input, maxTags) {
         // Simple tooltip implementation
@@ -185,16 +180,16 @@ const TagInput = (() => {
         setTimeout(() => { $tooltip.fadeOut(300, () => $tooltip.remove()); }, 1800);
     }
 
-    /**
-     * Get the tags container for a given input field.
+    /** Get the tags container for a given input field.
+     * 
      */
     function getTagsContainer($field, containerClass) {
         const bookId = $field.data('book-id');
         return $(`.${containerClass}[data-book-id="${bookId}"]`);
     }
 
-    /**
-     * Get all tag values from a container, sorted and trimmed.
+    /** Get all tag values from a container, sorted and trimmed.
+     * 
      */
     function getValuesFromContainer($container, hiddenInputName) {
         return $container.find(`input[name="${hiddenInputName}"]`).map(function() {
@@ -202,9 +197,9 @@ const TagInput = (() => {
         }).get().filter(Boolean).sort();
     }
 
-    /**
-     * Restore tags from input value (comma-separated string) for a given field/container.
-     * Used when enabling edit mode.
+    /** Restore tags from input value (comma-separated string) for a given field/container.
+     *  Used when enabling edit mode.
+     * 
      */
     function restoreTagsFromInput($field, $container, tagClass, hiddenInputName) {
         const existing = $field.val();
@@ -221,8 +216,8 @@ const TagInput = (() => {
         $field.data('originalValue', origValues.join(','));
     }
 
-    /**
-     * Show suggestions below the input field.
+    /** Show suggestions below the input field.
+     * 
      */
     function showSuggestions($input, suggestions, suggestionClass) {
         const $list = $(`<div class="${suggestionClass}s"></div>`);
@@ -233,8 +228,8 @@ const TagInput = (() => {
         $input.after($list);
     }
 
-    /**
-     * Remove the suggestions dropdown.
+    /** Remove the suggestions dropdown.
+     * 
      */
     function closeSuggestions($input, suggestionClass) {
         $input.siblings(`.${suggestionClass}s`).remove();

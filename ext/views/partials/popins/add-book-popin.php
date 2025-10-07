@@ -10,14 +10,27 @@
             <div class="aletho-modal-body">
                 <form id="add-book-form">
                     <label for="book-name" class="aletho-labels extra-popin-style">Boeknaam</label>
-                    <input type="text" class="aletho-inputs extra-popin-style" id="book-name" name="book_name" required>
+                    <input type="text"
+                        class="aletho-inputs extra-input-style"
+                        id="book-name-add"
+                        name="book_name"
+                        placeholder="Type een boek naam en druk op Enter."
+                        required>
 
-                    <label for="writer" class="aletho-labels extra-popin-style">Auteur</label>
-                    <input type="text" class="aletho-inputs extra-popin-style" id="writer" name="writer" required>
+                    <div class="writer-tags-container"></div>
+                    <label for="writer" class="aletho-labels extra-popin-style">Schrijver</label>
+                    <input type="text"
+                        class="aletho-inputs extra-input-style writer-input"
+                        id="book-writer-add"
+                        placeholder="Type een schrijver naam, en druk op Enter"
+                        autocomplete="off"
+                        required>
 
+                    <div class="genre-tags-container"></div>
                     <label for="genre" class="aletho-labels extra-popin-style">Genre</label>
                     <input type="text" class="aletho-inputs extra-popin-style" id="genre" name="genre" required>
 
+                    <div class="office-tags-container"></div>
                     <label for="office" class="aletho-labels extra-popin-style">Locatie</label>
                     <select class="aletho-inputs extra-popin-style mb-2" id="office" name="office_id" >
                         <option value="dummy" selected>Maak een selectie ..</option>

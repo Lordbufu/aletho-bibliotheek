@@ -4,7 +4,6 @@
  * All feature logic is delegated to modules for maintainability.
  */
 
-// Import modules first (using this to reduce header clutter):
 import { Popins } from './modules/popins.js';
 import { Dropdowns } from './modules/dropdowns.js';
 import { TagInput } from './modules/taginput.js';
@@ -13,6 +12,22 @@ import { Utility } from './modules/utility.js';
 
 // Document ready: wire up modules and event handlers
 $(function() {
+    // Test code for user feedback notifications.
+    const $alert = $('.alert-global-success, .alert-global-failure');
+    if ($alert.length) {
+        setTimeout(() => {
+            $alert.addClass('alert-global-show');
+        }, 100); // slight delay for transition
+
+        setTimeout(() => {
+            $alert.removeClass('alert-global-show');
+        }, 3500); // show for 3.5 seconds
+
+        setTimeout(() => {
+            $alert.remove();
+        }, 4000); // remove from DOM after hiding
+    }
+
     // Popins: hash-based open and setup for all popins
     Popins.initFromHash();
     Popins.setup('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
@@ -210,6 +225,19 @@ $(function() {
                 }
             }
         }, 150);
+    });
+
+    /*  Book-name-[$id] input, keydown event:
+     *      Stopping form submit when `Enter` is pressed, so its inline with other inputs.
+     *      Normalizing and trimming the input, and triggering `on blur` or `on change` events.
+     */
+    $('[id^="book-name-"]').on('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const $input = $(this);
+            const value = $input.val().trim();
+            if (value) { $input.blur(); }
+        }
     });
 
     // Trigger change on load to pre-fill with the first status
