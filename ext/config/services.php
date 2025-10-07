@@ -19,6 +19,10 @@ return [
     'auth' => [
         'class'  => \App\Auth::class
     ],
+    // Core validation service
+    'val' => [
+        'class'  => \App\Validation\FormValidation::class
+    ],
     // Core Books Service
     'books' => [
         'class' => \App\BooksService::class
