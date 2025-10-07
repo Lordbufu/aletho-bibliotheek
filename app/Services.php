@@ -17,9 +17,9 @@ class Services {
     /** @var array<string, mixed> */
     protected array $factories = [];
 
-    /**
-     * @param string|array $configFile Path to a PHP config file returning an array, or an array of service definitions.
-     * @throws \RuntimeException|\InvalidArgumentException
+    /** Construct the Services container.
+     *      @param string|array $configFile Path to a PHP config file returning an array, or an array of service definitions.
+     *      @throws \RuntimeException|\InvalidArgumentException
      */
     public function __construct(string|array $configFile) {
         if (is_string($configFile)) {
@@ -46,12 +46,10 @@ class Services {
         );
     }
 
-    /**
-     * Retrieve a service instance by name, instantiating it if necessary.
-     *
-     * @param string $name Service name
-     * @return mixed The service instance
-     * @throws \InvalidArgumentException|\RuntimeException
+    /** Retrieve a service instance by name, instantiating it if necessary.
+     *      @param string $name Service name
+     *      @return mixed The service instance
+     *      @throws \InvalidArgumentException|\RuntimeException
      */
     public function get(string $name) {
         App::getServiceSafeLogger()->warning("Resolving service: {$name}");
