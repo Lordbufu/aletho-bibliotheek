@@ -7,25 +7,22 @@
 		<meta name="description" content="Een bibliotheek App voor Alétho.">
 		<link rel="icon" type="image/x-icon" href="/images/favicon.ico">
 		<title>Alétho Bibliotheek App</title>
-		<!-- Font Awesome min css: -->
 		<link href="css/fontawesome.all.min.css" rel="stylesheet">
-		<!-- Manual Bootstrap min css: -->
 		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
-		<!-- Adobe Font BC Alphapipe -->
 		<link rel="stylesheet" href="https://use.typekit.net/rsa4jkk.css">
-		<!-- Google Font Quicksand -->
 		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet'>
-		<!-- Custom CSS & JS stuff: -->
 		<link rel="stylesheet" type="text/css" href="css/style.css">
-		<!-- Manual JQuery min css: -->
 		<script src="js/jquery-3.7.1.min.js"></script>
-		<!-- Homemade frontend code: -->
 		<script type="module" src="js/main.js"></script>
-		<!-- <script src="js/modules/popins.js"></script>
-		<script src="js/modules/dropdowns.js"></script>
-		<script src="js/modules/writers.js"></script> -->
 		<!-- PHP code for device specific styles etc goes here -->
 	</head>
 
 	<!-- Body to set the main page style and size -->
 	<body class="aletho-background">
+		<!-- user feedback container for the entire app -->
+		<?php if (!empty($_SESSION['_flash'])): ?>
+			<div class="aletho-border aletho-alert alert-global-<?= $_SESSION['_flash']['type'] ?>" role="alert">
+				<?= htmlspecialchars($_SESSION['_flash']['message']) ?>
+			</div>
+			<?php unset($_SESSION['_flash']); ?>
+		<?php endif; ?>
