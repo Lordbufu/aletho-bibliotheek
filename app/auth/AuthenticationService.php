@@ -3,22 +3,24 @@
 namespace App\Auth;
 
 use App\App;
+use App\Validation\PasswordValidation;
 
-/**
- * Handles user authentication, authorization, and password management.
- */
+/* Handles user authentication, authorization, and password management. */
 class AuthenticationService {
     protected array $permissionsMap;
-    protected PasswordValidator $passwordValidator;
+    protected PasswordValidation $passwordValidator;
 
-    public function __construct(PasswordValidator $passwordValidator = null) {
+    /** Construct the authentication service.
+     *      @param PasswordValidation|null $passwordValidator Optional custom password validator.
+     */
+    public function __construct(PasswordValidation $passwordValidator = null) {
         $this->permissionsMap = include BASE_PATH . '/ext/config/permissions.php';
-        $this->passwordValidator = $passwordValidator ?? new PasswordValidator();
+        $this->passwordValidator = $passwordValidator ?? new PasswordValidation();
     }
 
-    /**
-     * Determine the user's role for permissions.
-     * Returns the highest privilege role.
+    /** Determine the user's role for permissions.
+     *      @param array $user The user record.
+     *      @return string The user's role.
      */
     private function getRole(array $user): string {
         if (!empty($user['is_global_admin'])) return 'Global Admin';
@@ -27,16 +29,18 @@ class AuthenticationService {
         return 'Guest';
     }
 
-    /**
-     * Check if the current user has a given permission.
+    /** Check if the current user has a given permission.
+     *      @param string $permission The permission to check.
+     *      @return bool Whether the user has the permission.
      */
     private function can(string $permission): bool {
         $role = $_SESSION['user']['role'] ?? 'Guest';
         return in_array($permission, $this->permissionsMap[$role] ?? []);
     }
 
-    /**
-     * Fetch a user by name.
+    /** Fetch a user by name.
+     *      @param string $name The username.
+     *      @return array|null The user record or null if not found.
      */
     private function findUserByName(string $name): ?array {
         return App::getService('database')
@@ -44,9 +48,9 @@ class AuthenticationService {
             ->fetchOne("SELECT * FROM users WHERE name = ?", [$name]);
     }
 
-    /**
-     * Resolve the office assignment for a user.
-     * Returns 'All' if user has multiple offices, otherwise office id or 0.
+    /** Resolve the office assignment for a user.
+     *      @param array $user The user record.
+     *      @return int|string The office ID, 'All', or 0 if none.
      */
     private function resolveOffice(array $user) {
         if (empty($user['is_global_admin']) && empty($user['is_office_admin'])) {
@@ -64,9 +68,10 @@ class AuthenticationService {
         return count($userOffices) > 1 ? 'All' : $userOffices[0]['office_id'];
     }
 
-    /**
-     * Attempt to log in a user by name and password.
-     * Returns true on success, false on failure.
+    /** Attempts to log in a user by there name and password, and sets there initial session data.
+     *      @param string $name The username.
+     *      @param string $password The plaintext password.
+     *      @return bool Success status.
      */
     public function login(string $name, string $password): bool {
         $user = $this->findUserByName($name);
@@ -91,18 +96,17 @@ class AuthenticationService {
         return true;
     }
 
-    /**
-     * Log out the current user.
-     */
+    /* Log out the current user, and destory its session. */
     public function logout(): void {
         session_destroy();
         $_SESSION = [];
-        App::getService('logger')->info("User logged out", 'auth');
     }
 
-    /**
-     * Allow office admins to change their own password.
-     * Returns array with status message.
+    /** Allows Office Admins to change their own password.
+     *      @param int $userId The ID of the user changing their password.
+     *      @param string $currentPassword The user's current password.
+     *      @param string $newPassword The new password to set.
+     *      @return array Status message.
      */
     public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): array {
         if (!$this->can('manage_account')) {
@@ -132,7 +136,7 @@ class AuthenticationService {
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $success = App::getService('database')
             ->query()
-            ->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
+            ->run("UPDATE users SET password = ? WHERE id = ?", [$hash, $userId]);
 
         if ($success) {
             App::getService('logger')->info("User {$userId} changed their own password", 'auth');
@@ -144,10 +148,12 @@ class AuthenticationService {
         return ['error' => 'Password update failed'];
     }
 
-    /**
-     * Allow an admin to reset another user's password.
-     * Returns array with status message.
-     */
+    /** Allows Gobal Admins to reset other user's there password.
+     *      @param string $targetUserName The username of the account to reset.
+     *      @param string $newPassword The new password to set.
+     *      @param string $confirmPassword Confirmation of the new password.
+     *      @return array Status message.
+     */ 
     public function resetUserPassword(string $targetUserName, string $newPassword, string $confirmPassword): array {
         if (!$this->can('manage_account')) {
             App::getService('logger')->error('UNAUTHORIZED password reset attempt', 'auth');
@@ -173,7 +179,7 @@ class AuthenticationService {
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $success = App::getService('database')
             ->query()
-            ->execute("UPDATE users SET password = ? WHERE id = ?", [$hash, $user['id']]);
+            ->run("UPDATE users SET password = ? WHERE id = ?", [$hash, $user['id']]);
 
         if ($success) {
             App::getService('logger')->info("Admin reset password for: {$targetUserName}", 'auth');
@@ -182,6 +188,25 @@ class AuthenticationService {
 
         App::getService('logger')->error('PASSWORD_UPDATE_FAILED', 'auth');
         return ['error' => 'Password update failed'];
+    }
+
+    /** Check if the current user can update book info.
+     *      @return bool Whether the user can update book info.
+     */
+    public function canUpdateInfo(): bool {
+        if (!isset($_POST['_method']) || $_POST['_method'] !== 'PATCH' || $_POST['book_id'] < 1) {
+            return false;
+        }
+
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
+            return false;
+        }
+
+        if (! $_SESSION['user']['canEdit']) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

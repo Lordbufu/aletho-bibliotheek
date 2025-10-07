@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Auth;
+namespace App\Validation;
 
 /**
  * Validates password strength against configurable rules.
  */
-class PasswordValidator {
+class PasswordValidation {
     private const MIN_LENGTH      = 8;                      /** Minimum allowed password length */
     private const REQUIRE_UPPER   = true;                   /** Require at least one uppercase letter */
     private const REQUIRE_LOWER   = true;                   /** Require at least one lowercase letter */
