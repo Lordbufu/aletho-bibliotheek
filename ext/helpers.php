@@ -19,6 +19,16 @@ if (!function_exists('dd')) {
     }
 }
 
+if (!function_exists('setFlash')) {
+    function setFlash($data) {
+        foreach ($data as $key => $value) {
+            $_SESSION['_flash'][$key] = $value;
+        }
+        return true;
+    }
+
+}
+
 if (!function_exists('handleBootFailure')) {
     function handleBootFailure(array $errors): void {
         error_log("App failed to boot with " . count($errors) . " errors: " . implode('; ', $errors));
