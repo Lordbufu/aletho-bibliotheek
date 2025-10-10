@@ -43,6 +43,10 @@ class BooksService {
         $out  = [];
 
         foreach ($rows as $row) {
+            if (!$row['active']) {
+                continue;
+            }
+            
             $out[] = [
                 'id'     => (int)$row['id'],
                 'title'  => $row['title'],
@@ -57,7 +61,6 @@ class BooksService {
             ];
         }
 
-        // dd($out);
         return $out;
     }
 
@@ -108,8 +111,64 @@ class BooksService {
      *         Expected keys: title (string), writers (array), genres (array), offices (array)
      *      @return bool True on success, false on failure.
      */
-    public function addBook(array $data): bool {
-        dd('Add books function needs to still be writern');
+    public function addBook(array $data): mixed {
+        $updated = false;
+
+        // Temporary handling until many-to-many offices are supported
+        $officeId = is_array($data['book_offices']) && count($data['book_offices']) > 0
+            ? $data['book_offices'][0]
+            : null;
+        
+        // Check if we still have the book data stored, if so set it to active agian.
+        foreach($this->books->findAll() as $book) {
+            if ($book['title'] === $data['book_name']) {
+                if ($book['active']) {
+                    return "This book name is already in the database";
+                }
+
+                $this->db
+                    ->query()
+                    ->run("UPDATE books SET active = 1 WHERE id = ?",
+                    [$book['id']]
+                );
+
+                return true;
+            }
+        }
+
+        dd("No match found !!");
+
+        // Attempt to update book data within a PDO transaction.
+        try {
+            if (!$this->db->startTransaction()) {
+                throw new \RuntimeException('Failed to start database transaction.');
+            }
+
+            if (!empty($data['book_name']) || !empty($data['book_offices'])) {
+                $this->books->addBook($data['book_name'], $data['book_offices']);
+            }
+
+            if (!empty($data['book_genres'])) {
+                $this->genres->addGenres($data['book_genres'], $bookId);
+            }
+
+            if (!empty($data['book_writers'])) {
+                $this->writers->addWriters($data['book_writers'], $bookId);
+            }
+
+            $this->db->finishTransaction();
+
+            return true;
+        } catch(\Throwable $e) {
+            $this->db->cancelTransaction();
+
+            App::getService('logger')->error(
+                "The 'BooksService' failed to update book data: {$e->getMessage()}",
+                'bookservice'
+            );
+
+            return false;
+        }
     }
 
     /** Update book data, using our library classes.
@@ -163,6 +222,13 @@ class BooksService {
 
             return false;
         }
+    }
+
+    /**
+     * 
+     */
+    public function deleteBook(int $bookId): bool {
+        // simply set the 'active' field to 0
     }
 
     /** W.I.P. (potentially obsolete)
