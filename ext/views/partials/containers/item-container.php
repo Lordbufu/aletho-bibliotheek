@@ -159,21 +159,25 @@
                         class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
+        </form>
                 <div class="input-group input-group-sm mt-1">
                     <button id="boek-status-button"
                         type="button"
-                        name="action"
                         class="aletho-buttons extra-popin-style">Status Aanpassen</button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
+
                 <div class="input-group input-group-sm mt-1">
-                    <button id="remove-book-<?= $book['id'] ?>"
-                        type="submit"
-                        name="action"
-                        class="aletho-buttons extra-popin-style">Boek Verwijderen</button>
-                    <div type="button" class="extra-fake-button"></div>
+                    <form class="book-delete-form" data-book-id="<?= $book['id'] ?>" method="post" action="/delBook">
+                        <input type="hidden" name="_method" value="DELETE">
+                        <input type="hidden" name="book_id" value="<?= $book['id'] ?>">
+
+                        <button id="remove-book-<?= $book['id'] ?>"
+                            type="submit"
+                            class="aletho-buttons extra-popin-style">Boek Verwijderen</button>
+                        <div type="button" class="extra-fake-button"></div>
+                    </form>
                 </div>
             <?php endif; ?>
-        </form>
     </div>
 </div>
