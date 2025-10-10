@@ -76,4 +76,11 @@ class Query {
         $stmt = $this->run($sql, $params);
         return $stmt ? $stmt->fetchColumn() : null;
     }
+
+    /** Return index key from last query operration.
+     *      @return string  -> index key from last query operration
+     */
+    public function lastInsertId(): string {
+        return $this->connection->pdo()->lastInsertId();
+    }
 }
