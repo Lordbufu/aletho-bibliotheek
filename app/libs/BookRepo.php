@@ -46,6 +46,13 @@ class BookRepo {
         return $this->book;
     }
 
+    /**
+     * 
+     */
+    public function addBook(string $bookName, string $officeId) {
+
+    }
+
     /** Update the book title for edit functions.
      *      @param int $bookId The book ID.
      *      @param string $title The new book title.

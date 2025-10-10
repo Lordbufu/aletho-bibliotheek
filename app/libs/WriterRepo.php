@@ -68,6 +68,13 @@ class WriterRepo {
         return implode(', ', $names);
     }
 
+    /**
+     * 
+     */
+    public function addBookWriters(string $bookWriters, int $bookId) {
+
+    }
+
     /** Update the writers for a given book (many-to-many), removes all existing links and inserts the new ones.
      *      @param int $bookId
      *      @param array $writers Array of writer names or IDs

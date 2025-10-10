@@ -68,6 +68,13 @@ class GenreRepo {
         return implode(', ', $names);
     }
 
+    /**
+     * 
+     */
+    public function addBookGenres(string $bookGenres, int $bookId) {
+
+    }
+
     /** Update the genres for a given book (many-to-many), removing any current links.
      *      @param int $bookId
      *      @param array $genres Array of genre names or IDs

@@ -52,8 +52,10 @@ class BookController {
      *      @return void Redirects to the landing page route, so user lands on the default view again.
      */
     public function add() {
-        dd($_POST);
-        $this->bookS->addBook([]);
+        // dd($_POST);
+        $this->bookS->addBook($_POST);
+
+        return App::redirect('/');
     }
 
     /** Filter and process book edit form data, and call the update function in the BooksService.
