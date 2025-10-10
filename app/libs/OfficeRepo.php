@@ -10,7 +10,7 @@ class OfficeRepo {
     protected array $userLinks;
 
     /** Get all offices table data.
-     *      @return array
+     *      @return array   -> All office as stored in the `offices` table.
      */
     public function getAllOffices(): array {
         if (!isset($this->offices)) {
@@ -30,7 +30,7 @@ class OfficeRepo {
     }
 
     /** Get all book_office link table data (many-to-many relation).
-     *      @return array
+     *      @return array   -> All links as stored in the `book_office` table
      */
     public function getAllLinks(): array {
         if (!isset($this->links)) {
@@ -50,7 +50,7 @@ class OfficeRepo {
     }
 
     /** Get all user_office table data
-     *      @return array
+     *      @return array   -> All links as stored in the `user_office` table.
      */
     public function getAllUserLinks(): array {
         if (!isset($this->userLinks)) {
@@ -69,9 +69,25 @@ class OfficeRepo {
         return $this->userLinks;
     }
 
+    /** Attempt to get office ID from the input name, return 0 on failure.
+     *      @param string   -> $name filtered and validated input string.
+     *      @return int     -> Either the office id from the DB, or a 0.
+     */
+    public function getOfficeIdByName(string $name): int {
+        $mapNames = array_column($this->getAllOffices(), 'name', 'id');
+
+        foreach($mapNames as $id => $ofName) {
+            if ($ofName === $name) {
+                return $id;
+            }
+        }
+
+        return 0;
+    }
+
     /** Return office name(s) for a book, based on office id for current relations.
-     *      @param int $officeId The office ID.
-     *      @return string
+     *      @param int      -> $officeId The office ID.
+     *      @return string  -> The office name as stored in the Database.
      */
     public function getOfficeNameByOfficeId(int $officeId): string {
         $mapNames = array_column($this->getAllOffices(), 'name', 'id');
@@ -79,8 +95,8 @@ class OfficeRepo {
     }
 
     /** Return office name(s) for a book, based on book id for many-to-many relations.
-     *      @param int $bookId The book ID.
-     *      @return string
+     *      @param int      -> $bookId The book ID.
+     *      @return string  -> The office name as stored in the Database.
      */
     public function getOfficeNamesByBookId(int $bookId): string {
         $mapNames = array_column($this->getAllOffices(), 'name', 'id');
