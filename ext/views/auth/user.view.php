@@ -5,14 +5,11 @@
             require viewPath('partials/containers/hamburger-container.php');
             require viewPath('partials/containers/sort-container.php');
         ?>
-
         <div class="items-list">
             <?php foreach ($books as $book) {
-                // dd($book);
                 require viewPath('partials/containers/item-container.php');
             } ?>
         </div>
-
         <?php
             require viewPath('partials/popins/add-book-popin.php');
             require viewPath('partials/popins/status-period-popin.php');
