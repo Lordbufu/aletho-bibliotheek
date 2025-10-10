@@ -116,4 +116,8 @@ class BookController {
 
         return App::redirect('/');
     }
+
+    public function delete() {
+        dd($_POST);
+    }
 }
