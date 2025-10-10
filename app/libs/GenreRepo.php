@@ -2,12 +2,17 @@
 
 namespace App\Libs;
 
-use App\App;
+use App\{App, Database};
 
 /* Genres library, dealing with all genres table data & relations. */
 class GenreRepo {
     protected array $genres;
     protected array $links;
+    protected Database $db;
+
+    public function __construct() {
+        $this->db = App::getService('database');
+    }
 
     /** Get all genres as defined in the `genres` table.
      *      @return array
@@ -68,11 +73,75 @@ class GenreRepo {
         return implode(', ', $names);
     }
 
-    /**
-     * 
-     */
-    public function addBookGenres(string $bookGenres, int $bookId) {
+    /* Get a specific genre, return false if not found. */
+    public function getGenreByName(string $name): ?array {
+        return App::getService('database')->query()->fetchOne(
+            "SELECT * FROM `genres` WHERE `name` = ?",
+            [$name]
+        );
+    }
 
+    /** Add book genres to the database, or activate incase already there.
+     *  The function will also add new genres if not in the database.
+     *      @param array $names -> The sanitized $_POST['book_genres'] data.
+     *      @param int $bookId  -> The index value of the newly added book in the `BookRepo`.
+     */
+    public function addBookGenres(array $names, int $bookId): void {        
+        if (empty($names)) {
+            return;
+        }
+
+        if (!isset($this->genres)) {
+            $this->getAllGenres();
+        }
+
+        // Map: name => [id, active]
+        $nameToId = [];
+        foreach ($this->genres as $genre) {
+            $nameToId[$genre['name']] = [
+                'id'     => (int)$genre['id'],
+                'active' => (int)($genre['active'] ?? 1)
+            ];
+        }
+
+        $genreIds = [];
+        foreach ($names as $name) {
+            if (isset($nameToId[$name])) {
+                $genreId = $nameToId[$name]['id'];
+
+                // Reactivate if inactive
+                if ($nameToId[$name]['active'] === 0) {
+                    $this->db->query()->run("UPDATE genres SET active = 1 WHERE id = ?", [$genreId]);
+                    $nameToId[$name]['active'] = 1;
+                }
+            } else {
+                // Insert new genre
+                $this->db->query()->run("INSERT INTO genres (name, active) VALUES (?, 1)", [$name]);
+                $genreId = $this->db->query()->lastInsertId();
+
+                // Update local cache
+                $nameToId[$name] = ['id' => $genreId, 'active' => 1];
+                $this->genres[] = ['id' => $genreId, 'name' => $name, 'active' => 1];
+            }
+
+            $genreIds[] = $genreId;
+        }
+
+        // Now handle links
+        $existingLinks = $this->db->query()->fetchAll(
+            "SELECT genre_id FROM book_genre WHERE book_id = ?",
+            [$bookId]
+        );
+        $existingIds = array_column($existingLinks, 'genre_id');
+
+        foreach ($genreIds as $gid) {
+            if (!in_array($gid, $existingIds, true)) {
+                $this->db->query()->run(
+                    "INSERT INTO book_genre (book_id, genre_id) VALUES (?, ?)",
+                    [$bookId, $gid]
+                );
+            }
+        }
     }
 
     /** Update the genres for a given book (many-to-many), removing any current links.
@@ -81,11 +150,6 @@ class GenreRepo {
      *      @return void
      */
     public function updateBookGenres(int $bookId, array $genres): void {
-        // Remove all existing links for this book
-        App::getService('database')
-            ->query()
-            ->run("DELETE FROM book_genre WHERE book_id = ?", [$bookId]);
-
         // Make sure we have `local` genres
         if (empty($genres)) {
             return;
