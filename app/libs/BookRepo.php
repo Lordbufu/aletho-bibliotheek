@@ -49,8 +49,15 @@ class BookRepo {
     /**
      * 
      */
-    public function addBook(string $bookName, string $officeId) {
-
+    public function addBook(string $title, int $office) {
+        // add new book entry
+        $result = App::getService('database')->query()->run(
+                "INSERT INTO `books` (`title`, `office_id`, `active`) VALUES (?, ?, 1)",
+                [$title, $office]
+        );
+        
+        // Return index of the above insert.
+        return App::getService('database')->query()->lastInsertId();
     }
 
     /** Update the book title for edit functions.
