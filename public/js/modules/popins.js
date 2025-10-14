@@ -1,4 +1,3 @@
-
 /**
  * Popins module: Handles modal popin logic for the app.
  * - Manages opening/closing popins and body scroll lock
@@ -17,17 +16,14 @@ const Popins = (() => {
     let scrollY = 0;
     let padRight = 0;
 
-    /**
-     * Get all popin selectors as an array.
-     * @returns {string[]}
+    /** Get all popin selectors as an array.
+     *      @returns {string[]}
      */
     function getSelectors() {
         return popinSelectors;
     }
 
-    /**
-     * Lock body scroll and adjust padding when popin is open.
-     */
+    /* Lock body scroll and adjust padding when popin is open. */
     function lockBodyScroll() {
         scrollY = window.scrollY;
         padRight = window.innerWidth - document.body.clientWidth;
@@ -41,9 +37,7 @@ const Popins = (() => {
             });
     }
 
-    /**
-     * Unlock body scroll and reset padding when popin is closed.
-     */
+    /* Unlock body scroll and reset padding when popin is closed. */
     function unlockBodyScroll() {
         $('body')
             .removeClass('modal-open')
@@ -56,9 +50,8 @@ const Popins = (() => {
         window.scrollTo(0, scrollY);
     }
 
-    /**
-     * Open a popin by selector, lock scroll, and set open state.
-     * @param {string} selector - Popin selector
+    /** Open a popin by selector, lock scroll, and set open state.
+     *      @param {string} selector - Popin selector
      */
     function open(selector) {
         if (isOpen) return;
@@ -67,35 +60,67 @@ const Popins = (() => {
         isOpen = true;
     }
 
-    /**
-     * Close a popin by selector, unlock scroll, and reset open state.
-     * @param {string} selector - Popin selector
+    /** Clears all input, select, and textarea fields, and empties tag containers within a popin.
+     *      @param {jQuery} $popin The popin element whose fields need to be cleared.
      */
-    function close(selector) {
-        $(selector).hide();
-        unlockBodyScroll();
-        isOpen = false;
+    function _clearFields($popin) {
+        // Find and reset all input, select, and textarea fields
+        $popin.find('input, select, textarea').each(function() {
+            const $field = $(this);
+            if ($field.is(':checkbox') || $field.is(':radio')) {
+                $field.prop('checked', false);
+            } else {
+                $field.val('');
+            }
+        });
+
+        // Find and empty all tag containers (divs with class containing "-tags-container")
+        $popin.find('div[class*="-tags-container"]').empty();
     }
 
-    /**
-     * Setup open/close event handlers for a popin.
-     * @param {string} openBtn - Selector for open button
-     * @param {string} popinId - Selector for popin
-     * @param {string} closeBtn - Selector for close button
+    /** Close a popin by selector, unlock scroll, and reset open state.
+     *      @param {string} selector - Popin selector
+     */
+    function close(selector) {
+        const $popin = $(selector);
+        if ($popin.length === 0) {
+            return;
+        }
+
+        // If the popin has the 'clear-on-close' class, clear its fields
+        if ($popin.hasClass('clear-on-close')) {
+            _clearFields($popin);
+        }
+
+        $popin.hide();
+        unlockBodyScroll();
+        isOpen = false;
+        // Trigger a custom event when the popin is closed.
+        $popin.trigger('popin:close');
+    }
+
+    /** Setup open/close event handlers for a popin.
+     *      @param {string} openBtn - Selector for open button
+     *      @param {string} popinId - Selector for popin
+     *      @param {string} closeBtn - Selector for close button
      */
     function setup(openBtn, popinId, closeBtn) {
         $(openBtn).on('click', () => open(popinId));
         $(closeBtn).on('click', () => close(popinId));
-        $(popinId).on('click', function (e) {
-            if (e.target === this) {
-                close(popinId);
-            }
-        });
+
+        const $popin = $(popinId);
+
+        // Only close on backdrop click if the popin does not have the 'no-backdrop-close' class
+        if (!$popin.hasClass('no-backdrop-close')) {
+            $popin.on('click', function (e) {
+                if (e.target === this) {
+                    close(popinId);
+                }
+            });
+        }
     }
 
-    /**
-     * Open a popin if the URL hash matches a popin selector.
-     */
+    /*  Open a popin if the URL hash matches a popin selector. */
     function initFromHash() {
         if (window.location.hash) {
             const popinId = window.location.hash;
@@ -107,10 +132,9 @@ const Popins = (() => {
         }
     }
 
-    /**
-     * Handle outside click: closes dropdowns if click is outside any open popin.
-     * @param {Event} event - Click event
-     * @param {Function} closeDropdownFn - Function to close dropdowns
+    /** Handle outside click: closes dropdowns if click is outside any open popin.
+     *      @param {Event} event - Click event
+     *      @param {Function} closeDropdownFn - Function to close dropdowns
      */
     function handleOutsideClick(event, closeDropdownFn) {
         if (!isOpen) return;
@@ -122,14 +146,7 @@ const Popins = (() => {
     }
 
     // Exported API
-    return {
-        getSelectors,
-        open,
-        close,
-        setup,
-        initFromHash,
-        handleOutsideClick
-    };
+    return { getSelectors, open, close, setup, initFromHash, handleOutsideClick };
 })();
 
 export { Popins };
