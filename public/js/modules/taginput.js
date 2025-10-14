@@ -7,20 +7,21 @@ import { Utility } from './utility.js';
  *      - Supports limiting the number of tags (maxTags)
  *      - Shows a tooltip if user tries to exceed maxTags
  *
- * Usage:
- *   TagInput.init({
- *     inputSelector: '.writer-input',
- *     containerSelector: '.writer-tags-container',
- *     endpoint: '/writers',
- *     tagClass: 'writer-tag',
- *     suggestionClass: 'writer-suggestion',
- *     hiddenInputName: 'book_writers[]',
- *     maxTags: 1 // Optional: limit to 1 tag (e.g. for offices)
- *   });
+ *  Usage:
+ *      TagInput.init({
+ *          inputSelector: '.writer-input',
+ *          containerSelector: '.writer-tags-container',
+ *          endpoint: '/writers',
+ *          tagClass: 'writer-tag',
+ *          suggestionClass: 'writer-suggestion',
+ *          hiddenInputName: 'book_writers[]',
+ *          maxTags: 1 // Optional: limit to 1 tag (e.g. for offices)
+ *      });
  */
 const TagInput = (() => {
-    let removingTag = false;
+    let removingTag         = false;
     let selectingSuggestion = false;
+    let activeTagInput      = null;
 
     /** Initialize tag input and tag container.
      *      @param {Object} config - Configuration object
@@ -33,58 +34,76 @@ const TagInput = (() => {
      *      @param {number} [config.maxTags] - Optional: maximum number of tags allowed
      */
     function init(config) {
-        const $input = $(config.inputSelector);
+        const $inputs   = $(config.inputSelector);
         const $container = $(config.containerSelector);
-        let allOptions = [];
         const maxTags = config.maxTags || null;
+        let allOptions = [];
 
         // Fetch all options once for autocomplete
         $.getJSON(config.endpoint, function(data) { allOptions = data; });
 
         // Input handler: filter suggestions with debounce for performance
-        $input.on('input', debounce(function() {
+        $inputs.on('input', debounce(function() {
+            const $input = $(this);
             const query = $input.val().trim().toLowerCase();
+
             if (query.length < 2) {
-                closeSuggestions($input, config.suggestionClass);
+                closeAllSuggestions();
                 return;
             }
+
             // Filter options by partial match
             const suggestions = allOptions.filter(name =>
                 name.toLowerCase().includes(query)
             );
+
             if (suggestions.length > 0) {
                 showSuggestions($input, suggestions, config.suggestionClass);
             } else {
-                closeSuggestions($input, config.suggestionClass);
+                closeAllSuggestions();
             }
         }, 300));
 
         // Mousedown on suggestion: add tag before blur closes
-        $container.on('mousedown', `.${config.suggestionClass}`, function(e) {
+        $(document).on('mousedown', `.${config.suggestionClass}`, function(e) {
+            const $suggestion = $(this);
+            const $input = $suggestion.closest(`.${config.suggestionClass}s`).prev(config.inputSelector);
+
+            if (!activeTagInput || !activeTagInput.is(config.inputSelector)) return;
             selectingSuggestion = true;
             e.preventDefault();
-            const name = $(this).text().trim();
+
+            const name = $suggestion.text().trim();
+            const $container = getTagsContainer($input, config.containerSelector.substring(1));
+
             addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags);
-            closeSuggestions($input, config.suggestionClass);
+            closeAllSuggestions();
+
             $input.focus();
-            setTimeout(() => { selectingSuggestion = false; }, 0);
+            
+            setTimeout(() => {
+                selectingSuggestion = false;
+            }, 0);
         });
 
         // Blur on input: keep suggestions open if selecting
-        $input.on('blur', function() {
+        $inputs.on('blur', function() {
+            const $input = $(this);
             setTimeout(() => {
                 if (!selectingSuggestion) {
-                    closeSuggestions($input, config.suggestionClass);
+                    closeAllSuggestions();
                 }
             }, 150);
         });
 
         // Enter key: prevent form submit, add tag
-        $input.on('keydown', function(e) {
+        $inputs.on('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                const $input = $(this);
                 const name = $input.val().trim();
                 if (name) {
+                    const $container = getTagsContainer($input, config.containerSelector.substring(1));
                     addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags);
                 }
             }
@@ -94,20 +113,22 @@ const TagInput = (() => {
         $container.on('click', `.remove-${config.tagClass}`, function(e) {
             e.preventDefault();
             const $tag = $(this).closest(`.${config.tagClass}`);
+            const $input = $tag.closest('form').find(config.inputSelector);
             $tag.find(`input[type="hidden"][name="${config.hiddenInputName}"]`).remove();
             $tag.remove();
-            Utility.markFieldChanged($input);
-        });
-
-        // Click handler for suggestion (global): add tag and close suggestions
-        $(document).on('click', `.${config.suggestionClass}`, function() {
-            const name = $(this).text();
-            addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags);
-            closeSuggestions($input, config.suggestionClass);
+            if ($input.data('context') !== 'popin') {
+                Utility.markFieldChanged($input);
+            }
         });
 
         // Add removing tag/flag on mousedown (global)
         $(document).on('mousedown', `.remove-${config.tagClass}`, () => setRemoving(true));
+    }
+
+    /*  Closes any open suggestion list on page and clears the active input reference. */
+    function closeAllSuggestions() {
+        $('.suggestion-list').remove();
+        activeTagInput = null;
     }
 
     /** Debounce helper: limits function execution rate.
@@ -152,7 +173,9 @@ const TagInput = (() => {
         `);
         $container.append($tag);
         $input.val('');
-        Utility.markFieldChanged($input);
+        if ($input.data('context') !== 'popin') {
+            Utility.markFieldChanged($input);
+        }
     }
 
     /** Show a tooltip near the input if user tries to add more than allowed tags.
@@ -184,8 +207,18 @@ const TagInput = (() => {
      * 
      */
     function getTagsContainer($field, containerClass) {
-        const bookId = $field.data('book-id');
-        return $(`.${containerClass}[data-book-id="${bookId}"]`);
+        const bookId    = $field.data('book-id');
+        const context   = $field.data('context');
+
+        if (bookId){
+            return $(`.${containerClass}[data-book-id="${bookId}"]`);
+        }
+
+        if (context) {
+            return $(`.${containerClass}[data-context="${context}"]`);
+        }
+
+        return $(`.${containerClass}`).first(); // fallback
     }
 
     /** Get all tag values from a container, sorted and trimmed.
@@ -203,6 +236,7 @@ const TagInput = (() => {
      */
     function restoreTagsFromInput($field, $container, tagClass, hiddenInputName) {
         const existing = $field.val();
+
         if (existing) {
             existing.split(',')
                 .map(name => name.trim())
@@ -212,45 +246,37 @@ const TagInput = (() => {
                     }
                 });
         }
+
         const origValues = getValuesFromContainer($container, hiddenInputName);
         $field.data('originalValue', origValues.join(','));
     }
 
     /** Show suggestions below the input field.
-     * 
+     *  This implementation uses fixed positioning and a high z-index to ensure
+     *  the list appears correctly over all other content, including modals.
      */
     function showSuggestions($input, suggestions, suggestionClass) {
-        const offset = $input.offset();
-        const $list = $(`<div class="${suggestionClass}s"></div>`).css({
+        closeAllSuggestions();
+        activeTagInput = $input;
+
+        const rect = $input[0].getBoundingClientRect();
+        const $list = $(`<div class="suggestion-list ${suggestionClass}s"></div>`).css({
             position: 'fixed',
-            top: offset.top + $input.outerHeight(),
-            left: offset.left,
-            width: $input.outerWidth(),
-            zIndex: 2000
+            top: rect.bottom + 'px',
+            left: rect.left + 'px',
+            width: rect.width + 'px',
+            zIndex: 9999
         });
+
         suggestions.forEach(s => {
             $list.append(`<div class="${suggestionClass}">${s}</div>`);
         });
-        closeSuggestions($input, suggestionClass);
-        $input.after($list);
-    }
 
-    /** Remove the suggestions dropdown.
-     * 
-     */
-    function closeSuggestions($input, suggestionClass) {
-        $input.siblings(`.${suggestionClass}s`).remove();
+        $('body').append($list);
     }
 
     // Exported API
-    return {
-        init,
-        addTag,
-        isRemoving,
-        getTagsContainer,
-        getValuesFromContainer,
-        restoreTagsFromInput
-    };
+    return { init, addTag, isRemoving, getTagsContainer, getValuesFromContainer, restoreTagsFromInput };
 })();
 
 export { TagInput };
