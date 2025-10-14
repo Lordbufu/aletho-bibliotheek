@@ -1,12 +1,4 @@
 <?php
-/*
- * Expected returned view errors:
- *      Inline errrors:
- *          $errors = ['{element-name|class|id}' => '{message}']
- *      Global errrors:
- *          $_SESSION['_flash'] = ['type' => 'inline'|'flash', 'message' => '...']
- */
-
 namespace App;
 
 use App\Validation\{FormValidation, PasswordValidation};

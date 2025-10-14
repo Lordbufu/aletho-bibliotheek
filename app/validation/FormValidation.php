@@ -1,12 +1,4 @@
 <?php
-/*
- * Expected returned view errors:
- *      Inline errrors:
- *          $errors = ['{element-name|class|id}' => '{message}']
- *      Global errrors:
- *          $_SESSION['_flash'] = ['type' => 'failure'|'success', 'message' => '...']
- */
-
 namespace App\Validation;
 
 class FormValidation {
