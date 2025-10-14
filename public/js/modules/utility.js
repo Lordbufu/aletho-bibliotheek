@@ -27,8 +27,36 @@ const Utility = (() => {
         }
     }
 
+    /**
+     * Get configuration for taggable fields based on their class.
+     * @param {jQuery} $field - The field to get config for.
+     * @returns {object} Configuration object.
+     */
+    function getFieldConfig($field) {
+        const configs = [
+            { class: 'writer-input', type: 'writer', container: '.writer-tags-container', name: 'book_writers[]' },
+            { class: 'genre-input', type: 'genre', container: '.genre-tags-container', name: 'book_genres[]' },
+            { class: 'office-input', type: 'office', container: '.office-tags-container', name: 'book_offices[]' },
+            { class: 'writer-input-pop', type: 'writer', container: '.add-writer-tags-container', name: 'book_writers[]' },
+            { class: 'genre-input-pop', type: 'genre', container: '.add-genre-tags-container', name: 'book_genres[]' },
+            { class: 'office-input-pop', type: 'office', container: '.add-office-tags-container', name: 'book_offices[]' }
+        ];
+
+        for (const config of configs) {
+            if ($field.hasClass(config.class)) {
+                return {
+                    tagClass: `${config.type}-tag`,
+                    containerSelector: config.container,
+                    hiddenInputName: config.name,
+                    isTaggable: true
+                };
+            }
+        }
+        return { isTaggable: false };
+    }
+
     // Exported API
-    return { markFieldChanged, clearFieldChanged };
+    return { markFieldChanged, clearFieldChanged, getFieldConfig };
 })();
 
 export { Utility };
