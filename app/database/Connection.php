@@ -21,7 +21,10 @@ class Connection {
         $requiredKeys = ['driver', 'host', 'port', 'database', 'charset', 'username', 'password'];
         foreach ($requiredKeys as $key) {
             if (!isset($config[$key])) {
-                $safeLogger->warning("Missing database config key: {$key}", 'app');
+                $safeLogger->warning(
+                    "Missing database config key: {$key}",
+                    'app'
+                );
             }
         }
 
@@ -40,7 +43,11 @@ class Connection {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
         } catch (PDOException $e) {
-            $safeLogger->error("Database connection failed: " . $e->getMessage(), 'app');
+            $safeLogger->error(
+                "Database connection failed: " . $e->getMessage(),
+                'app'
+            );
+
             throw new \RuntimeException("Database connection failed: " . $e->getMessage());
         }
     }
@@ -58,18 +65,28 @@ class Connection {
     public function startTransaction(): bool {
         try {
             if ($this->isTransactionActive()) {
-                App::getService('logger')->error("Transaction already active before updateBook", 'bookservice');
+                App::getService('logger')->error(
+                    "PDO transaction already active",
+                    'db'
+                );
             }
 
             $started = $this->pdo->beginTransaction();
 
             if (!$started) {
-                App::getService('logger')->error("Failed to start transaction in updateBook", 'bookservice');
+                App::getService('logger')->error(
+                    "Failed to start PDO transaction",
+                    'db'
+                );
             }
 
             return $started;
         } catch (\PDOException $e) {
-            App::getServiceSafeLogger()->error("Could not start transaction: " . $e->getMessage(), 'db');
+            App::getServiceSafeLogger()->error(
+                "Could not start transaction: " . $e->getMessage(),
+                'db'
+            );
+
             return false;
         }
     }
@@ -81,7 +98,11 @@ class Connection {
         try {
             return $this->pdo->commit();
         } catch (\PDOException $e) {
-            App::getServiceSafeLogger()->error("Could not commit transaction: " . $e->getMessage(), 'db');
+            App::getServiceSafeLogger()->error(
+                "Could not commit transaction: " . $e->getMessage(),
+                'db'
+            );
+
             return false;
         }
     }
@@ -93,7 +114,11 @@ class Connection {
         try {
             return $this->pdo->rollBack();
         } catch (\PDOException $e) {
-            App::getServiceSafeLogger()->error("Could not roll back transaction: " . $e->getMessage(), 'db');
+            App::getServiceSafeLogger()->error(
+                "Could not roll back transaction: " . $e->getMessage(),
+                'db'
+            );
+            
             return false;
         }
     }

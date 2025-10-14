@@ -55,15 +55,6 @@ class ViewController {
 
         $books = App::getService('books')->getAllForDisplay();
 
-        if (!is_array($books) || $books === []) {
-            App::getService('logger')->error(
-                "The 'ViewController' din't get the expected 'books' data",
-                'controllers'
-            );
-        }
-
-        return App::view('main', [
-            'books' => $books ?? null
-        ]);
+        return App::view('main', ['books' => $books ?? null]);
     }
 }
