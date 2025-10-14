@@ -110,8 +110,8 @@ const Popins = (() => {
 
         const $popin = $(popinId);
 
-        // Only close on backdrop click if the popin does not have the 'no-backdrop-close' class
-        if (!$popin.hasClass('no-backdrop-close')) {
+        // Only close on backdrop click if the popin has the 'backdrop-close' class
+        if ($popin.hasClass('backdrop-close')) {
             $popin.on('click', function (e) {
                 if (e.target === this) {
                     close(popinId);
