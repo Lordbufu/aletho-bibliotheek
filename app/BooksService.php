@@ -22,41 +22,36 @@ class BooksService {
 
     /*  Construct all associated library classes, and logs it. */
     public function __construct() {
-        $this->books   = new BookRepo();
-        $this->genres  = new GenreRepo();
-        $this->writers = new WriterRepo();
-        $this->status  = new StatusRepo();
-        $this->offices = new OfficeRepo();
         $this->db      = App::getService('database');
-
-        App::getService('logger')->info(
-            "Service 'books' has constructed its libraries, and loaded the database service",
-            'bookservices'
-        );
+        $this->books   = new BookRepo($this->db);
+        $this->genres  = new GenreRepo($this->db);
+        $this->writers = new WriterRepo($this->db);
+        $this->status  = new StatusRepo($this->db);
+        $this->offices = new OfficeRepo($this->db);
     }
 
     /** Get all books as an array, processed and formatted for views.
      *      @return array
      */
     public function getAllForDisplay(): array {
-        $rows = $this->books->findAll();
+        $books = $this->books->findAll();
         $out  = [];
 
-        foreach ($rows as $row) {
-            if (!$row['active']) {
+        foreach ($books as $book) {
+            if (!$book['active']) {
                 continue;
             }
-            
+
             $out[] = [
-                'id'     => (int)$row['id'],
-                'title'  => $row['title'],
-                'writers' => $this->writers->getWriterNamesByBookId((int)$row['id']),
-                'genres' => $this->genres->getGenreNamesByBookId((int)$row['id']),
-                'office' => $this->offices->getOfficeNameByOfficeId((int)$row['office_id']),
-                'status' => $this->status->getDisplayStatusByBookId((int)$row['id']),
+                'id'     => $book['id'],
+                'title'  => $book['title'],
+                'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
+                'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
+                'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
+                'status' => $this->status->getDisplayStatusByBookId((int)$book['id']),
                 'canEditOffice' => (
                     $_SESSION['user']['office'] === 'All'
-                    || $_SESSION['user']['office'] === $row['office_id']
+                    || $_SESSION['user']['office'] === $book['office_id']
                     ) ? 1 : 0,
             ];
         }
@@ -72,6 +67,10 @@ class BooksService {
         $out = [];
         
         foreach ($temp as $writer) {
+            if (!$writer['active']) {
+                continue;
+            }
+
             $out[] = $writer['name'];
         }
 
@@ -86,6 +85,10 @@ class BooksService {
         $out = [];
 
         foreach ($temp as $genre) {
+            if (!$genre['active']) {
+                continue;
+            }
+
             $out[] = $genre['name'];
         }
 
@@ -100,6 +103,10 @@ class BooksService {
         $out = [];
 
         foreach ($temp as $office) {
+            if (!$office['active']) {
+                continue;
+            }
+
             $out[] = $office['name'];
         }
 
@@ -115,7 +122,7 @@ class BooksService {
         $updated = false;
 
         // Temporary handling until many-to-many offices are supported
-        $officeId = is_array($data['book_offices']) && count($data['book_offices']) > 0
+        $officeName = is_array($data['book_offices']) && count($data['book_offices']) > 0
             ? $data['book_offices'][0]
             : null;
         
@@ -126,9 +133,8 @@ class BooksService {
                     return "This book name is already in the database";
                 }
 
-                $this->db
-                    ->query()
-                    ->run("UPDATE books SET active = 1 WHERE id = ?",
+                $this->db->query()->run(
+                    "UPDATE books SET active = 1 WHERE id = ?",
                     [$book['id']]
                 );
 
@@ -136,7 +142,7 @@ class BooksService {
             }
         }
 
-        dd("No match found !!");
+        $officeId = $this->offices->getOfficeIdByName($officeName);
 
         // Attempt to update book data within a PDO transaction.
         try {
@@ -144,14 +150,19 @@ class BooksService {
                 throw new \RuntimeException('Failed to start database transaction.');
             }
 
+            // Attempt to store new book item and fetch its id
             if (!empty($data['book_name']) || !empty($data['book_offices'])) {
-                $this->books->addBook($data['book_name'], $data['book_offices']);
+                $bookId = $this->books->addBook($data['book_name'], $officeId);
             }
 
+            // Attempt to store genres
             if (!empty($data['book_genres'])) {
-                $this->genres->addGenres($data['book_genres'], $bookId);
+                $this->genres->addBookGenres($data['book_genres'], $bookId);
             }
 
+            dd($data);
+
+            // Attempt to store writers
             if (!empty($data['book_writers'])) {
                 $this->writers->addWriters($data['book_writers'], $bookId);
             }
