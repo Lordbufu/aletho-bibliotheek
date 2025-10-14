@@ -31,7 +31,12 @@ if (!is_dir($logTempPath)) {
     mkdir($logTempPath, 0700, true);
 }
 ini_set('log_errors', 'On');
-ini_set('error_log', '/path/to/your/custom_error.log');
+ini_set('error_log', $logTempPath . '/custom_error.log');
+
+/* These should only be on, or set to all in the Development enviroment */
+ini_set('display_errors', 'On');                            // ensure this is disable on production.
+ini_set('display_startup_errors', 'On');                    // ensure this is disable on production.
+error_reporting(E_ALL);                                     //
 
 /**
  * Set secure session cookies.
