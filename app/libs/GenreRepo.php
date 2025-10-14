@@ -10,18 +10,18 @@ class GenreRepo {
     protected array $links;
     protected Database $db;
 
-    public function __construct() {
-        $this->db = App::getService('database');
+    public function __construct($con = []) {
+        if  (!empty($con)) {
+            $this->db = $con;
+        }
     }
 
     /** Get all genres as defined in the `genres` table.
-     *      @return array
+     *      @return array   -> All genres in the database.
      */
     public function getAllGenres(): array {
         if (!isset($this->genres)) {
-            $this->genres = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM genres");
+            $this->genres = $this->db->query()->fetchAll("SELECT * FROM genres");
         }
 
         if (!is_array($this->genres) || $this->genres === []) {
@@ -35,13 +35,11 @@ class GenreRepo {
     }
 
     /** Get all book_genre link table data (many-to-many relations).
-     *      @return array
+     *      @return array   -> All genre links in the database.
      */
     public function getAllLinks(): array {
         if (!isset($this->links)) {
-            $this->links = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM book_genre");
+            $this->links = $this->db->query()->fetchAll("SELECT * FROM book_genre");
         }
 
         if (!is_array($this->links) || $this->links === []) {
@@ -55,8 +53,8 @@ class GenreRepo {
     }
 
     /** Get all genre names for a given book ID.
-     *      @param int $bookId
-     *      @return string Comma-separated genre names
+     *      @param int $bookId  -> The id we want to know the genres for.
+     *      @return string      -> Comma-separated genre names
      */
     public function getGenreNamesByBookId(int $bookId): string {
         $mapNames = array_column($this->getAllGenres(), 'name', 'id');
@@ -73,11 +71,25 @@ class GenreRepo {
         return implode(', ', $names);
     }
 
-    /* Get a specific genre, return false if not found. */
+    /** Get genre by name to support input elements instead of select elements.
+     *      @param string $name -> Sanitized user input.
+     *      @return array       -> The row associated with the name.
+     */
     public function getGenreByName(string $name): ?array {
-        return App::getService('database')->query()->fetchOne(
+        return $this->db->query()->fetchOne(
             "SELECT * FROM `genres` WHERE `name` = ?",
             [$name]
+        );
+    }
+
+    /** Get links by book_id.
+     *      @param int $bookId  -> The book id as known in the Database.
+     *      @return array       -> All associated links.
+     */
+    public function getLinksByBookId(int $bookId) {
+        return $this->db->query()->fetchAll(
+            "SELECT genre_id FROM book_genre WHERE book_id = ?",
+            [$bookId]
         );
     }
 
@@ -111,27 +123,40 @@ class GenreRepo {
 
                 // Reactivate if inactive
                 if ($nameToId[$name]['active'] === 0) {
-                    $this->db->query()->run("UPDATE genres SET active = 1 WHERE id = ?", [$genreId]);
+                    $this->db->query()->run(
+                        "UPDATE genres SET active = 1 WHERE id = ?",
+                        [$genreId]
+                    );
+
                     $nameToId[$name]['active'] = 1;
                 }
             } else {
                 // Insert new genre
-                $this->db->query()->run("INSERT INTO genres (name, active) VALUES (?, 1)", [$name]);
+                $this->db->query()->run(
+                    "INSERT INTO genres (name, active) VALUES (?, 1)",
+                    [$name]
+                );
+
                 $genreId = $this->db->query()->lastInsertId();
 
                 // Update local cache
-                $nameToId[$name] = ['id' => $genreId, 'active' => 1];
-                $this->genres[] = ['id' => $genreId, 'name' => $name, 'active' => 1];
+                $nameToId[$name] = [
+                    'id' => $genreId,
+                    'active' => 1
+                ];
+
+                $this->genres[] = [
+                    'id' => $genreId,
+                    'name' => $name,
+                    'active' => 1
+                ];
             }
 
             $genreIds[] = $genreId;
         }
 
         // Now handle links
-        $existingLinks = $this->db->query()->fetchAll(
-            "SELECT genre_id FROM book_genre WHERE book_id = ?",
-            [$bookId]
-        );
+        $existingLinks = $this->getLinksByBookId($bookId);
         $existingIds = array_column($existingLinks, 'genre_id');
 
         foreach ($genreIds as $gid) {
@@ -144,50 +169,76 @@ class GenreRepo {
         }
     }
 
-    /** Update the genres for a given book (many-to-many), removing any current links.
-     *      @param int $bookId
-     *      @param array $genres Array of genre names or IDs
+    /** Update the genres for a given book (many-to-many.
+     *      @param int $bookId      -> The book id that needs updating.
+     *      @param array $genres    -> Array of genre names or id's.
      *      @return void
      */
     public function updateBookGenres(int $bookId, array $genres): void {
-        // Make sure we have `local` genres
         if (empty($genres)) {
+            // If no genres passed, remove all links for this book
+            $this->db->query()->run(
+                "DELETE FROM book_genre WHERE book_id = ?",
+                [$bookId]
+            );
             return;
         }
 
-        // Make sure all `global` genres are set
         if (!isset($this->genres)) {
             $this->getAllGenres();
         }
 
-        // Map genre names to IDs if needed
-        $nameToId = array_column($this->genres, 'id', 'name');
+        // Map: name => [id, active]
+        $nameToId = [];
+        foreach ($this->genres as $g) {
+            $nameToId[$g['name']] = [
+                'id'     => (int)$g['id'],
+                'active' => (int)($g['active'] ?? 1)
+            ];
+        }
 
+        $genreIds = [];
         foreach ($genres as $genre) {
             if (is_numeric($genre)) {
-                $genreId = $genre;
+                $genreId = (int)$genre;
             } else {
-                // Check if genre exists, else insert
                 if (isset($nameToId[$genre])) {
-                    $genreId = $nameToId[$genre];
-                } else {
-                    App::getService('database')
-                        ->query()
-                        ->run("INSERT INTO genres (name) VALUES (?)", [$genre]);
+                    $genreId = $nameToId[$genre]['id'];
 
-                    $genreId = App::getService('database')
-                        ->query()
-                        ->lastInsertId();
-                        
-                    $nameToId[$genre] = $genreId; // update map for next loop
+                    // Reactivate if inactive
+                    if ($nameToId[$genre]['active'] === 0) {
+                        $this->db->query()->run(
+                            "UPDATE genres SET active = 1 WHERE id = ?",
+                            [$genreId]
+                        );
+                        $nameToId[$genre]['active'] = 1;
+                    }
+                } else {
+                    // Insert new genre
+                    $this->db->query()->run(
+                        "INSERT INTO genres (name, active) VALUES (?, 1)",
+                        [$genre]
+                    );
+                    $genreId = $this->db->query()->lastInsertId();
+
+                    $nameToId[$genre] = ['id' => $genreId, 'active' => 1];
+                    $this->genres[]   = ['id' => $genreId, 'name' => $genre, 'active' => 1];
                 }
             }
 
-            App::getService('database')
-                ->query()
-                ->run(
-                    "INSERT INTO book_genre (book_id, genre_id) VALUES (?, ?)",
-                    [$bookId, $genreId]
+            $genreIds[] = $genreId;
+        }
+
+        // Replace semantics: wipe old links, insert new ones
+        $this->db->query()->run(
+            "DELETE FROM book_genre WHERE book_id = ?",
+            [$bookId]
+        );
+
+        foreach ($genreIds as $gid) {
+            $this->db->query()->run(
+                "INSERT INTO book_genre (book_id, genre_id) VALUES (?, ?)",
+                [$bookId, $gid]
             );
         }
     }

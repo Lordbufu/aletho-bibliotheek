@@ -2,21 +2,26 @@
 
 namespace App\Libs;
 
-use App\App;
+use App\{App, Database};
 
 /* Writers library, dealing with all writers table data & relations. */
 class WriterRepo {
     protected array $writers;
     protected array $links;
+    protected Database $db;
+
+    public function __construct($con = []) {
+        if  (!empty($con)) {
+            $this->db = $con;
+        }
+    }
 
     /** Get all writers as defined in the `writers` table.
      *      @return array
      */
     public function getAllWriters(): array {
         if (!isset($this->writers)) {
-            $this->writers = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM writers");
+            $this->writers = $this->db->query()->fetchAll("SELECT * FROM writers");
         }
 
         if (!is_array($this->writers) || $this->writers === []) {
@@ -34,9 +39,7 @@ class WriterRepo {
      */
     public function getAllLinks(): array {
         if (!isset($this->links)) {
-            $this->links = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM book_writers");
+            $this->links = $this->db->query()->fetchAll("SELECT * FROM book_writers");
         }
 
         if (!is_array($this->links) || $this->links === []) {
@@ -68,11 +71,69 @@ class WriterRepo {
         return implode(', ', $names);
     }
 
+    public function getLinksByBookId(int $bookId): array {
+        return $this->db->query->fetchAll(
+            "SELECT writer_id FROM book_writers WHERE book_id = ?",
+            [$bookId]
+        );
+    }
+
     /**
      * 
      */
-    public function addBookWriters(string $bookWriters, int $bookId) {
+    public function addBookWriters(array $names, int $bookId) {
+        if (empty($names)) {
+            return;
+        }
 
+        if (!isset($this->writer)) {
+            $this->getAllWriters();
+        }
+
+        // Map: name => [id, active]
+        $nameToId = [];
+        foreach ($this->writers as $writer) {
+            $nameToId[$writer['name']] = [
+                'id'     => (int)$writer['id'],
+                'active' => (int)($writer['active'] ?? 1)
+            ];
+        }
+
+        $writersIds = [];
+        foreach ($names as $name) {
+            if (isset($nameToId[$name])) {
+                $writerId = $nameToId[$name]['id'];
+
+                // Reactivate if inactive
+                if ($nameToId[$name]['active'] === 0) {
+                    $this->db->query()->run("UPDATE writers SET active = 1 WHERE id = ?", [$writerId]);
+                    $nameToId[$name]['active'] = 1;
+                }
+            } else {
+                // Insert new writer
+                $this->db->query()->run("INSERT INTO writers (name, active) VALUES (?, 1)", [$name]);
+                $writerId = $this->db->query()->lastInsertId();
+
+                // Update local cache
+                $nameToId[$name] = ['id' => $writerId, 'active' => 1];
+                $this->writers[] = ['id' => $writerId, 'name' => $name, 'active' => 1];
+            }
+
+            $writersIds[] = $writerId;
+        }
+
+        // Now handle links
+        $existingLinks = $this->getLinksByBookId($bookId);
+        $existingIds = array_column($existingLinks, 'writer_id');
+
+        foreach ($writersIds as $wId) {
+            if (!in_array($wId, $existingIds, true)) {
+                $this->db->query()->run(
+                    "INSERT INTO book_writers (book_id, writer_id) VALUES (?, ?)",
+                    [$bookId, $wId]
+                );
+            }
+        }
     }
 
     /** Update the writers for a given book (many-to-many), removes all existing links and inserts the new ones.
@@ -81,11 +142,6 @@ class WriterRepo {
      *      @return void
      */
     public function updateBookWriters(int $bookId, array $writers): void {
-        // Remove all existing links for this book
-        App::getService('database')
-            ->query()
-            ->run("DELETE FROM book_writers WHERE book_id = ?", [$bookId]);
-
         if (empty($writers)) {
             return;
         }
@@ -106,20 +162,17 @@ class WriterRepo {
                 if (isset($nameToId[$writer])) {
                     $writerId = $nameToId[$writer];
                 } else {
-                    App::getService('database')
-                        ->query()
-                        ->run("INSERT INTO writers (name) VALUES (?)", [$writer]);
+                    $this->db->query()->run(
+                        "INSERT INTO writers (name) VALUES (?)",
+                        [$writer]
+                    );
 
-                    $writerId = App::getService('database')
-                        ->query()
-                        ->lastInsertId();
+                    $writerId = $this->db->query()->lastInsertId();
                     $nameToId[$writer] = $writerId;
                 }
             }
 
-            App::getService('database')
-                ->query()
-                ->run(
+            $this->db->query()->run(
                     "INSERT INTO book_writers (book_id, writer_id) VALUES (?, ?)",
                     [$bookId, $writerId]
             );
