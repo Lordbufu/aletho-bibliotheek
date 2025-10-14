@@ -551,11 +551,6 @@ button:disabled.needs-save {
  *		TODO:
  *			- Need to go over this, and change px to rem, and add % where this makes sense.
  */
-
-/* Alert styles */
-
-
-
 .writer-tag,
 .genre-tag,
 .office-tag {
@@ -576,37 +571,26 @@ button:disabled.needs-save {
     cursor: pointer;
 }
 
-.writer-suggestions,
-.genre-suggestions,
-.office-suggestions {
-    position: absolute;
+.suggestion-list {
     background: white;
     border: 1px solid #ccc;
     list-style: none;
-    margin: 2px 0 0;
+    margin: 0;
     padding: 0;
     z-index: 1000;
     max-height: 150px;
     overflow-y: auto;
-    width: 200px;
-	top: 100%;
+	text-align: center;
 }
 
-.writer-suggestion,
-.genre-suggestion,
-.office-suggestion {
+.suggestion {
 	display: block;
 	width: 100%;
 	padding: 4px 8px;
 	cursor: pointer;
 }
 
-.writer-suggestion:hover,
-.genre-suggestion:hover,
-.office-suggestion:hover {
-    background: #f0f0f0;
-	cursor: pointer;
-}
+.suggestion:hover { background: #f0f0f0; }
 
 /* Temp status dot styles for prototype reasons */
 .status-dot {
@@ -617,18 +601,7 @@ button:disabled.needs-save {
 	margin-right: 0.2rem !important;
 }
 
-.statusOne {
-	background-color: rgb(41, 126, 38);
-}
-
-.statusTwo {
-	background-color: rgb(255, 56, 35);
-}
-
-.statusThree {
-	background-color: rgb(121, 117, 19);
-}
-
-.statusFour {
-	background-color: rgb(105, 103, 103);
-}
+.statusOne { background-color: rgb(41, 126, 38); }
+.statusTwo { background-color: rgb(255, 56, 35); }
+.statusThree { background-color: rgb(121, 117, 19); }
+.statusFour { background-color: rgb(105, 103, 103); }
