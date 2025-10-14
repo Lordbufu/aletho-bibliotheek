@@ -5,9 +5,8 @@
  * - clearFieldChanged: Clears changed state and disables save button if no fields are dirty
  */
 const Utility = (() => {
-    /**
-     * Mark an input/select field as changed and enable the save button.
-     * @param {jQuery} $field - The field that was edited
+    /** Mark an input/select field as changed and enable the save button.
+     *      @param {jQuery} $field - The field that was edited
      */
     function markFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
@@ -16,9 +15,8 @@ const Utility = (() => {
         $saveBtn.addClass('needs-save');
     }
 
-    /**
-     * Clear changed state from a field and disable save button if no fields are dirty.
-     * @param {jQuery} $field - The field to clear
+    /** Clear changed state from a field and disable save button if no fields are dirty.
+     *      @param {jQuery} $field - The field to clear
      */
     function clearFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
@@ -30,10 +28,7 @@ const Utility = (() => {
     }
 
     // Exported API
-    return {
-        markFieldChanged,
-        clearFieldChanged
-    };
+    return { markFieldChanged, clearFieldChanged };
 })();
 
 export { Utility };
