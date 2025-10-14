@@ -12,15 +12,61 @@ import { Utility } from './modules/utility.js';
 
 // Document ready: wire up modules and event handlers
 $(function() {
-    // Test code for user feedback notifications.
-    const $alert = $('.alert-global-success, .alert-global-failure');
+    const CONSTANTS = {
+        SELECTORS: {
+            globalAlert: '.alert-global-success, .alert-global-failure',
+            hamburgerDropdown: '#customHamburgerDropdown',
+            searchDropdown: '#customSearchDropdown',
+            hamburgerButton: '#hamburgerButton',
+            searchButton: '#searchButton',
+            bookDetailsButton: '[id^="itemButton-"]',
+            editButton: '.extra-button-style',
+            editableField: 'input.field-editable, select.field-editable',
+            statusType: '#status-type',
+            periodeLength: '#periode-length',
+            reminderDay: '#reminder-day',
+            overdueDay: '#overdue-day',
+            bookNameInput: '[id^="book-name-"]',
+            loginName: '#login-name',
+            loginPassw: '#login-passw',
+            statusDot: '.status-dot',
+            searchInp: '#search-inp',
+            searchOptions: '#search-options',
+            sortOptions: '#sort-options',
+            bookAddButton: '#boek-add-button',
+            addBookPopin: '#add-book-popin',
+            closeAddBookPopin: '#close-add-book-popin',
+            statusPeriodeButton: '#status-periode-button',
+            statusPeriodPopin: '#status-period-popin',
+            closeStatusPeriodPopin: '#close-status-period-popin',
+            passwordChangeButton: '#password-change-button',
+            passwordResetPopin: '#password-reset-popin',
+            closePasswordResetPopin: '#close-password-reset-popin',
+            bookStatusButton: '#boek-status-button',
+            changeBookStatusPopin: '#change-book-status-popin',
+            closeChangeBookStatusPopin: '#close-change-book-status-popin',
+            alethoDropdownBody: '.aletho-dropdown-body.show',
+            alethoItemDropdown: '.collapse.aletho-item-dropdown.show',
+        },
+        CLASSES: {
+            alertShow: 'alert-global-show',
+            fieldEditable: 'field-editable',
+            fieldChanged: 'field-changed',
+        }
+    };
+
+    const DROPDOWNS_TO_CLOSE = [CONSTANTS.SELECTORS.hamburgerDropdown, CONSTANTS.SELECTORS.searchDropdown];
+
+    // User feedback notifications.
+    const $alert = $(CONSTANTS.SELECTORS.globalAlert);
+
     if ($alert.length) {
         setTimeout(() => {
-            $alert.addClass('alert-global-show');
+            $alert.addClass(CONSTANTS.CLASSES.alertShow);
         }, 100); // slight delay for transition
 
         setTimeout(() => {
-            $alert.removeClass('alert-global-show');
+            $alert.removeClass(CONSTANTS.CLASSES.alertShow);
         }, 3500); // show for 3.5 seconds
 
         setTimeout(() => {
@@ -30,162 +76,144 @@ $(function() {
 
     // Popins: hash-based open and setup for all popins
     Popins.initFromHash();
-    Popins.setup('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
-    Popins.setup('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
-    Popins.setup('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
-    Popins.setup('#boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
+    Popins.setup(CONSTANTS.SELECTORS.bookAddButton, CONSTANTS.SELECTORS.addBookPopin, CONSTANTS.SELECTORS.closeAddBookPopin);
+    Popins.setup(CONSTANTS.SELECTORS.statusPeriodeButton, CONSTANTS.SELECTORS.statusPeriodPopin, CONSTANTS.SELECTORS.closeStatusPeriodPopin);
+    Popins.setup(CONSTANTS.SELECTORS.passwordChangeButton, CONSTANTS.SELECTORS.passwordResetPopin, CONSTANTS.SELECTORS.closePasswordResetPopin);
+    Popins.setup(CONSTANTS.SELECTORS.bookStatusButton, CONSTANTS.SELECTORS.changeBookStatusPopin, CONSTANTS.SELECTORS.closeChangeBookStatusPopin);
 
-    // Writers: autocomplete/tagging
-    TagInput.init({
-        inputSelector: '.writer-input',
-        containerSelector: '.writer-tags-container',
-        endpoint: '/bookdata?data=writers',
-        tagClass: 'writer-tag',
-        suggestionClass: 'writer-suggestion',
-        hiddenInputName: 'book_writers[]',
-        maxTags: 3
-    });
-
-    // Genres: autocomplete/tagging
-    TagInput.init({
-        inputSelector: '.genre-input',
-        containerSelector: '.genre-tags-container',
-        endpoint: '/bookdata?data=genres',
-        tagClass: 'genre-tag',
-        suggestionClass: 'genre-suggestion',
-        hiddenInputName: 'book_genres[]',
-        maxTags: 3
-    });
-
-    // Offices: autocomplete/tagging
-    TagInput.init({
-        inputSelector: '.office-input',
-        containerSelector: '.office-tags-container',
-        endpoint: '/bookdata?data=offices',
-        tagClass: 'office-tag',
-        maxTags: 1,
-        suggestionClass: 'office-suggestion',
-        hiddenInputName: 'book_offices[]',
-        maxTags: 1
-    });
-
-    // Initialize writer input in add-book popin
-    TagInput.init({
-        inputSelector: '#book-writer-add',
-        containerSelector: '.add-writer-tags-container',
-        endpoint: '/bookdata?data=writers',
-        tagClass: 'writer-tag',
-        hiddenInputName: 'book_writers[]',
-        suggestionClass: 'writer-suggestion',
-        maxTags: 3
-    });
-
-    // Later you can do the same for genres and offices:
-    TagInput.init({
-        inputSelector: '#book-genre-add',
-        containerSelector: '.add-genre-tags-container',
-        endpoint: '/bookdata?data=genres',
-        tagClass: 'genre-tag',
-        hiddenInputName: 'book_genres[]',
-        suggestionClass: 'genre-suggestion',
-        maxTags: 3
-    });
-
-    // For offices, once you replace <select> with an input:
-    TagInput.init({
-        inputSelector: '#book-office-add',
-        containerSelector: '.add-office-tags-container',
-        endpoint: '/bookdata?data=offices',
-        tagClass: 'office-tag',
-        hiddenInputName: 'book_offices[]',
-        suggestionClass: 'office-suggestion',
-        maxTags: 1
-    });
+    // Setup for all TagInputs: autocomplete/tagging
+    const tagInputConfigs = [
+        {
+            inputSelector: '.writer-input',
+            containerSelector: '.writer-tags-container',
+            endpoint: '/bookdata?data=writers',
+            tagClass: 'writer-tag',
+            suggestionClass: 'writer-suggestion',
+            hiddenInputName: 'book_writers[]',
+            maxTags: 3
+        },
+        {
+            inputSelector: '.genre-input',
+            containerSelector: '.genre-tags-container',
+            endpoint: '/bookdata?data=genres',
+            tagClass: 'genre-tag',
+            suggestionClass: 'genre-suggestion',
+            hiddenInputName: 'book_genres[]',
+            maxTags: 3
+        },
+        {
+            inputSelector: '.office-input',
+            containerSelector: '.office-tags-container',
+            endpoint: '/bookdata?data=offices',
+            tagClass: 'office-tag',
+            suggestionClass: 'office-suggestion',
+            hiddenInputName: 'book_offices[]',
+            maxTags: 1
+        },
+        {
+            inputSelector: '.writer-input-pop',
+            containerSelector: '.add-writer-tags-container',
+            endpoint: '/bookdata?data=writers',
+            tagClass: 'writer-tag',
+            suggestionClass: 'writer-suggestion',
+            hiddenInputName: 'book_writers[]',
+            maxTags: 3
+        },
+        {
+            inputSelector: '.genre-input-pop',
+            containerSelector: '.add-genre-tags-container',
+            endpoint: '/bookdata?data=genres',
+            tagClass: 'genre-tag',
+            suggestionClass: 'genre-suggestion',
+            hiddenInputName: 'book_genres[]',
+            maxTags: 3
+        },
+        {
+            inputSelector: '.office-input-pop',
+            containerSelector: '.add-office-tags-container',
+            endpoint: '/bookdata?data=offices',
+            tagClass: 'office-tag',
+            suggestionClass: 'office-suggestion',
+            hiddenInputName: 'book_offices[]',
+            maxTags: 1
+        }
+    ];
+    tagInputConfigs.forEach(config => TagInput.init(config));
 
     // Search & Sort: event handlers
-    SearchSort.initSearch('#search-inp', '#search-options');
-    SearchSort.initSort('#sort-options');
+    SearchSort.initSearch(CONSTANTS.SELECTORS.searchInp, CONSTANTS.SELECTORS.searchOptions);
+    SearchSort.initSort(CONSTANTS.SELECTORS.sortOptions);
 
-    // Global click: popin outside click, dropdown close, book details edit
+    // Global click: close popins and dropdowns when clicking outside
     $(document).on('click', function(event) {
         // Popins: close on outside click
         Popins.handleOutsideClick(event, Dropdowns.close);
 
         // Dropdowns: close when focus is lost
-        const $targetDropdown = $(event.target).closest('#customHamburgerDropdown, #customSearchDropdown');
+        const $targetDropdown = $(event.target).closest(DROPDOWNS_TO_CLOSE.join(','));
         if ($targetDropdown.length === 0) {
-            Dropdowns.close(['#customHamburgerDropdown', '#customSearchDropdown']);
+            Dropdowns.close(DROPDOWNS_TO_CLOSE);
+        }
+    });
+
+    // Book details: close other dropdowns when details opened
+    $(document).on('click', CONSTANTS.SELECTORS.bookDetailsButton, function(event) {
+        event.stopPropagation(); // Prevent global click handler from firing
+        const $detailsBtn = $(this);
+        const targetId = $detailsBtn.attr('data-bs-target');
+
+        if ($(CONSTANTS.SELECTORS.alethoDropdownBody).length) {
+            Dropdowns.close(DROPDOWNS_TO_CLOSE);
         }
 
-        // Book details: close other dropdowns when details opened
-        const $detailsBtn = $(event.target).closest('[id^="itemButton-"]');
-        if ($detailsBtn.length) {
-            const targetId = $detailsBtn.attr('data-bs-target');
-            event.stopPropagation();
-            if ($('.aletho-dropdown-body.show').length) {
-                Dropdowns.close(['#customHamburgerDropdown', '#customSearchDropdown']);
+        // Close other open book details sections for accordion behavior
+        $(CONSTANTS.SELECTORS.alethoItemDropdown).each(function() {
+            if ('#' + this.id !== targetId) {
+                bootstrap.Collapse.getOrCreateInstance(this, { toggle: false }).hide();
             }
-            $('.collapse.aletho-item-dropdown.show').each(function() {
-                if ('#' + $detailsBtn.attr('id') !== targetId) {
-                    bootstrap.Collapse.getOrCreateInstance(this, {toggle: false}).hide();
-                }
-            });
-        }
+        });
+    });
 
-        // Book details edit: make field editable and convert input to tags for all taggable fields
-        const $detEditBtn = $(event.target).closest('.extra-button-style');
-        if ($detEditBtn.length) {
-            const selector = $detEditBtn.data('swapTargets');
-            const $field = $(selector);
-            if ($field.prop('disabled')) {
-                $field.prop('disabled', false)
-                    .addClass('field-editable')
-                    .focus();
-                // Writers
-                if ($field.hasClass('writer-input')) {
-                    Utility.markFieldChanged($field);
-                    const $container = TagInput.getTagsContainer($field, 'writer-tags-container');
-                    TagInput.restoreTagsFromInput($field, $container, 'writer-tag', 'book_writers[]');
-                }
-                // Genres
-                else if ($field.hasClass('genre-input')) {
-                    Utility.markFieldChanged($field);
-                    const $container = TagInput.getTagsContainer($field, 'genre-tags-container');
-                    TagInput.restoreTagsFromInput($field, $container, 'genre-tag', 'book_genres[]');
-                }
-                // Offices
-                else if ($field.hasClass('office-input')) {
-                    Utility.markFieldChanged($field);
-                    const $container = TagInput.getTagsContainer($field, 'office-tags-container');
-                    TagInput.restoreTagsFromInput($field, $container, 'office-tag', 'book_offices[]');
-                }
-                else {
-                    $field.data('originalValue', $field.val());
-                }
-            }
+    // Book details edit: make field editable and convert input to tags for all taggable fields
+    $(document).on('click', CONSTANTS.SELECTORS.editButton, function(event) {
+        event.stopPropagation(); // Prevent global click handler from firing
+        const selector = $(this).data('swapTargets');
+        const $field = $(selector);
+
+        if (!$field.prop('disabled')) return;
+
+        const config = Utility.getFieldConfig($field);
+
+        if (config.isTaggable) {
+            Utility.markFieldChanged($field);
+            const $container = TagInput.getTagsContainer($field, config.containerSelector);
+            TagInput.restoreTagsFromInput($field, $container, config.tagClass, config.hiddenInputName);
+        } else {
+            $field.data('originalValue', $field.val());
         }
     });
 
     // Popins: status period popin input fill (could be refactored into Popins)
-    $('#status-type').on('change', function() {
+    $(CONSTANTS.SELECTORS.statusType).on('change', function() {
         const $selected = $(this).find('option:selected');
-        $('#periode-length').val($selected.data('periode_length'));
-        $('#reminder-day').val($selected.data('reminder_day'));
-        $('#overdue-day').val($selected.data('overdue_day'));
+        $(CONSTANTS.SELECTORS.periodeLength).val($selected.data('periode_length'));
+        $(CONSTANTS.SELECTORS.reminderDay).val($selected.data('reminder_day'));
+        $(CONSTANTS.SELECTORS.overdueDay).val($selected.data('overdue_day'));
     });
 
     // Dropdowns: button click handlers
-    $('#hamburgerButton').on('click', function(e) {
+    $(CONSTANTS.SELECTORS.hamburgerButton).on('click', function(e) {
         e.stopPropagation();
-        Dropdowns.toggle(['#customHamburgerDropdown', '#customSearchDropdown']);
+        Dropdowns.toggle([CONSTANTS.SELECTORS.hamburgerDropdown, CONSTANTS.SELECTORS.searchDropdown]);
     });
-    $('#searchButton').on('click', function(e) {
+    
+    $(CONSTANTS.SELECTORS.searchButton).on('click', function(e) {
         e.stopPropagation();
-        Dropdowns.toggle(['#customSearchDropdown', '#customHamburgerDropdown']);
+        Dropdowns.toggle([CONSTANTS.SELECTORS.searchDropdown, CONSTANTS.SELECTORS.hamburgerDropdown]);
     });
 
     // Book details: input/change listener for editable fields
-    $(document).on('input change', 'input.field-editable, select.field-editable', function() {
+    $(document).on('input change', CONSTANTS.SELECTORS.editableField, function() {
         const $field = $(this);
         const original = $field.data('originalValue');
         const current = $field.val();
@@ -197,65 +225,36 @@ $(function() {
     });
 
     // Blur event handler to revert input if unchanged for all taggable fields
-    $(document).on('blur', 'input.field-editable, select.field-editable', function() {
+    $(document).on('blur', CONSTANTS.SELECTORS.editableField, function() {
         const $field = $(this);
         setTimeout(() => {
-            if (TagInput.isRemoving()) {
+            if (TagInput.isRemoving && TagInput.isRemoving()) {
                 return;
             }
+
             const original = $field.data('originalValue');
+            const config = Utility.getFieldConfig($field);
             let current;
-            // Writers
-            if ($field.hasClass('writer-input')) {
-                const $container = TagInput.getTagsContainer($field, 'writer-tags-container');
-                const currentValues = TagInput.getValuesFromContainer($container, 'book_writers[]');
+
+            if (config.isTaggable) {
+                const $container = TagInput.getTagsContainer($field, config.containerSelector);
+                const currentValues = TagInput.getValuesFromContainer($container, config.hiddenInputName);
                 current = currentValues.join(',');
+
                 if (current === original) {
-                    const names = TagInput.getValuesFromContainer($container, 'book_writers[]');
+                    const names = TagInput.getValuesFromContainer($container, config.hiddenInputName);
                     $field.val(names.join(', '));
                     $container.empty();
                     $field.prop('disabled', true)
-                        .removeClass('field-editable field-changed')
+                        .removeClass(`${CONSTANTS.CLASSES.fieldEditable} ${CONSTANTS.CLASSES.fieldChanged}`)
                         .removeData('originalValue');
                     Utility.clearFieldChanged($field);
                 }
-            }
-            // Genres
-            else if ($field.hasClass('genre-input')) {
-                const $container = TagInput.getTagsContainer($field, 'genre-tags-container');
-                const currentValues = TagInput.getValuesFromContainer($container, 'book_genres[]');
-                current = currentValues.join(',');
-                if (current === original) {
-                    const names = TagInput.getValuesFromContainer($container, 'book_genres[]');
-                    $field.val(names.join(', '));
-                    $container.empty();
-                    $field.prop('disabled', true)
-                        .removeClass('field-editable field-changed')
-                        .removeData('originalValue');
-                    Utility.clearFieldChanged($field);
-                }
-            }
-            // Offices
-            else if ($field.hasClass('office-input')) {
-                const $container = TagInput.getTagsContainer($field, 'office-tags-container');
-                const currentValues = TagInput.getValuesFromContainer($container, 'book_offices[]');
-                current = currentValues.join(',');
-                if (current === original) {
-                    const names = TagInput.getValuesFromContainer($container, 'book_offices[]');
-                    $field.val(names.join(', '));
-                    $container.empty();
-                    $field.prop('disabled', true)
-                        .removeClass('field-editable field-changed')
-                        .removeData('originalValue');
-                    Utility.clearFieldChanged($field);
-                }
-            }
-            // Default
-            else {
+            } else {
                 current = $field.val();
                 if (current === original) {
                     $field.prop('disabled', true)
-                        .removeClass('field-editable field-changed')
+                        .removeClass(`${CONSTANTS.CLASSES.fieldEditable} ${CONSTANTS.CLASSES.fieldChanged}`)
                         .removeData('originalValue');
                     Utility.clearFieldChanged($field);
                 }
@@ -267,7 +266,7 @@ $(function() {
      *      Stopping form submit when `Enter` is pressed, so its inline with other inputs.
      *      Normalizing and trimming the input, and triggering `on blur` or `on change` events.
      */
-    $('[id^="book-name-"]').on('keydown', function(e) {
+    $(CONSTANTS.SELECTORS.bookNameInput).on('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             const $input = $(this);
@@ -277,11 +276,11 @@ $(function() {
     });
 
     // Trigger change on load to pre-fill with the first status
-    $('#status-type').trigger('change');
+    $(CONSTANTS.SELECTORS.statusType).trigger('change');
 
     // W.I.P. Testing functions
-    $('#login-name, #login-passw').on('input', inputCheck);
-    $('.status-dot').on('click', testLights);
+    $(CONSTANTS.SELECTORS.loginName + ', ' + CONSTANTS.SELECTORS.loginPassw).on('input', inputCheck);
+    $(CONSTANTS.SELECTORS.statusDot).on('click', testLights);
 });
 
 // W.I.P. helpers (could be moved to Utility or modules)
