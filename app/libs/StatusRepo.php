@@ -2,16 +2,22 @@
 
 namespace App\Libs;
 
-use App\App;
+use App\{App, Database};
 
 class StatusRepo {
     protected array $status;
     protected array $links;
     protected array $meta;
+    protected Database $db;
 
-    /** (Done)
-     * Helper function to calculate a status due date.
-     * Formated for <input type="date">.
+    public function __construct($con = []) {
+        if  (!empty($con)) {
+            $this->db = $con;
+        }
+    }
+
+    /** Helper function to calculate a status due date, formated for <input type="date">.
+     *      @return string -> converted time string. 
      */
     private function calculateDueDate(string $startDate, int $days): string {
         $dt = new \DateTimeImmutable($startDate);
@@ -21,20 +27,16 @@ class StatusRepo {
     }
 
     /** All default status data:
-     * 
-     *  - [id] = status id
-     *  - [type] = status name
-     *  - [periode_length] = periode length in days
-     *  - [reminder_day] = amount of days before the period end, that a reminder should be sent
-     *  - [overdue_day] = amount of days after the period end, that a book is considered overdue
-     *  - [active] = if a status type is still active or not
-     * 
+     *      - [id]              = status id
+     *      - [type]            = status name
+     *      - [periode_length]  = periode length in days
+     *      - [reminder_day]    = amount of days before the period end, that a reminder should be sent
+     *      - [overdue_day]     = amount of days after the period end, that a book is considered overdue
+     *      - [active]          = if a status type is still active or not
      */
     public function getAllStatus(): array {
         if (!isset($this->status)) {
-            $this->status = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM status");
+            $this->status = $this->db->query()->fetchAll("SELECT * FROM status");
         }
 
         if (!is_array($this->status) || $this->status === []) {
@@ -48,21 +50,17 @@ class StatusRepo {
     }
 
     /** All default book_status link table data:
-     *  
-     *  [book_id] = book id link
-     *  [stat_id] = status id link
-     *  [meta_id] = meta id link
-     *  [loaner_id] = loaner id link
-     *  [current_location] = current office id link
-     *  [start_date] = date & time the status was started
-     *  [send_mail] => If a mail was send for this status or not 
-     * 
+     *      - [book_id]             = book id link
+     *      - [stat_id]             = status id link
+     *      - [meta_id]             = meta id link
+     *      - [loaner_id]           = loaner id link
+     *      - [current_location]    = current office id link
+     *      - [start_date]          = date & time the status was started
+     *      - [send_mail]           = If a mail was send for this status or not 
      */
     public function getAllLinks(): array {
         if (!isset($this->links)) {
-            $this->links = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM book_status");
+            $this->links = $this->db->query()->fetchAll("SELECT * FROM book_status");
         }
 
         if (!is_array($this->links) || $this->links === []) {
@@ -76,21 +74,17 @@ class StatusRepo {
     }
 
     /** All default book_sta_meata link table data:
-     * 
-     *  [id] = default index
-     *  [noti_id]       = notificatie id link
-     *  [action_type]   = type/name of the action
-     *  [action_token]  = unique token for this action
-     *  [token_expires] = expire date & time for the token
-     *  [token_used]    = was the token used yes/no
-     *  [finished]      = was the action finished yes/no
-     * 
+     *      - [id]              = default index
+     *      - [noti_id]         = notificatie id link
+     *      - [action_type]     = type/name of the action
+     *      - [action_token]    = unique token for this action
+     *      - [token_expires]   = expire date & time for the token
+     *      - [token_used]      = was the token used yes/no
+     *      - [finished]        = was the action finished yes/no
      */
     public function getAllMeta(): array {
         if (!isset($this->meta)) {
-            $this->meta = App::getService('database')
-                ->query()
-                ->fetchAll("SELECT * FROM book_sta_meta");
+            $this->meta = $this->db->query()->fetchAll("SELECT * FROM book_sta_meta");
         }
 
         if (!is_array($this->meta) || $this->meta === []) {
