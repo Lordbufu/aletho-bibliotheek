@@ -5,50 +5,56 @@ class FormValidation {
 	protected array $errors = [];
 	protected array $cleanData = [];
 
+	/**
+	 * Sanitize an array of strings: trim, strip tags, drop empties, deduplicate.
+	 */
+	protected function sanitizeArray($value): array {
+		if (!is_array($value)) {
+			return [];
+		}
+
+		$cleaned = array_map(
+			fn($v) => is_string($v) ? trim(strip_tags($v)) : '',
+			$value
+		);
+
+		$cleaned = array_filter($cleaned, fn($v) => $v !== '');
+		$cleaned = array_unique($cleaned);
+
+		return array_values($cleaned);
+	}
+
 	/**	Sanitize and filter input data, always keeps all expected keys, never drops them.
 	 *      @param array $input
 	 *      @return bool True if valid, false if errors found.
 	 */
-	public function sanitizeInput(array $input): bool {
+	public function sanitizeInput(array $input, string $mode = 'add'): bool {
 		$this->errors = [];
 		$this->cleanData = [];
 
-		// Always expect these fields
+		// Define expected fields and their sanitizers
 		$expected = [
-			'book_id', 'book_name', 'book_writers', 'book_genres', 'book_offices'
+			'book_name'     => fn($v) => trim(strip_tags((string)$v)),
+			'book_writers'  => fn($v) => $this->sanitizeArray($v),
+			'book_genres'   => fn($v) => $this->sanitizeArray($v),
+			'book_offices'  => fn($v) => $this->sanitizeArray($v),
 		];
 
-		// Set safe defaults
-		foreach ($expected as $key) {
-			if (!isset($input[$key])) {
-				if ($key === 'book_id') {
-					$this->cleanData[$key] = 0;
-				} elseif ($key === 'book_name') {
-					$this->cleanData[$key] = '';
-				} else {
-					$this->cleanData[$key] = [];
+		// Only include book_id in edit mode
+		if ($mode === 'edit') {
+			$expected['book_id'] = function($v) {
+				$id = filter_var($v, FILTER_VALIDATE_INT);
+				if ($id === false && $v !== null) {
+					$this->errors['book_id'] = 'Ongeldige boek-ID.';
 				}
-			}
+				return $id !== false && $id !== null ? $id : 0;
+			};
 		}
 
-		// Sanitize each field
-		// book_id
-		$id = isset($input['book_id']) ? filter_var($input['book_id'], FILTER_VALIDATE_INT) : 0;
-		$this->cleanData['book_id'] = $id !== false && $id !== null ? $id : 0;
-		if ($id === false && isset($input['book_id'])) {
-			$this->errors['book_id'] = 'Ongeldige boek-ID.';
-		}
-
-		// book_name
-		$name = isset($input['book_name']) ? trim(strip_tags($input['book_name'])) : '';
-		$this->cleanData['book_name'] = $name;
-
-		// book_writers, book_genres, book_offices
-		foreach (['book_writers', 'book_genres', 'book_offices'] as $arrKey) {
-			$arr = isset($input[$arrKey]) && is_array($input[$arrKey]) ? $input[$arrKey] : [];
-			$cleaned = array_map(fn($v) => is_string($v) ? trim(strip_tags($v)) : '', $arr);
-			$cleaned = array_filter($cleaned, fn($v) => $v !== '');
-			$this->cleanData[$arrKey] = array_values($cleaned);
+		// Apply sanitizers
+		foreach ($expected as $key => $sanitizer) {
+			$raw = $input[$key] ?? null;
+			$this->cleanData[$key] = $sanitizer($raw);
 		}
 
 		return empty($this->errors);
@@ -65,7 +71,7 @@ class FormValidation {
 		// Title
 		if ($mode === 'add' || ($mode === 'edit' && $data['book_name'] !== '')) {
 			if ($data['book_name'] === '') {
-				$this->errors['book_title'] = 'Titel is verplicht.';
+				$this->errors['book_name'] = 'Titel is verplicht.';
 			}
 		}
 
