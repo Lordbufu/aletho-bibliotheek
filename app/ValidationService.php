@@ -29,7 +29,7 @@ class ValidationService {
     }
 
     /*  Sanitize and filter input data. */
-    public function sanitizeInput(array $input): bool {
+    public function sanitizeInput(array $input, string $mode): bool {
         return $this->formValidator->sanitizeInput($input);
     }
 
