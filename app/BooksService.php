@@ -160,11 +160,9 @@ class BooksService {
                 $this->genres->addBookGenres($data['book_genres'], $bookId);
             }
 
-            dd($data);
-
             // Attempt to store writers
             if (!empty($data['book_writers'])) {
-                $this->writers->addWriters($data['book_writers'], $bookId);
+                $this->writers->addBookWriters($data['book_writers'], $bookId);
             }
 
             $this->db->finishTransaction();
@@ -243,7 +241,7 @@ class BooksService {
     }
 
     /** W.I.P. (potentially obsolete)
-     * @return array
+     *      @return array
      */
     public function getOneForDisplay(int $id): array {
         $row = $this->books->findOne($id);
