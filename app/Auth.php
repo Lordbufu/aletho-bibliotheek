@@ -22,6 +22,10 @@ class Auth {
         return $this->service->can($permission);
     }
 
+    public function canManageOffice(int $officeId): bool {
+        return $this->service->canManageOffice($officeId);
+    }
+
     public function login(string $email, string $password): bool {
         return $this->service->login($email, $password);
     }
