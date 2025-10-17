@@ -35,7 +35,7 @@ if (!function_exists('dd')) {
     }
 }
 
-/** Set custom SESSION flash data, if kept associated, you can store a array of types and message that related to eachother.
+/** Set custom SESSION flash data, supports arrays of types and message.
  *      @param string $bucket           -> One of: global, inline, form
  *      @param string|array $type       -> e.g. success, failure, warning
  *      @param string|array $message    -> Message string or array (for form data)
@@ -49,6 +49,9 @@ if (!function_exists('setFlash')) {
                 break;
             case "inline":
                 $bName = "_flashInline";
+                break;
+            case "inlinePop":
+                $bName = "_flashInlinePop";
                 break;
             case "form":
                 $bName = "_flashForm";
