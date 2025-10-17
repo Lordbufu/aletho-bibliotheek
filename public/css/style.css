@@ -204,7 +204,7 @@ body.modal-open { overflow: hidden; }
 	border-radius: 0.375rem 0.375rem 0 0;
 }
 
-/* Custom alert style */
+/* Custom global alert style */
 .aletho-alert {
     position: fixed;
     top: -80px;
@@ -224,6 +224,23 @@ body.modal-open { overflow: hidden; }
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     transition: top 0.5s cubic-bezier(.68,-0.55,.27,1.55);
     word-wrap: break-word;
+}
+
+/* Custom inline alert style */
+.aletho-inline-success {
+    background: #2ecc40;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+}
+
+.aletho-inline-failure {
+    background: #e74c3c;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
 }
 
 /* custom element specific tags */
