@@ -1,13 +1,5 @@
-<?php	// Require the header, and store old form data is set.
-	require viewPath('partials\templates\header.php');
-	$old = $_SESSION['_flashForm']['message'] ?? [];
-	unset($_SESSION['_flashForm']);
-?>
-
 <div class="page-wrapper">
-
 	<?php require viewPath('partials\templates\banner.php'); ?>
-
 		<main class="flex-grow-1 d-flex flex-column flex-md-row">
 			<div class="centered-view">
 				<div class="login-cont">
@@ -38,7 +30,7 @@
 								required>
 
 						<?php if (!empty($_SESSION['_flashInline'])): ?>
-							<div class="aletho-inline-<?= $_SESSION['_flashInline']['type'] ?>" role="alert">
+							<div class="aletho-border aletho-inline-<?= $_SESSION['_flashInline']['type'] ?>" role="alert">
 								<?= htmlspecialchars($_SESSION['_flashInline']['message']) ?>
 							</div>
 							<?php unset($_SESSION['_flashInline']); ?>
@@ -49,9 +41,6 @@
 
 				</div>
 			</div>
-
 		</main>
-
 	<?php require viewPath('partials\templates\footer.php'); ?>
-
 </div>

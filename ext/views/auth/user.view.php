@@ -10,6 +10,10 @@
                 require viewPath('partials/containers/item-container.php');
             } ?>
         </div>
+        <form id="shared-delete-form" method="post" action="/delBook" style="display:none;">
+            <input type="hidden" name="_method" value="DELETE">
+            <input type="hidden" name="book_id" id="delete-book-id">
+        </form>
         <?php
             require viewPath('partials/popins/add-book-popin.php');
             require viewPath('partials/popins/status-period-popin.php');

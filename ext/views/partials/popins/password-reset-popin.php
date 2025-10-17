@@ -1,8 +1,3 @@
-<?php   // Get and unflash old form data
-    $old = $_SESSION['_flashForm']['message'] ?? [];
-    unset($_SESSION['_flashForm']);
-?>
-
 <div id="password-reset-popin" class="modal" tabindex="-1" style="display:none;">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
@@ -47,10 +42,8 @@
                             required>
 
                     <?php if (!empty($_SESSION['_flashInline'])): ?>
-                        <div class="login-error mt-1" role="alert">Melding:
-                            <div class="mt-1 aletho-inline-<?= $_SESSION['_flashInline']['type'] ?>">
-                                <?= htmlspecialchars($_SESSION['_flashInline']['message']) ?>
-                            </div>
+                        <div class="aletho-border mt-1 aletho-inline-<?= $_SESSION['_flashInline']['type'] ?>">
+                            <?= htmlspecialchars($_SESSION['_flashInline']['message']) ?>
                         </div>
                         <?php unset($_SESSION['_flashInline']); ?>
                     <?php endif; ?>

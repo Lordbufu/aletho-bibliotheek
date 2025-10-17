@@ -1,3 +1,27 @@
+<?php
+    $old = $_SESSION['_flashForm']['message'] ?? [];
+    unset($_SESSION['_flashForm']);
+
+	// Store the correct inline error formats, for book details.
+    if (!empty($_SESSION['_flashInline']) && !is_array($_SESSION['_flashInline'])) {
+        $errors[$_SESSION['_flashInline']['type']] = $_SESSION['_flashInline']['message'];
+    } elseif (!empty($_SESSION['_flashInline']) && is_array($_SESSION['_flashInline'])) {
+		foreach($_SESSION['_flashInline']['type'] as $key => $value) {
+			$errors[$value] = $_SESSION['_flashInline']['message'][$key];
+		}
+	}
+	unset($_SESSION['_flashInline']);
+
+	// Store the correct inline error formats, for popins.
+    if (!empty($_SESSION['_flashInlinePop']) && !is_array($_SESSION['_flashInlinePop'])) {
+        $popErrors[$_SESSION['_flashInlinePop']['type']] = $_SESSION['_flashInlinePop']['message'];
+    } elseif (!empty($_SESSION['_flashInlinePop']) && is_array($_SESSION['_flashInlinePop'])) {
+		foreach($_SESSION['_flashInlinePop']['type'] as $key => $value) {
+			$popErrors[$value] = $_SESSION['_flashInlinePop']['message'][$key];
+		}
+	}
+	unset($_SESSION['_flashInlinePop']);
+?>
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -21,7 +45,7 @@
 	<body class="aletho-background">
 		<!-- user feedback container for the entire app -->
 		<?php if (!empty($_SESSION['_flashGlobal'])): ?>
-			<div class="aletho-border aletho-alert alert-global-<?= $_SESSION['_flashGlobal']['type'] ?>" role="alert">
+			<div class="aletho-border aletho-alert-global aletho-global-<?= $_SESSION['_flashGlobal']['type'] ?>" role="alert">
 				<?= htmlspecialchars($_SESSION['_flashGlobal']['message']) ?>
 			</div>
 			<?php unset($_SESSION['_flashGlobal']); ?>
