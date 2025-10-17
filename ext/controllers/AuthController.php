@@ -1,124 +1,97 @@
 <?php
-
 namespace Ext\Controllers;
 
 use App\{App, Auth};
+use App\Validation\FormValidation;
 
 /*  Handles authentication-related HTTP requests. */
 class AuthController {
     protected Auth $auth;
+    protected FormValidation $validator;
 
-    /* Construct Auth as default local service. */
+    /*  Construct Auth as default local service. */
     public function __construct() {
-        $this->auth = new Auth();
-
-        App::getService('logger')->info(
-            "Controller 'AuthController' has constructed 'Auth'",
-            'authcontroller'
-        );
-    }
-
-    /** Show the login form.
-     *      @return void Renders the login view.
-     */
-    public function showForm() {
-        return App::view('auth/login');
-    }
-
-    /** Handle login submission.
-     *      @return void Redirects or returns view with errors.
-     */
-    public function authenticate() {
-        $username = trim($_POST['userName'] ?? '');
-        $password = $_POST['userPw'] ?? '';
-
-        if ($username === '' || $password === '') {
-            App::getService('logger')->warning(
-                'Login attempt with missing credentials',
-                'auth'
+        try {
+            $this->auth = new Auth();
+            $this->validator = App::getService('val')->formVal();
+        } catch(Exception $e) {
+            App::getService('logger')->error(
+                "Failed to construct `Auth` or `FormValidation`",
+                "AuthController"
             );
 
-            return App::view('auth/login', [
-                'error' => 'Please enter both username and password.'
-            ]);
+            error_log($e.getMessage(), 0);
         }
+    }
 
-        if ($this->auth->login($username, $password)) {
-            App::getService('logger')->info(
-                "User {$username} logged in",
-                'auth'
-            );
-
+    /*  Show the login form. */
+    public function showForm() {
+        /*  Basically a session timeout protection. */
+        if (!isset($_SESSION['user'])) {
             return App::redirect('/');
         }
 
-        App::getService('logger')->warning(
-            "Failed login for {$username}",
-            'auth'
-        );
-
-        return App::view('auth/login', [
-            'error' => 'Invalid username or password.'
-        ]);
+        return App::view('auth/login');
     }
 
-    /** Handle logout.
-     *      @return void Redirects to landing page.
-     */
+    /*  Handle login submission. */
+    public function authenticate() {
+        if (!$this->validator->validateUserLogin($_POST)) {
+            setFlash('inline', 'failure', 'Vul zowel gebruikersnaam als wachtwoord in.');
+            setFlash('form', 'data', ['userName' => $this->validator->cleanData()['userName'] ?? '']);
+            return App::redirect('/login');
+        }
+
+        $data = $this->validator->cleanData();
+
+        if (!$this->auth->login($data['userName'], $data['userPw'])) {
+            setFlash('inline', 'failure', 'Ongeldige gebruikersnaam of wachtwoord.');
+            setFlash('form', 'data', ['userName' => $data['userName']]);
+            return App::redirect('/login');
+        }
+
+        return App::redirect('/');
+    }
+
+    /*  Handle logout. */
     public function logout() {
         $this->auth->logout();
 
-        App::getService('logger')->info(
-            'User logged out',
-            'auth'
-        );
-
         if (!isset($_SESSION['user'])) {
             $_SESSION['user']['role'] = 'Guest';
-
-            App::getService('logger')->info(
-                "User role reset to 'Guest'",
-                'auth'
-            );
         }
         
         return App::redirect('/');
     }
 
-    /** Handle password reset (for own account).
-     *      @return void Redirects back to home->password-reset-popin with a status message.
-     */
+    /*  Handle all password resets. */
     public function resetPassword() {
-        $userId         = $_SESSION['user']['id'] ?? null;
-        $currentPw      = $_POST['currentPw'] ?? '';
-        $newPw          = $_POST['newPw'] ?? '';
-        $confirmNewPw   = $_POST['confirmNewPw'] ?? '';
+        $isGlobal = ($_SESSION['user']['role'] ?? '') === 'Gadmin';
 
-        if (!$userId) {
-            App::getService('logger')->error(
-                'Password reset attempted without user session',
-                'auth'
+        if (!$this->validator->validatePasswordChange($_POST, $isGlobal)) {
+            setFlash('inline', 'failure', 'Controleer de invoer en probeer opnieuw.');
+            setFlash('form', 'data', [
+                'user_name' => $this->validator->cleanData()['user_name'] ?? ''
+            ]);
+            return App::redirect('/home#password-reset-popin');
+        }
+
+        $data = $this->validator->cleanData();
+
+        if ($isGlobal) {
+            $result = $this->auth->resetUserPassword(
+                $data['user_name'],
+                $data['new_password']
             );
-
-            $_SESSION['_flash'] = [
-                'error' => 'Not logged in.'
-            ];
+        } else {
+            $result = $this->auth->resetOwnPassword(
+                $_SESSION['user']['id'],
+                $data['current_password'],
+                $data['new_password']
+            );
         }
 
-        if ($newPw !== $confirmNewPw) {
-            $_SESSION['_flash'] = [
-                'error' => 'New passwords do not match.'
-            ];
-        }
-
-        if (!isset($_SESSION['flash']['error'])) {
-            $result = $this->auth->resetOwnPassword($userId, $currentPw, $newPw);
-        }
-
-        if (isset($result['error'])) {
-            $_SESSION['_flash'] = $message;
-        }
-
+        setFlash('inline', $result['success'] ? 'success' : 'failure', $result['message']);
         return App::redirect('/home#password-reset-popin');
     }
 }
