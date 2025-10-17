@@ -21,7 +21,7 @@ return [
     ],
     // Core validation service
     'val' => [
-        'class'  => \App\Validation\FormValidation::class
+        'class'  => \App\ValidationService::class
     ],
     // Core Books Service
     'books' => [
