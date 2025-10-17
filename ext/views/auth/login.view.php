@@ -1,11 +1,14 @@
-
-<?php use App\App;
-	require viewPath('partials\templates\header.php'); ?>
+<?php	// Require the header, and store old form data is set.
+	require viewPath('partials\templates\header.php');
+	$old = $_SESSION['_flashForm']['message'] ?? [];
+	unset($_SESSION['_flashForm']);
+?>
 
 <div class="page-wrapper">
-	<?php require viewPath('partials\templates\banner.php'); ?>
-		<main class="flex-grow-1 d-flex flex-column flex-md-row">
 
+	<?php require viewPath('partials\templates\banner.php'); ?>
+
+		<main class="flex-grow-1 d-flex flex-column flex-md-row">
 			<div class="centered-view">
 				<div class="login-cont">
 
@@ -16,25 +19,34 @@
 					<form class="aletho-modal-body needs-validation" id="login-form" method="post" action="/login" novalidate>
 
 						<label class="aletho-labels extra-popin-style" for="login-name">Gebruikersnaam</label>
-						<input class="aletho-inputs extra-popin-style" id="login-name" name="userName" placeholder="Gebruikersnaam" type="text" autocomplete="username" required>
+						<input	class="aletho-inputs extra-popin-style"
+								id="login-name"
+								name="userName"
+								placeholder="Gebruikersnaam"
+								type="text"
+								value="<?= htmlspecialchars($old['userName'] ?? '') ?>"
+								autocomplete="username"
+								required>
 
 						<label class="aletho-labels extra-popin-style" for="login-passw">Wachtwoord</label>
-						<input
-							class="aletho-inputs extra-popin-style" id="login-passw" name="userPw" placeholder="Wachtwoord" type="password"
-							required
-							autocomplete="current-password"
-							minlength="8"
-							pattern="(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}"
-							title="Minimaal 8 tekens, met minstens één hoofdletter, één kleine letter en één cijfer">
+						<input	class="aletho-inputs extra-popin-style mb-2"
+								id="login-passw"
+								name="userPw"
+								placeholder="Wachtwoord"
+								type="password"
+								autocomplete="current-password"
+								required>
 
-						
-						<?php if(isset($_SESSION['_flash']) && !empty($_SESSION['_flash']['login_error'])) : ?>
-						<div class="login-error mt-1">Melding:<p class="login-error-text"><?=$$_SESSION['_flash']['login_error']?></p></div>
-						<?php unset($_SESSION['_flash']); endif; ?>
-						
-						<input class="aletho-buttons extra-popin-style mt-1 mb-2" id="login-submit" type="submit" value="Inloggen">
+						<?php if (!empty($_SESSION['_flashInline'])): ?>
+							<div class="aletho-inline-<?= $_SESSION['_flashInline']['type'] ?>" role="alert">
+								<?= htmlspecialchars($_SESSION['_flashInline']['message']) ?>
+							</div>
+							<?php unset($_SESSION['_flashInline']); ?>
+						<?php endif; ?>
+
+						<input class="aletho-buttons extra-popin-style mt-2 mb-2" id="login-submit" type="submit" value="Inloggen">
 					</form>
-					
+
 				</div>
 			</div>
 
