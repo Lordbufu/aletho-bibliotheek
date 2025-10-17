@@ -3,13 +3,13 @@ return [
     'Gadmin' => [
         'viewCata',
         'manageBooks',
-        'manageOffice',
-        'pwAllChange',
+        'manageOffices',
+        'pwChanges',
         'notifications'
     ], 'Oadmin' => [
         'viewCata',
         'manageBooks',
-        'manageOwnOffice',
+        'manageOffice',
         'pwChange',
         'notifications'
     ], 'User' => [
