@@ -35,14 +35,31 @@ if (!function_exists('dd')) {
     }
 }
 
-/* Set SESSION `_flash` data */
+/** Set custom SESSION flash data, if kept associated, you can store a array of types and message that related to eachother.
+ *      @param string $bucket           -> One of: global, inline, form
+ *      @param string|array $type       -> e.g. success, failure, warning
+ *      @param string|array $message    -> Message string or array (for form data)
+ */
 if (!function_exists('setFlash')) {
-    function setFlash($data) {
-        foreach ($data as $key => $value) {
-            $_SESSION['_flash'][$key] = $value;
+    function setFlash(string $bucket, $type, $message): void {
+        $bName;
+        switch($bucket) {
+            case "global":
+                $bName = "_flashGlobal";
+                break;
+            case "inline":
+                $bName = "_flashInline";
+                break;
+            case "form":
+                $bName = "_flashForm";
+                break;
+            default:
+                throw new InvalidArgumentException("Unknown flash bucket: {$bucket}");
         }
-        return true;
+
+        $_SESSION[$bName] = [
+            'type' => $type,
+            'message' => $message
+        ];
     }
-
 }
-
