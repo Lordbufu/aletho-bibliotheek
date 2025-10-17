@@ -20,9 +20,9 @@
 	<!-- Body to set the main page style and size -->
 	<body class="aletho-background">
 		<!-- user feedback container for the entire app -->
-		<?php if (!empty($_SESSION['_flash'])): ?>
-			<div class="aletho-border aletho-alert alert-global-<?= $_SESSION['_flash']['type'] ?>" role="alert">
-				<?= htmlspecialchars($_SESSION['_flash']['message']) ?>
+		<?php if (!empty($_SESSION['_flashGlobal'])): ?>
+			<div class="aletho-border aletho-alert alert-global-<?= $_SESSION['_flashGlobal']['type'] ?>" role="alert">
+				<?= htmlspecialchars($_SESSION['_flashGlobal']['message']) ?>
 			</div>
-			<?php unset($_SESSION['_flash']); ?>
+			<?php unset($_SESSION['_flashGlobal']); ?>
 		<?php endif; ?>
