@@ -1,11 +1,11 @@
 <?php
 /** TODO List:
- *      - Review the add/edit authentication logic, i might want to change that to just checking there admin status.
  *      - Review the frontend JQuery for edit and add logic, there seems to be a few key issues atm:
- *          - Fields not being tagged as editable.
- *          - Input remains when converted to a Tag.
+ *          - Tags not being added currently, most other functions seem to work now ?
  *          - Requires more live testing.
  *      - Add a default status when adding books, seems logical to just set to avaible right ?
+ *      - Figure out how to redirect back to a book details dropdown, i used to have this functionality.
+ *          - only required for the edit function, used needs to return to the book he/she was editing.
  */
 
 namespace Ext\Controllers;
@@ -51,14 +51,12 @@ class BookController {
         exit;
     }
 
-    // TODO: Re-add old form data to session _flash ?
     /*  Filter and process book add form data, and call the add functions in the BooksService. */
     public function add() {
         $hasError   = false;
         $newData    = [];
         $result     = false;
 
-        // dd($_POST);
 
         // Filter out unauthorized users first.
         if (!App::getService('auth')->can('manageBooks')) {
@@ -68,14 +66,22 @@ class BookController {
 
         // Check if POST data exists and is 'sanitized'.
         if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'add')) {
-            setFlash('failure', $this->valS->valErrors());
+            $error = $this->valS->valErrors();
+            setFlash('global', 'failure', $error['book_id']);
+            return App::redirect('/#add-book-popin');
         } else {
             $newData = $this->valS->sanData();
         }
 
         //  Validate input, and return errors and old input on failure.
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'add')) {
-            setFlash('failure', $this->valS->valErrors());
+            foreach($this->valS->valErrors() as $key => $value) {
+                $tempKeys[] = $key;
+                $tempValues[] = $value;
+            }
+
+            setFlash('inlinePop', $tempKeys, $tempValues);
+            return App::redirect('/#add-book-popin');
         }
 
         // Attempt to update book data if no errosr where set.
@@ -83,13 +89,15 @@ class BookController {
             $result = $this->bookS->addBook($newData);
             
             if (!$result) {
-                setFlash('failure', 'Boekgegevens zijn niet toegevoegd.');
+                setFlash('global', 'failure', 'Boekgegevens zijn niet toegevoegd.');
             } else {
-                setFlash('success', 'Boekgegevens zijn toegevoegd.');
+                setFlash('global', 'success', 'Boekgegevens zijn toegevoegd.');
             }
         }
 
-        return App::redirect('/');
+        setFlash('global', 'failure', 'Boekgegevens zijn niet toegevoegd.');
+
+        return App::redirect('/#add-book-popin');
     }
 
     /** Filter and process book edit form data, and call the update function in the BooksService.
@@ -101,28 +109,36 @@ class BookController {
         $result     = false;
 
         if (!App::getService('auth')->can('manageBooks')) {
-            setFlash('failure', 'Je hebt geen rechten om deze actie uit te voeren.');
+            setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
             return App::redirect('/');
         }
 
         if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'edit')) {
             $bookId = isset($_POST['book_id']) && is_numeric($_POST['book_id']) ? (int)$_POST['book_id'] : 0;
-            setFlash('failure', $this->valS->valErrors());
+            setFlash('inline', 'failure', $this->valS->valErrors());
         } else {
             $newData = $this->valS->sanData();
         }
 
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'edit')) {
-            setFlash('failure', $this->valS->valErrors());
+            foreach($this->valS->valErrors() as $key => $value) {
+                $tempKeys[] = $key;
+                $tempValues[] = $value;
+            }
+
+            setFlash('inlinePop', $tempKeys, $tempValues);
+            return App::redirect('/');
         }
 
         if (!isset($_SESSION['_flash']['type'])) {
             $result = $this->bookS->updateBook($newData);
             
             if (!$result) {
-                setFlash('failure', 'Boekgegevens zijn niet bijgewerkt.');
+                setFlash('global', 'failure', 'Boekgegevens zijn niet bijgewerkt.');
+                setFlash('form', 'data', $newData);
+                return App::redirect('/');
             } else {
-                setFlash('success', 'Boekgegevens zijn bijgewerkt.');
+                setFlash('global', 'success', 'Boekgegevens zijn bijgewerkt.');
             }
         }
 
