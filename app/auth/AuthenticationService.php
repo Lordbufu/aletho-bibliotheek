@@ -67,6 +67,20 @@ class AuthenticationService {
         return in_array($permission, $this->permissionsMap[$role] ?? []);
     }
 
+    /*  Check if user can edit office based on permission and/or office id. */
+    public function canManageOffice(int $officeId): bool {
+        if ($this->can('manageOffices')) {
+            return true;
+        }
+
+        if ($this->can('manageOffice')) {
+            $offices = $_SESSION['user']['offices'] ?? [];
+            return in_array($officeId, $offices, true);
+        }
+
+        return false;
+    }
+
     /*  Attempts to log in a user by there name and password, and sets there initial session data. */
     public function login(string $name, string $password): bool {
         $user = $this->findUserByName($name);
@@ -89,7 +103,7 @@ class AuthenticationService {
         return true;
     }
 
-    /* Log out the current user, and destory its session. */
+    /*  Log out the current user, and destory its session. */
     public function logout(): void {
         session_destroy();
         $_SESSION = [];
@@ -153,7 +167,7 @@ class AuthenticationService {
 
     /*  Password reset for Global Admins, allowing it for any account. */
     public function resetUserPassword(string $targetUserName, string $newPassword, string $confirmPassword): array {
-        if (!$this->can('pwAllChange')) {
+        if (!$this->can('pwChanges')) {
             App::getService('logger')->error(
                 'UNAUTHORIZED password reset attempt',
                 'auth'
