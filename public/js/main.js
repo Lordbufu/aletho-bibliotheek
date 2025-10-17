@@ -14,44 +14,42 @@ import { Utility } from './modules/utility.js';
 $(function() {
     const CONSTANTS = {
         SELECTORS: {
-            globalAlert: '.alert-global-success, .alert-global-failure',
+            globalAlert: '.aletho-global-success, .aletho-global-failure',
             hamburgerDropdown: '#customHamburgerDropdown',
             searchDropdown: '#customSearchDropdown',
             hamburgerButton: '#hamburgerButton',
+            alethoDropdownBody: '.aletho-dropdown-body.show',
+            alethoItemDropdown: '.collapse.aletho-item-dropdown.show',
             searchButton: '#searchButton',
+            searchInp: '#search-inp',
+            searchOptions: '#search-options',
+            sortOptions: '#sort-options',
             bookDetailsButton: '[id^="itemButton-"]',
+            bookAddButton: '#boek-add-button',
+            bookNameInput: '[id^="book-name-"]',
             editButton: '.extra-button-style',
             editableField: 'input.field-editable, select.field-editable',
             statusType: '#status-type',
             periodeLength: '#periode-length',
             reminderDay: '#reminder-day',
             overdueDay: '#overdue-day',
-            bookNameInput: '[id^="book-name-"]',
-            loginName: '#login-name',
-            loginPassw: '#login-passw',
-            statusDot: '.status-dot',
-            searchInp: '#search-inp',
-            searchOptions: '#search-options',
-            sortOptions: '#sort-options',
-            bookAddButton: '#boek-add-button',
+            bookStatusButton: '#boek-status-button',
             addBookPopin: '#add-book-popin',
             closeAddBookPopin: '#close-add-book-popin',
             statusPeriodeButton: '#status-periode-button',
             statusPeriodPopin: '#status-period-popin',
             closeStatusPeriodPopin: '#close-status-period-popin',
+            changeBookStatusPopin: '#change-book-status-popin',
+            closeChangeBookStatusPopin: '#close-change-book-status-popin',
+            statusDot: '.status-dot',
             passwordChangeButton: '#password-change-button',
             passwordResetPopin: '#password-reset-popin',
             closePasswordResetPopin: '#close-password-reset-popin',
-            bookStatusButton: '#boek-status-button',
-            changeBookStatusPopin: '#change-book-status-popin',
-            closeChangeBookStatusPopin: '#close-change-book-status-popin',
-            alethoDropdownBody: '.aletho-dropdown-body.show',
-            alethoItemDropdown: '.collapse.aletho-item-dropdown.show',
         },
         CLASSES: {
-            alertShow: 'alert-global-show',
+            alertShow: 'aletho-global-show',
             fieldEditable: 'field-editable',
-            fieldChanged: 'field-changed',
+            fieldChanged: 'field-changed'
         }
     };
 
@@ -59,7 +57,6 @@ $(function() {
 
     // User feedback notifications.
     const $alert = $(CONSTANTS.SELECTORS.globalAlert);
-
     if ($alert.length) {
         setTimeout(() => {
             $alert.addClass(CONSTANTS.CLASSES.alertShow);
@@ -176,7 +173,7 @@ $(function() {
 
     // Book details edit: make field editable and convert input to tags for all taggable fields
     $(document).on('click', CONSTANTS.SELECTORS.editButton, function(event) {
-        event.stopPropagation(); // Prevent global click handler from firing
+        event.stopPropagation();
         const selector = $(this).data('swapTargets');
         const $field = $(selector);
 
@@ -189,8 +186,13 @@ $(function() {
             const $container = TagInput.getTagsContainer($field, config.containerSelector);
             TagInput.restoreTagsFromInput($field, $container, config.tagClass, config.hiddenInputName);
         } else {
+            Utility.markFieldChanged($field);
             $field.data('originalValue', $field.val());
+            $field.prop('disabled', false);
         }
+
+        $field.prop('disabled', false)
+            .addClass(CONSTANTS.CLASSES.fieldEditable);
     });
 
     // Popins: status period popin input fill (could be refactored into Popins)
@@ -275,78 +277,88 @@ $(function() {
         }
     });
 
+    // Add book-id to a shared delete form, and submit said form.
+    $(document).on('click', '.delete-book-btn', function() {
+        const bookId = $(this).data('book-id');
+        $('#delete-book-id').val(bookId);
+        $('#shared-delete-form').trigger('submit');
+    });
+
     // Trigger change on load to pre-fill with the first status
     $(CONSTANTS.SELECTORS.statusType).trigger('change');
 
     // W.I.P. Testing functions
-    $(CONSTANTS.SELECTORS.loginName + ', ' + CONSTANTS.SELECTORS.loginPassw).on('input', inputCheck);
     $(CONSTANTS.SELECTORS.statusDot).on('click', testLights);
 });
 
-// W.I.P. helpers (could be moved to Utility or modules)
-function inputCheck(e) {
-    let check;
-    if(e.target.value !== '') {
-        switch(e.target.name) {
-            case 'userName':
-                check = stringChecker('name', e.target.value);
-                break;
-            case 'userPw':
-                check = stringChecker('pass', e.target.value);
-                break;
-        }
-        if(check !== "" && check !== undefined && check) {
-            if(e.target.classList.contains('is-invalid')) {
-                e.target.classList.remove('is-invalid');
-                e.target.style.outline = '';
-            }
-            return e.target.classList.add('is-valid');
-        }
-        if(check !== "" && check !== undefined && !check) {
-            if(e.target.classList.contains('is-valid')) {
-                e.target.classList.remove('is-valid');
-                e.target.style.outline = '';
-            }
-            return e.target.classList.add('is-invalid');
-        }
-    }
-    if(e.target.classList.contains('is-invalid')) {
-        e.target.style.outline = '';
-        return e.target.classList.remove('is-invalid');
-    }
-    if(e.target.classList.contains('is-valid')) {
-        e.target.style.outline = '';
-        return e.target.classList.remove('is-valid');
-    }
-}
-
-function stringChecker(type, value) {
-    switch(type) {
-        case 'name':
-            return value.length >= 7;
-        case 'pass':
-            return value.length >= 9;
-        default:
-            return false;
-    }
-}
-
+// W.I.P. helper, to review the basic status light colors via a simple click to change/rotate.
 function testLights(e) {
     let $el = $(e.target);
+
     if ($el.hasClass('statusOne')) {
         $el.removeClass('statusOne').addClass('statusTwo');
         return;
     }
+
     if ($el.hasClass('statusTwo')) {
         $el.removeClass('statusTwo').addClass('statusThree');
         return;
     }
+
     if ($el.hasClass('statusThree')) {
         $el.removeClass('statusThree').addClass('statusFour');
         return;
     }
+
     if ($el.hasClass('statusFour')) {
         $el.removeClass('statusFour').addClass('statusOne');
         return;
     }
 }
+
+// function inputCheck(e) {
+//     let check;
+//     if(e.target.value !== '') {
+//         switch(e.target.name) {
+//             case 'userName':
+//                 check = stringChecker('name', e.target.value);
+//                 break;
+//             case 'userPw':
+//                 check = stringChecker('pass', e.target.value);
+//                 break;
+//         }
+//         if(check !== "" && check !== undefined && check) {
+//             if(e.target.classList.contains('is-invalid')) {
+//                 e.target.classList.remove('is-invalid');
+//                 e.target.style.outline = '';
+//             }
+//             return e.target.classList.add('is-valid');
+//         }
+//         if(check !== "" && check !== undefined && !check) {
+//             if(e.target.classList.contains('is-valid')) {
+//                 e.target.classList.remove('is-valid');
+//                 e.target.style.outline = '';
+//             }
+//             return e.target.classList.add('is-invalid');
+//         }
+//     }
+//     if(e.target.classList.contains('is-invalid')) {
+//         e.target.style.outline = '';
+//         return e.target.classList.remove('is-invalid');
+//     }
+//     if(e.target.classList.contains('is-valid')) {
+//         e.target.style.outline = '';
+//         return e.target.classList.remove('is-valid');
+//     }
+// }
+
+// function stringChecker(type, value) {
+//     switch(type) {
+//         case 'name':
+//             return value.length >= 7;
+//         case 'pass':
+//             return value.length >= 9;
+//         default:
+//             return false;
+//     }
+// }

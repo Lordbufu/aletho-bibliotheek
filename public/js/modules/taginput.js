@@ -24,14 +24,14 @@ const TagInput = (() => {
     let activeTagInput      = null;
 
     /** Initialize tag input and tag container.
-     *      @param {Object} config - Configuration object
-     *      @param {string} config.inputSelector - Selector for the input field(s)
-     *      @param {string} config.containerSelector - Selector for the tag container(s)
-     *      @param {string} config.endpoint - API endpoint to fetch options
-     *      @param {string} config.tagClass - CSS class for tags
-     *      @param {string} config.suggestionClass - CSS class for suggestions
-     *      @param {string} config.hiddenInputName - Name for hidden input(s)
-     *      @param {number} [config.maxTags] - Optional: maximum number of tags allowed
+     *      @param {Object} config  -> Configuration object:
+     *          - inputSelector     -> Selector for the input field(s)
+     *          - containerSelector -> Selector for the tag container(s)
+     *          - endpoint          -> API endpoint to fetch options
+     *          - tagClass          -> CSS class for tags
+     *          - suggestionClass   -> CSS class for suggestions
+     *          - hiddenInputName   -> Name for hidden input(s)
+     *          - maxTags           -> Optional: maximum number of tags allowed
      */
     function init(config) {
         const $inputs   = $(config.inputSelector);
@@ -211,14 +211,14 @@ const TagInput = (() => {
         const context   = $field.data('context');
 
         if (bookId){
-            return $(`.${containerClass}[data-book-id="${bookId}"]`);
+            return $(`${containerClass}[data-book-id="${bookId}"]`);
         }
 
         if (context) {
-            return $(`.${containerClass}[data-context="${context}"]`);
+            return $(`${containerClass}[data-context="${context}"]`);
         }
 
-        return $(`.${containerClass}`).first(); // fallback
+        return $(`${containerClass}`).first(); // fallback
     }
 
     /** Get all tag values from a container, sorted and trimmed.
