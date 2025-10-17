@@ -11,11 +11,12 @@
                 <form id="status-period-form mb-1">
                     <label for="status-type" class="aletho-labels extra-popin-style">Status</label>
                     <select class="aletho-inputs extra-popin-style" id="status-type" name="status_type" required>
-                        <?php foreach ($statuses as $status): ?>
-                        <option value="<?= $status['id'] ?>" data-periode_length="<?= $status['periode_length'] ?>" data-reminder_day="<?= $status['reminder_day'] ?>" data-overdue_day="<?= $status['overdue_day'] ?>" >
-                            <?= htmlspecialchars($status['type']) ?>
+                        <option
+                            value="<?= $status['id'] ?>"
+                            data-periode_length="<?= $status['periode_length'] ?>"
+                            data-reminder_day="<?= $status['reminder_day'] ?>"
+                            data-overdue_day="<?= $status['overdue_day'] ?>">
                         </option>
-                        <?php endforeach; ?>
                     </select>
 
                     <label for="periode-length" class="aletho-labels extra-popin-style">Periode Lengte (dagen)</label>
