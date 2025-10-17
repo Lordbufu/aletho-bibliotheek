@@ -49,10 +49,7 @@ class BooksService {
                 'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
                 'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
                 'status' => $this->status->getDisplayStatusByBookId((int)$book['id']),
-                'canEditOffice' => (
-                    $_SESSION['user']['office'] === 'All'
-                    || $_SESSION['user']['office'] === $book['office_id']
-                    ) ? 1 : 0,
+                'canEditOffice' => App::getService('auth')->canManageOffice($book['office_id'])
             ];
         }
 
