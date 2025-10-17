@@ -11,11 +11,6 @@ class ValidationService {
     public function __construct() {
         $this->formValidator = new FormValidation();
         $this->passwordValidator = new PasswordValidation();
-
-        App::getService('logger')->info(
-            "Service 'val' has constructed 'FormValidation'",
-            'validationservice'
-        );
     }
 
     /*  Get the FormValidation object. */
@@ -46,5 +41,13 @@ class ValidationService {
     /*  Return the sanitized book form data. */
     public function sanData(): array {
         return $this->formValidator->cleanData();
+    }
+
+    public function validateUserLogin(array $data): bool {
+        return $this->formValidator->validateUserLogin($data);
+    }
+
+    public function validatePasswordChange(array $data, bool $isGlobalAdmin = false): bool {
+        return $this->formValidator->validatePasswordChange($data, $isGlobalAdmin);
     }
 }
