@@ -493,10 +493,11 @@ button:disabled.needs-save {
 		margin: 0.2rem auto 1rem;
 	}
 
-    .view-container {
+	/* Breaks the website now ¿?¿ */
+    /* .view-container {
         flex-direction: row;
         margin-inline: auto;
-    }
+    } */
 
   	.aletho-labels {
     	display: inline-block;

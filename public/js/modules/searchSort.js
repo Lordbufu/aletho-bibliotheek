@@ -61,7 +61,7 @@ const SearchSort = (() => {
     function initSort(sortSelector, callback) {
         $(sortSelector).on('change', function () {
             const [field, direction] = $(this).val().split('-');
-            const $wrapper = $('#view-container');
+            const $wrapper = $('.view-container');
             const $cards = $wrapper.find('.item-container');
             const sorted = $cards.get().sort((a, b) => {
                 const va = extractFieldValue($(a), field);
