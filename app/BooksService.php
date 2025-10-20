@@ -1,12 +1,5 @@
 <?php
 
-/*  Dealing with errrors and user feedback:
- *      $_SESSION['_flash'] = [
- *          'type'      => 'failure'|'success', 
- *          'message'   => '...'
- *      ]
- */
-
 namespace App;
 
 use App\App;
@@ -30,9 +23,7 @@ class BooksService {
         $this->offices = new OfficeRepo($this->db);
     }
 
-    /** Get all books as an array, processed and formatted for views.
-     *      @return array
-     */
+    /*  Get all books as an array, processed and formatted for views. */
     public function getAllForDisplay(): array {
         $books = $this->books->findAll();
         $out  = [];
@@ -48,17 +39,20 @@ class BooksService {
                 'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
                 'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
                 'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
-                'status' => $this->status->getDisplayStatusByBookId((int)$book['id']),
+                'status' => $this->status->getBookStatus((int)$book['id']),
+                'dueDate' => $this->status->getBookDueDate((int)$book['id']),
+                'curLoaner' => $this->status->getBookLoaner((int)$book['id']),
+                'prevLoaners' => $this->status->getBookPrevLoaners((int)$book['id']),
                 'canEditOffice' => App::getService('auth')->canManageOffice($book['office_id'])
             ];
         }
 
+        dd($out);
+
         return $out;
     }
 
-    /** Get all writer names, for frontend autocomplete JQuery.
-     *      @return array
-     */
+    /*  Get all writer names, for frontend autocomplete JQuery. */
     public function getWritersForDisplay(): array {
         $temp = $this->writers->getAllWriters();
         $out = [];
@@ -74,9 +68,7 @@ class BooksService {
         return $out;
     }
 
-    /** Get all genre names, for frontend autocomplete JQuery.
-     *      @return array
-     */
+    /*  Get all genre names, for frontend autocomplete JQuery. */
     public function getGenresForDisplay(): array {
         $temp = $this->genres->getAllGenres();
         $out = [];
@@ -92,9 +84,7 @@ class BooksService {
         return $out;
     }
 
-    /** Get all office names, for frontend autocomplete JQuery.
-     *      @return array
-     */
+    /*  Get all office names, for frontend autocomplete JQuery. */
     public function getOfficesForDisplay(): array {
         $temp = $this->offices->getAllOffices();
         $out = [];
@@ -164,15 +154,12 @@ class BooksService {
 
             $this->db->finishTransaction();
 
+            // Set default book status to 'Aanwezig'.
+            $this->status->setBookStatus($data['book_name'], 1);
+
             return true;
         } catch(\Throwable $e) {
             $this->db->cancelTransaction();
-
-            App::getService('logger')->error(
-                "The 'BooksService' failed to update book data: {$e->getMessage()}",
-                'bookservice'
-            );
-
             return false;
         }
     }
