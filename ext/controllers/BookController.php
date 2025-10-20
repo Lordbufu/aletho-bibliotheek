@@ -75,12 +75,7 @@ class BookController {
 
         //  Validate input, and return errors and old input on failure.
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'add')) {
-            foreach($this->valS->valErrors() as $key => $value) {
-                $tempKeys[] = $key;
-                $tempValues[] = $value;
-            }
-
-            setFlash('inlinePop', $tempKeys, $tempValues);
+            setFlash('inlinePop', 'data', $this->valS->valErrors());
             return App::redirect('/#add-book-popin');
         }
 
@@ -92,6 +87,7 @@ class BookController {
                 setFlash('global', 'failure', 'Boekgegevens zijn niet toegevoegd.');
             } else {
                 setFlash('global', 'success', 'Boekgegevens zijn toegevoegd.');
+                return App::redirect('/home');
             }
         }
 
@@ -126,7 +122,7 @@ class BookController {
                 $tempValues[] = $value;
             }
 
-            setFlash('inlinePop', $tempKeys, $tempValues);
+            setFlash('inlinePop', 'data', $this->valS->valErrors());
             return App::redirect('/');
         }
 

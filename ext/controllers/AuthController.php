@@ -15,23 +15,19 @@ class AuthController {
             $this->auth = new Auth();
             $this->validator = App::getService('val')->formVal();
         } catch(Exception $e) {
-            App::getService('logger')->error(
-                "Failed to construct `Auth` or `FormValidation`",
-                "AuthController"
-            );
-
-            error_log($e.getMessage(), 0);
+            App::getService('logger')->error("Failed to construct the `AuthController`: {$e->getLine()}", "controllers");
+            error_log($e->getMessage(), 0);
         }
     }
 
     /*  Show the login form. */
     public function showForm() {
-        /*  Basically a session timeout protection. */
+        /*  Basically a session timeout protection, going back to the landingpage route. */
         if (!isset($_SESSION['user'])) {
             return App::redirect('/');
         }
 
-        return App::view('auth/login');
+        return App::view('main');
     }
 
     /*  Handle login submission. */

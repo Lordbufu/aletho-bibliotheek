@@ -14,13 +14,8 @@ class ViewController {
             return App::redirect('/login');
         }
 
-        if (empty($_SESSION['user'])) {
+        if (empty($_SESSION['user']) || !isset($_SESSION['user']['role'])) {
             $_SESSION['user'] = ['role' => 'Guest'];
-        }
-
-        if (!isset($_SESSION['user']['role'])) {
-            App::getService('logger')->warning('Session missing user role', 'ViewController');
-            return App::redirect('/login');
         }
 
         if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'Guest') === 'Guest') {
