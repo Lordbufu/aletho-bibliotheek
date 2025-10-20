@@ -1,29 +1,26 @@
 <?php
+	// Store _flashForm data, or set empty array.
     $old = $_SESSION['_flashForm']['message'] ?? [];
     unset($_SESSION['_flashForm']);
 
+	// Store _flashInlinePop data, or set empty array.
+	$popErrors = $_SESSION['_flashInlinePop']['message'] ?? [];
+	unset($_SESSION['_flashInlinePop']);
+
 	// Store the correct inline error formats, for book details.
-    if (!empty($_SESSION['_flashInline']) && !is_array($_SESSION['_flashInline'])) {
+    if (!empty($_SESSION['_flashInline']) && $_SESSION['_flashInline']['type'] !== 'data') {
         $errors[$_SESSION['_flashInline']['type']] = $_SESSION['_flashInline']['message'];
-    } elseif (!empty($_SESSION['_flashInline']) && is_array($_SESSION['_flashInline'])) {
+    } elseif (!empty($_SESSION['_flashInline']) && is_array($_SESSION['_flashInline']['type'])) {
 		foreach($_SESSION['_flashInline']['type'] as $key => $value) {
 			$errors[$value] = $_SESSION['_flashInline']['message'][$key];
 		}
 	}
 	unset($_SESSION['_flashInline']);
-
-	// Store the correct inline error formats, for popins.
-    if (!empty($_SESSION['_flashInlinePop']) && !is_array($_SESSION['_flashInlinePop'])) {
-        $popErrors[$_SESSION['_flashInlinePop']['type']] = $_SESSION['_flashInlinePop']['message'];
-    } elseif (!empty($_SESSION['_flashInlinePop']) && is_array($_SESSION['_flashInlinePop'])) {
-		foreach($_SESSION['_flashInlinePop']['type'] as $key => $value) {
-			$popErrors[$value] = $_SESSION['_flashInlinePop']['message'][$key];
-		}
-	}
-	unset($_SESSION['_flashInlinePop']);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,7 +38,6 @@
 		<!-- PHP code for device specific styles etc goes here -->
 	</head>
 
-	<!-- Body to set the main page style and size -->
 	<body class="aletho-background">
 		<!-- user feedback container for the entire app -->
 		<?php if (!empty($_SESSION['_flashGlobal'])): ?>

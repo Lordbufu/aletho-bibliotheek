@@ -36,7 +36,7 @@
                     </button>
                 </div>
                 <?php if (!empty($errors['book_title'])): ?>
-                    <div class="aletho-alert-inline"><?= htmlspecialchars($errors['book_title']) ?></div>
+                    <div class="aletho-alert-inline-<?= $_SESSION['_flashInline']['type'] ?>"><?= htmlspecialchars($errors['book_title']) ?></div>
                 <?php endif; ?>
             <?php endif; ?>
 
@@ -117,7 +117,12 @@
                     <div type="button" class="extra-fake-button"></div>
                 </div>                
                 <div class="input-group input-group-sm">
-                    <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($book['status']['status_name']) ?>" disabled>
+                    <input  type="text"
+                            class="aletho-inputs extra-input-style"
+                            id="book-status-<?= $book['id'] ?>"
+                            name="book_status"
+                            value="<?= htmlspecialchars($book['status']) ?>"
+                            disabled>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
                 <?php if (!empty($errors['book_status'])): ?>
@@ -125,26 +130,43 @@
                 <?php endif; ?>
             <?php else : ?>
                 <span class="aletho-labels extra-popin-style">Status</span>
-                <input type="text" class="aletho-inputs extra-input-style" id="book-status-<?= $book['id'] ?>" name="book_status" value="<?= htmlspecialchars($book['status']['status_name']) ?>" disabled>
+                <input  type="text"
+                        class="aletho-inputs extra-input-style"
+                        id="book-status-<?= $book['id'] ?>"
+                        name="book_status"
+                        value="<?= htmlspecialchars($book['status']) ?>"
+                        disabled>
             <?php endif; ?>
 
-            <?php if (isset($book['status']['status_exp']) && $canEdit): // Status expires section ?>
+            <?php if (isset($book['dueDate']) && $canEdit): // Status expires section ?>
                 <div class="input-group input-group-sm">
                     <span class="aletho-labels extra-popin-style">Verloopt</span>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
                 <div class="input-group input-group-sm">
-                    <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['status']['status_exp']) ? htmlspecialchars($book['status']['status_exp']) : '' ?>" disabled>
+                    <input  type="date"
+                            class="aletho-inputs extra-input-style"
+                            id="book-status-expires-<?= $book['id'] ?>"
+                            name="book_status_expires" value="<?= htmlspecialchars($book['dueDate']) ? htmlspecialchars($book['dueDate']) : '' ?>"
+                            disabled>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-            <?php elseif (isset($book['status']['status_exp'])) : ?>
+            <?php elseif (isset($book['dueDate'])) : ?>
                 <span class="aletho-labels extra-popin-style">Verloopt</span>
-                <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['status']['status_exp']) ? htmlspecialchars($book['status']['status_exp']) : '' ?>" disabled>
+                <input type="date" class="aletho-inputs extra-input-style" id="book-status-expires-<?= $book['id'] ?>" name="book_status_expires" value="<?= htmlspecialchars($book['dueDate']) ? htmlspecialchars($book['dueDate']) : '' ?>" disabled>
             <?php endif; ?>
 
-            <?php if($canEdit): // Previous loaners section ?>
+            <?php if($canEdit): // Previous loaners section (W.I.P.) ?>
                 <div class="input-group input-group-sm">
                     <span class="aletho-labels extra-popin-style">Vorige Leners</span>
+
+                        <select>
+                            <option value="<?= htmlspecialchars($book['curLoaner']) ?>" selected disabled><?= htmlspecialchars($book['curLoaner']) ?></option>
+                            <?php foreach ($book['prevLoaners'] as $key => $lName) : ?>
+                                <option disabled><?= htmlspecialchars($lName) ?></option>
+                            <?php endforeach; ?>    
+                        </select>
+                        
                     <div type="button" class="extra-fake-button"></div>
                 </div>
                 <div class="input-group input-group-sm">
@@ -155,15 +177,19 @@
             <?php if($canEdit): // Form buttons section ?>
                 <div class="input-group input-group-sm mt-1">
                     <button id="save-changes-<?= $book['id'] ?>"
-                        type="submit"
-                        class="aletho-buttons extra-popin-style">Wijzigingen Opslaan</button>
+                            type="submit"
+                            class="aletho-buttons extra-popin-style">
+                        Wijzigingen Opslaan
+                    </button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
-        </form>
+
                 <div class="input-group input-group-sm mt-1">
                     <button id="boek-status-button"
-                        type="button"
-                        class="aletho-buttons extra-popin-style">Status Aanpassen</button>
+                            type="button"
+                            class="aletho-buttons extra-popin-style">
+                        Status Aanpassen
+                    </button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
@@ -176,5 +202,6 @@
                     <div type="button" class="extra-fake-button"></div>
                 </div>
             <?php endif; ?>
+        </form>
     </div>
 </div>

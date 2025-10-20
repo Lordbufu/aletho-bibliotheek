@@ -3,7 +3,6 @@
  *      - Review the frontend JQuery for edit and add logic, there seems to be a few key issues atm:
  *          - Tags not being added currently, most other functions seem to work now ?
  *          - Requires more live testing.
- *      - Add a default status when adding books, seems logical to just set to avaible right ?
  *      - Figure out how to redirect back to a book details dropdown, i used to have this functionality.
  *          - only required for the edit function, used needs to return to the book he/she was editing.
  */

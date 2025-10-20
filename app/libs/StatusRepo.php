@@ -103,7 +103,7 @@ class StatusRepo {
         if ($statusType === 'Aanwezig' || $periodeLength === null || $periodeLength === '') {
             if ($statusType === 'Gereserveerd') {
                 // Case B: Reserved → borrow Afwezig’s periode_length
-                $afwezig = $this->db->query()->value("SELECT periode_length FROM status WHEREtype = 'Afwezig'");
+                $afwezig = $this->db->query()->value("SELECT periode_length FROM status WHERE type = 'Afwezig'");
                 $periodeLength = (int)$afwezig;
             } else {
                 // Default fallback: today

@@ -47,7 +47,7 @@ class BooksService {
             ];
         }
 
-        dd($out);
+        // dd($out);
 
         return $out;
     }
