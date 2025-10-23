@@ -21,7 +21,7 @@
 
                 <div class="input-group input-group-sm">
                     <input  type="text"
-                            class="aletho-inputs extra-input-style aletho-border"
+                            class="aletho-inputs extra-input-style"
                             id="book-name-<?= $book['id'] ?>"
                             name="book_name"
                             value="<?= htmlspecialchars($book['title']) ?>"
@@ -43,7 +43,7 @@
                 <div class="input-group input-group-sm">
                     <div class="writer-tags-container" data-book-id="<?= $book['id'] ?>" data-context="details"></div>
                     <input  type="text"
-                            class="aletho-inputs extra-input-style aletho-border writer-input"
+                            class="aletho-inputs extra-input-style writer-input"
                             id="book-writer-<?= $book['id'] ?>"
                             value="<?= htmlspecialchars($book['writers'] ?? '') ?>"
                             placeholder="Type writer names and press Enter"
@@ -64,14 +64,14 @@
                     <div class="aletho-alert-inline"><?= htmlspecialchars($errors['book_writers']) ?></div>
                 <?php endif; ?>
             <?php else: ?>
-                <input type="text" class="aletho-inputs extra-input-style aletho-border" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
+                <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
             <?php endif; ?>
 
             <?php if ($canEdit): // Genre section ?>
                 <div class="input-group input-group-sm">
                     <div class="genre-tags-container" data-book-id="<?= $book['id'] ?>" data-context="details"></div>
                     <input  type="text"
-                            class="aletho-inputs extra-input-style aletho-border genre-input"
+                            class="aletho-inputs extra-input-style genre-input"
                             id="book-genre-<?= $book['id'] ?>"
                             value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>"
                             placeholder="Type een genre en druk op Enter"
@@ -93,7 +93,7 @@
                 <?php endif; ?>
             <?php else: ?>
                 <input  type="text"
-                        class="aletho-inputs aletho-border extra-input-style"
+                        class="aletho-inputs extra-input-style"
                         value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>"
                         disabled>
             <?php endif; ?>
@@ -102,7 +102,7 @@
                 <div class="input-group input-group-sm">
                     <div class="office-tags-container" data-book-id="<?= $book['id'] ?>" data-context="details"></div>
                     <input  type="text"
-                            class="aletho-inputs extra-input-style aletho-border office-input"
+                            class="aletho-inputs extra-input-style office-input"
                             id="book-office-<?= $book['id'] ?>"
                             value="<?=htmlspecialchars($book['office']) ?>"
                             placeholder="Type een locatie en druk op Enter"
@@ -123,7 +123,7 @@
                     <div class="aletho-alert-inline"><?= htmlspecialchars($errors['book_offices']) ?></div>
                 <?php endif; ?>
             <?php else: ?>
-                <input type="text" class="aletho-inputs aletho-border extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
+                <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
             <?php endif; ?>
 
             <?php if ($canEdit): // Huidige status section ?>
@@ -134,7 +134,7 @@
 
                 <div class="input-group input-group-sm">
                     <input  type="text"
-                            class="aletho-inputs extra-input-style aletho-border"
+                            class="aletho-inputs extra-input-style"
                             id="book-status-<?= $book['id'] ?>"
                             name="book_status"
                             value="<?= htmlspecialchars($book['status']) ?>"
@@ -153,7 +153,7 @@
             <?php else : ?>
                 <span class="aletho-labels extra-popin-style">Status</span>
                 <input  type="text"
-                        class="aletho-inputs extra-input-style aletho-border"
+                        class="aletho-inputs extra-input-style"
                         id="book-status-<?= $book['id'] ?>"
                         name="book_status"
                         value="<?= htmlspecialchars($book['status']) ?>"
@@ -168,7 +168,7 @@
 
                 <div class="input-group input-group-sm">
                     <input  type="date"
-                            class="aletho-inputs extra-input-style aletho-border"
+                            class="aletho-inputs extra-input-style"
                             id="book-status-expires-<?= $book['id'] ?>"
                             name="book_status_expires" value="<?= htmlspecialchars($book['dueDate']) ? htmlspecialchars($book['dueDate']) : '' ?>"
                             disabled>
@@ -177,7 +177,7 @@
             <?php elseif (isset($book['dueDate'])) : ?>
                 <span class="aletho-labels extra-popin-style">Verloopt</span>
                 <input  type="date"
-                        class="aletho-inputs extra-input-style aletho-border"
+                        class="aletho-inputs extra-input-style"
                         id="book-status-expires-<?= $book['id'] ?>"
                         name="book_status_expires"
                         value="<?= htmlspecialchars($book['dueDate']) ? htmlspecialchars($book['dueDate']) : '' ?>"
@@ -191,7 +191,7 @@
                 </div>
 
                 <div class="input-group input-group-sm">
-                    <select class="aletho-inputs extra-input-style aletho-border" data-context="details">
+                    <select class="aletho-inputs extra-input-style" data-context="details">
                         <option class="aletho-inputs extra-input-style" data-context="details" selected disabled> <?= htmlspecialchars($book['curLoaner']) ?> </option>
                         <?php foreach ($book['prevLoaners'] as $key => $lName) : ?>
                         <option class="aletho-inputs extra-input-style" data-context="details" disabled> <?= htmlspecialchars($lName) ?> </option>
