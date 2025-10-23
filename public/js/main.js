@@ -80,60 +80,12 @@ $(function() {
 
     // Setup for all TagInputs: autocomplete/tagging
     const tagInputConfigs = [
-        {
-            inputSelector: '.writer-input',
-            containerSelector: '.writer-tags-container',
-            endpoint: '/bookdata?data=writers',
-            tagClass: 'writer-tag',
-            suggestionClass: 'writer-suggestion',
-            hiddenInputName: 'book_writers[]',
-            maxTags: 3
-        },
-        {
-            inputSelector: '.genre-input',
-            containerSelector: '.genre-tags-container',
-            endpoint: '/bookdata?data=genres',
-            tagClass: 'genre-tag',
-            suggestionClass: 'genre-suggestion',
-            hiddenInputName: 'book_genres[]',
-            maxTags: 3
-        },
-        {
-            inputSelector: '.office-input',
-            containerSelector: '.office-tags-container',
-            endpoint: '/bookdata?data=offices',
-            tagClass: 'office-tag',
-            suggestionClass: 'office-suggestion',
-            hiddenInputName: 'book_offices[]',
-            maxTags: 1
-        },
-        {
-            inputSelector: '.writer-input-pop',
-            containerSelector: '.add-writer-tags-container',
-            endpoint: '/bookdata?data=writers',
-            tagClass: 'writer-tag',
-            suggestionClass: 'writer-suggestion',
-            hiddenInputName: 'book_writers[]',
-            maxTags: 3
-        },
-        {
-            inputSelector: '.genre-input-pop',
-            containerSelector: '.add-genre-tags-container',
-            endpoint: '/bookdata?data=genres',
-            tagClass: 'genre-tag',
-            suggestionClass: 'genre-suggestion',
-            hiddenInputName: 'book_genres[]',
-            maxTags: 3
-        },
-        {
-            inputSelector: '.office-input-pop',
-            containerSelector: '.add-office-tags-container',
-            endpoint: '/bookdata?data=offices',
-            tagClass: 'office-tag',
-            suggestionClass: 'office-suggestion',
-            hiddenInputName: 'book_offices[]',
-            maxTags: 1
-        }
+        makeTagConfig('writer'),
+        makeTagConfig('genre'),
+        makeTagConfig('office', { allowCustom: false, maxTags: 1 }),
+        makePopTagConfig('writer'),
+        makePopTagConfig('genre'),
+        makePopTagConfig('office', { allowCustom: false, maxTags: 1 })
     ];
     tagInputConfigs.forEach(config => TagInput.init(config));
 
@@ -185,6 +137,10 @@ $(function() {
             Utility.markFieldChanged($field);
             const $container = TagInput.getTagsContainer($field, config.containerSelector);
             TagInput.restoreTagsFromInput($field, $container, config.tagClass, config.hiddenInputName);
+
+            if (!$field.data('originalValue')) {
+                $field.data('originalValue', '');
+            }
         } else {
             Utility.markFieldChanged($field);
             $field.data('originalValue', $field.val());
@@ -193,6 +149,8 @@ $(function() {
 
         $field.prop('disabled', false)
             .addClass(CONSTANTS.CLASSES.fieldEditable);
+
+        setTimeout(() => $field.focus(), 0);
     });
 
     // Popins: status period popin input fill (could be refactored into Popins)
@@ -229,23 +187,24 @@ $(function() {
     // Blur event handler to revert input if unchanged for all taggable fields
     $(document).on('blur', CONSTANTS.SELECTORS.editableField, function() {
         const $field = $(this);
+
         setTimeout(() => {
-            if (TagInput.isRemoving && TagInput.isRemoving()) {
+            const $group = $field.closest('.input-group');
+            if ($group.find(':focus').length) {
                 return;
             }
 
-            const original = $field.data('originalValue');
             const config = Utility.getFieldConfig($field);
+            const original = $field.data('originalValue');
             let current;
 
             if (config.isTaggable) {
                 const $container = TagInput.getTagsContainer($field, config.containerSelector);
                 const currentValues = TagInput.getValuesFromContainer($container, config.hiddenInputName);
-                current = currentValues.join(',');
+                current = Utility.normalizeValues(currentValues);
 
                 if (current === original) {
-                    const names = TagInput.getValuesFromContainer($container, config.hiddenInputName);
-                    $field.val(names.join(', '));
+                    $field.val(currentValues.join(', '));
                     $container.empty();
                     $field.prop('disabled', true)
                         .removeClass(`${CONSTANTS.CLASSES.fieldEditable} ${CONSTANTS.CLASSES.fieldChanged}`)
@@ -261,7 +220,7 @@ $(function() {
                     Utility.clearFieldChanged($field);
                 }
             }
-        }, 150);
+        }, 200);
     });
 
     /*  Book-name-[$id] input, keydown event:
@@ -291,6 +250,35 @@ $(function() {
     $(CONSTANTS.SELECTORS.statusDot).on('click', testLights);
 });
 
+
+function makeTagConfig(type, opts = {}) {
+    return {
+        inputSelector: `.${type}-input`,
+        containerSelector: `.${type}-tags-container`,
+        endpoint: `/bookdata?data=${type}s`,
+        tagClass: `${type}-tag`,
+        suggestionClass: `${type}-suggestion`,
+        hiddenInputName: `book_${type}s[]`,
+        maxTags: 3,
+        allowCustom: true,
+        ...opts
+    };
+}
+
+function makePopTagConfig(type, opts = {}) {
+    return {
+        inputSelector: `.${type}-input-pop`,
+        containerSelector: `.add-${type}-tags-container`,
+        endpoint: `/bookdata?data=${type}s`,
+        tagClass: `${type}-tag`,
+        suggestionClass: `${type}-suggestion-pop`,
+        hiddenInputName: `book_${type}s[]`,
+        maxTags: 3,
+        allowCustom: true,
+        ...opts
+    };
+}
+
 // W.I.P. helper, to review the basic status light colors via a simple click to change/rotate.
 function testLights(e) {
     let $el = $(e.target);
@@ -315,6 +303,69 @@ function testLights(e) {
         return;
     }
 }
+
+    // const tagInputConfigs = [
+    //     {
+    //         inputSelector: '.writer-input',
+    //         containerSelector: '.writer-tags-container',
+    //         endpoint: '/bookdata?data=writers',
+    //         tagClass: 'writer-tag',
+    //         suggestionClass: 'writer-suggestion',
+    //         hiddenInputName: 'book_writers[]',
+    //         maxTags: 3,
+    //         allowCustom: true
+    //     },
+    //     {
+    //         inputSelector: '.genre-input',
+    //         containerSelector: '.genre-tags-container',
+    //         endpoint: '/bookdata?data=genres',
+    //         tagClass: 'genre-tag',
+    //         suggestionClass: 'genre-suggestion',
+    //         hiddenInputName: 'book_genres[]',
+    //         maxTags: 3,
+    //         allowCustom: true
+    //     },
+    //     {
+    //         inputSelector: '.office-input',
+    //         containerSelector: '.office-tags-container',
+    //         endpoint: '/bookdata?data=offices',
+    //         tagClass: 'office-tag',
+    //         suggestionClass: 'office-suggestion',
+    //         hiddenInputName: 'book_offices[]',
+    //         maxTags: 1,
+    //         allowCustom: false
+    //     },
+    //     {
+    //         inputSelector: '.writer-input-pop',
+    //         containerSelector: '.add-writer-tags-container',
+    //         endpoint: '/bookdata?data=writers',
+    //         tagClass: 'writer-tag',
+    //         suggestionClass: 'add-writer-suggestion',
+    //         hiddenInputName: 'book_writers[]',
+    //         maxTags: 3,
+    //         allowCustom: true
+    //     },
+    //     {
+    //         inputSelector: '.genre-input-pop',
+    //         containerSelector: '.add-genre-tags-container',
+    //         endpoint: '/bookdata?data=genres',
+    //         tagClass: 'genre-tag',
+    //         suggestionClass: 'add-genre-suggestion',
+    //         hiddenInputName: 'book_genres[]',
+    //         maxTags: 3,
+    //         allowCustom: true
+    //     },
+    //     {
+    //         inputSelector: '.office-input-pop',
+    //         containerSelector: '.add-office-tags-container',
+    //         endpoint: '/bookdata?data=offices',
+    //         tagClass: 'office-tag',
+    //         suggestionClass: 'add-office-suggestion',
+    //         hiddenInputName: 'book_offices[]',
+    //         maxTags: 1,
+    //         allowCustom: false
+    //     }
+    // ];
 
 // function inputCheck(e) {
 //     let check;
