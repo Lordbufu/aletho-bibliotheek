@@ -28,7 +28,7 @@
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
-	font-size: 16px;
+	/* font-size: 16px; */
 }
 
 ::placeholder {
@@ -167,20 +167,12 @@ body.modal-open { overflow: hidden; }
 	text-align: center;
 	font-size: 0.85rem;
 	padding: 0.4rem;
-	margin: 0.3rem auto;
+	margin: 0.2rem;
 	border: 1px solid var(--color-sec-1);
 	border-radius: 0.25rem;
 	display: block;
 	width: 100%;
 	max-width: 320px;
-}
-
-.aletho-select {
-    min-width: 8rem;
-    max-width: 14rem;
-    font-family: inherit;
-    font-size: inherit;
-    text-align: center;
 }
 
 .aletho-inputs:focus {
@@ -253,6 +245,7 @@ body.modal-open { overflow: hidden; }
     transition: top 0.5s cubic-bezier(.68,-0.55,.27,1.55);
     word-wrap: break-word;
 }
+
 .aletho-global-show { top: 4rem; }
 .aletho-global-success { background: var(--color-success); }
 .aletho-global-failure { background: var(--color-failure); }
@@ -427,6 +420,18 @@ body.modal-open { overflow: hidden; }
 	border: 0;
 }
 
+/* Set flex direction to make sure elements are shown in the right places. */
+.book-edit-form .input-group {
+	display: block ruby;
+}
+
+.add-book-form .input-group {
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+	align-items: stretch;
+}
+
 .input-group .aletho-buttons {
 	border-radius: 0.375rem !important;
 	width: 85%;
@@ -547,30 +552,62 @@ button:disabled.needs-save {
 #add-book-form {
 	width: 100%;
 }
+
+/* Tag container font style and margin. */
+.add-writer-tags-container, .writer-tags-container {
+	font-family: Quicksand;
+	font-style: normal;
+	margin-bottom: 0.2rem;
+}
+
+/* Popin-specific tags */
+[data-context="popin"] .writer-tag,
+[data-context="popin"] .genre-tag,
+[data-context="popin"] .office-tag {
+    display: inline-flex;
+    background: var(--color-sec-4);
+    font-size: 0.85rem;
+	padding: 0.1rem;
+}
+
+[data-context="popin"] .remove-writer-tag,
+[data-context="popin"] .remove-genre-tag,
+[data-context="popin"] .remove-office-tag {
+    border: none;
+    background: transparent;
+    margin-left: 0.2rem;
+	font-size: large;
+	line-height: 0;
+}
+
+/* Book-details-specific tags */
+[data-context="details"] .writer-tag,
+[data-context="details"] .genre-tag,
+[data-context="details"] .office-tag {
+    display: inline-flex;
+    background: var(--color-sec-4);
+    font-size: 0.85rem;
+	padding: 0.2rem;
+}
+
+[data-context="details"] .remove-writer-tag,
+[data-context="details"] .remove-genre-tag,
+[data-context="details"] .remove-office-tag {
+    border: none;
+    background: transparent;
+    margin-left: 0.2rem;
+	font-size: large;
+	line-height: 0;
+}
+
+[data-context="details"] .aletho-select {
+
+}
+
 /** AI suggested make-up:
  *		TODO:
  *			- Need to go over this, and change px to rem, and add % where this makes sense.
  */
-.writer-tag,
-.genre-tag,
-.office-tag {
-    display: inline-flex;
-    background: #e0e0e0;
-    border-radius: 3px;
-    padding: 2px 6px;
-    margin: 2px;
-    font-size: 0.85em;
-}
-
-.writer-tag button,
-.genre-tag button,
-.office-tag button {
-    border: none;
-    background: transparent;
-    margin-left: 4px;
-    cursor: pointer;
-}
-
 .suggestion-list {
     background: white;
     border: 1px solid #ccc;
@@ -607,7 +644,6 @@ button:disabled.needs-save {
 .statusFour { background-color: rgb(105, 103, 103); }
 
 /* Old potentially useless tags/styles:
-
 .field-editable {
     background-color: #fffbe6;
     border: 0.1rem solid #e0c06d;
