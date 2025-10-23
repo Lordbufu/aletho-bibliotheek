@@ -420,11 +420,7 @@ body.modal-open { overflow: hidden; }
 	border: 0;
 }
 
-/* Set flex direction to make sure elements are shown in the right places. */
-.book-edit-form .input-group {
-	display: block ruby;
-}
-
+/* Set flex direction to make sure elements are shown in the right places (add-book popin only). */
 .add-book-form .input-group {
 	display: flex;
 	flex-direction: column;
@@ -558,6 +554,8 @@ button:disabled.needs-save {
 	font-family: Quicksand;
 	font-style: normal;
 	margin-bottom: 0.2rem;
+	color: var(--color-text-1);
+	width: 85%;
 }
 
 /* Popin-specific tags */
@@ -565,9 +563,11 @@ button:disabled.needs-save {
 [data-context="popin"] .genre-tag,
 [data-context="popin"] .office-tag {
     display: inline-flex;
-    background: var(--color-sec-4);
+    background: var(--color-sec-3);
     font-size: 0.85rem;
-	padding: 0.1rem;
+	padding: 0.2rem;
+	margin: 0.2rem;
+	gap: 0.2rem;
 }
 
 [data-context="popin"] .remove-writer-tag,
@@ -575,9 +575,12 @@ button:disabled.needs-save {
 [data-context="popin"] .remove-office-tag {
     border: none;
     background: transparent;
-    margin-left: 0.2rem;
-	font-size: large;
+	padding: 0 0.2rem;
+	font-size: 1.5rem;
 	line-height: 0;
+	border-left: 0.1rem solid black;
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s;
 }
 
 /* Book-details-specific tags */
@@ -585,9 +588,11 @@ button:disabled.needs-save {
 [data-context="details"] .genre-tag,
 [data-context="details"] .office-tag {
     display: inline-flex;
-    background: var(--color-sec-4);
+    background: var(--color-sec-3);
     font-size: 0.85rem;
 	padding: 0.2rem;
+	margin: 0.2rem;
+	gap: 0.3rem;
 }
 
 [data-context="details"] .remove-writer-tag,
@@ -595,13 +600,30 @@ button:disabled.needs-save {
 [data-context="details"] .remove-office-tag {
     border: none;
     background: transparent;
-    margin-left: 0.2rem;
-	font-size: large;
+	padding: 0 0.2rem;
+	font-size: 1.5rem;
 	line-height: 0;
+	border-left: 0.1rem solid black;
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s;
 }
 
-[data-context="details"] .aletho-select {
+/* Target inputs and buttons in book-details, they dont play nice otherwhise */
+[data-context="details"] .aletho-inputs,
+[data-context="details"] .aletho-buttons {
+	margin: 0;
+	margin-bottom: 0.2rem;
+}
 
+/* Shared styles, for popin and dropdown content. */
+[data-context="details"] .remove-writer-tag:hover,
+[data-context="details"] .remove-genre-tag:hover,
+[data-context="details"] .remove-office-tag:hover,
+[data-context="popin"] .remove-writer-tag:hover,
+[data-context="popin"] .remove-genre-tag:hover,
+[data-context="popin"] .remove-office-tag:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--color-accent, crimson); /* accent color on hover */
 }
 
 /** AI suggested make-up:
@@ -642,26 +664,3 @@ button:disabled.needs-save {
 .statusTwo { background-color: rgb(255, 56, 35); }
 .statusThree { background-color: rgb(121, 117, 19); }
 .statusFour { background-color: rgb(105, 103, 103); }
-
-/* Old potentially useless tags/styles:
-.field-editable {
-    background-color: #fffbe6;
-    border: 0.1rem solid #e0c06d;
-    transition: box-shadow 0.2s ease, background-color 0.3s ease;
-}
-
-.field-editable:focus {
-    box-shadow: 0 0 0.4rem rgba(255, 193, 7, 0.6);
-}
-
-.login-error {
-	font-style: bold;
-	font-size: 0.85rem;
-	color: var(--err-text-col);
-}
-
-.login-error-text {
-	font-style: italic;
-	font-size: 0.75rem;
-	color: var(--err-text-col);
-}

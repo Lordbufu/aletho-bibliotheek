@@ -12,6 +12,7 @@
         <span class="dropdown-item flex-fill text-center mn-main-col"><?= htmlspecialchars($book['title']) ?></span>
         <span class="status-dot statusOne d-flex justify-content-end" id="status-dot-<?= $book['id'] ?>"></span>
     </div>
+
     <div id="customItemDropdown-<?= $book['id'] ?>" class="collapse aletho-item-dropdown <?= (isset($old['book_id']) && $old['book_id'] === $book['id']) ? ' show' : '' ?>">
         <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="post" action="/editBook">
 
@@ -19,12 +20,13 @@
                 <input type="hidden" name="_method" value="PATCH">
                 <input type="hidden" name="book_id" value="<?= $book['id'] ?>">
 
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <input  type="text"
-                            class="aletho-inputs extra-input-style"
+                            class="aletho-inputs extra-input-style title-input"
                             id="book-name-<?= $book['id'] ?>"
                             name="book_name"
                             value="<?= htmlspecialchars($book['title']) ?>"
+                            data-context="details"
                             disabled>
                     <button type="button"
                             class="btn btn-link extra-button-style"
@@ -40,7 +42,7 @@
             <?php endif; ?>
 
             <?php if ($canEdit): // Writers section ?>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <div class="writer-tags-container" data-book-id="<?= $book['id'] ?>" data-context="details"></div>
                     <input  type="text"
                             class="aletho-inputs extra-input-style writer-input"
@@ -68,7 +70,7 @@
             <?php endif; ?>
 
             <?php if ($canEdit): // Genre section ?>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <div class="genre-tags-container" data-book-id="<?= $book['id'] ?>" data-context="details"></div>
                     <input  type="text"
                             class="aletho-inputs extra-input-style genre-input"
@@ -99,7 +101,7 @@
             <?php endif; ?>
 
             <?php if ($canEdit && $book['canEditOffice']): // Office section ?>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <div class="office-tags-container" data-book-id="<?= $book['id'] ?>" data-context="details"></div>
                     <input  type="text"
                             class="aletho-inputs extra-input-style office-input"
@@ -127,17 +129,18 @@
             <?php endif; ?>
 
             <?php if ($canEdit): // Huidige status section ?>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <span class="aletho-labels extra-popin-style">Status</span>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <input  type="text"
                             class="aletho-inputs extra-input-style"
                             id="book-status-<?= $book['id'] ?>"
                             name="book_status"
                             value="<?= htmlspecialchars($book['status']) ?>"
+                            data-context="details"
                             disabled>
                     <button id="boek-status-button"
                             type="button"
@@ -161,16 +164,18 @@
             <?php endif; ?>
 
             <?php if (isset($book['dueDate']) && $canEdit): // Status expires section ?>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <span class="aletho-labels extra-popin-style">Verloopt</span>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <input  type="date"
                             class="aletho-inputs extra-input-style"
                             id="book-status-expires-<?= $book['id'] ?>"
-                            name="book_status_expires" value="<?= htmlspecialchars($book['dueDate']) ? htmlspecialchars($book['dueDate']) : '' ?>"
+                            name="book_status_expires"
+                            value="<?= htmlspecialchars($book['dueDate']) ? htmlspecialchars($book['dueDate']) : '' ?>"
+                            data-context="details"
                             disabled>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
@@ -185,12 +190,12 @@
             <?php endif; ?>
 
             <?php if($canEdit): // Previous loaners section (W.I.P.) ?>
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <span class="aletho-labels extra-popin-style">Vorige Leners</span>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
-                <div class="input-group input-group-sm">
+                <div class="input-group input-group-sm" data-context="details">
                     <select class="aletho-inputs extra-input-style" data-context="details">
                         <option class="aletho-inputs extra-input-style" data-context="details" selected disabled> <?= htmlspecialchars($book['curLoaner']) ?> </option>
                         <?php foreach ($book['prevLoaners'] as $key => $lName) : ?>
@@ -202,19 +207,21 @@
             <?php endif; ?>
 
             <?php if($canEdit): // Form buttons section ?>
-                <div class="input-group input-group-sm mt-1">
+                <div class="input-group input-group-sm mt-1" data-context="details">
                     <button id="save-changes-<?= $book['id'] ?>"
                             type="submit"
-                            class="aletho-buttons extra-popin-style">
+                            class="aletho-buttons extra-popin-style"
+                            data-context="details">
                         Wijzigingen Opslaan
                     </button>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
-                <div class="input-group input-group-sm mt-1">
+                <div class="input-group input-group-sm mt-1" data-context="details">
                     <button type="button"
                             class="aletho-buttons extra-popin-style delete-book-btn"
-                            data-book-id="<?= $book['id'] ?>">
+                            data-book-id="<?= $book['id'] ?>"
+                            data-context="details">
                         Boek Verwijderen
                     </button>
                     <div type="button" class="extra-fake-button"></div>
