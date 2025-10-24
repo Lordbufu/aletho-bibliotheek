@@ -25,7 +25,7 @@ class ValidationService {
 
     /*  Sanitize and filter input data. */
     public function sanitizeInput(array $input, string $mode): bool {
-        return $this->formValidator->sanitizeInput($input);
+        return $this->formValidator->sanitizeInput($input, $mode);
     }
 
     /*  Validate book edit form data. */
@@ -39,7 +39,7 @@ class ValidationService {
     }
 
     /*  Return the sanitized book form data. */
-    public function sanData(): array {
+    public function cleanData(): array {
         return $this->formValidator->cleanData();
     }
 
