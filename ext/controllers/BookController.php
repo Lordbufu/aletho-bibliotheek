@@ -1,6 +1,6 @@
 <?php
 /** TODO List:
- *      - Evaluate the Validation check logic, redirect and session flash data attached to it.
+
  */
 
 namespace Ext\Controllers;
@@ -15,15 +15,10 @@ class BookController {
     /*  Construct BooksService as default local service. */
     public function __construct() {
         try {
-            $this->bookS = new BooksService;
+            $this->bookS = new BooksService();
             $this->valS  = new ValidationService();
-        } catch(Exception $e) {
-            App::getService('logger')->error(
-                "Failed to construct `BookService` or `ValidationService`",
-                "BookController"
-            );
-            
-            error_log($e.getMessage(), 0);
+        } catch(\Throwable $t) {
+            throw $t;
         }
     }
 
@@ -146,6 +141,25 @@ class BookController {
 
     /* Authenticate and filter data, then set book to inactive. */
     public function delete() {
-        dd($_POST);
+        if (!App::getService('auth')->can('manageBooks')) {
+            setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
+            return App::redirect('/');
+        }
+
+        if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'delete')) {
+            setFlash('global', 'failure', 'Geen geldige book data ontvangen !');
+            return App::redirect('/');
+        }
+
+        $bookId = (int) $_POST['book_id'];
+        $result = $this->bookS->disableBook($bookId);
+
+        if (!$result) {
+            setFlash('global', 'failure', 'Boek kon niet worden verwijderd!');
+        } else {
+            setFlash('global', 'success', 'Boek is verwijderd!');
+        }
+
+        return App::redirect('/');
     }
 }

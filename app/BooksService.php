@@ -154,8 +154,9 @@ class BooksService {
             $this->db->finishTransaction();
 
             return true;
-        } catch(\Throwable $e) {
+        } catch(\Throwable $t) {
             $this->db->cancelTransaction();
+            throw $t;
             return false;
         }
     }
@@ -195,22 +196,15 @@ class BooksService {
             $this->db->finishTransaction();
 
             return true;
-        } catch(\Throwable $e) {
+        } catch(\Throwable $t) {
             $this->db->cancelTransaction();
-
-            App::getService('logger')->error(
-                "The 'BooksService' failed to update book data: {$e->getMessage()}",
-                'bookservice'
-            );
-
+            throw $t;
             return false;
         }
     }
 
-    /**
-     * 
-     */
-    public function deleteBook(int $bookId): bool {
-        // simply set the 'active' field to 0
+    /*  Disabled book by id. */
+    public function disableBook(int $bookId): bool {
+        return $this->books->disableBook($bookId);
     }
 }

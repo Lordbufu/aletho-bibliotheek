@@ -21,14 +21,6 @@ class BookRepo {
      */
     public function findAll(): array {
         $this->books = $this->db->query()->fetchAll("SELECT * FROM books");
-        
-        if (!is_array($this->books) || $this->books === []) {
-            App::getService('logger')->error(
-                "The 'BookRepo' dint get any books from the database",
-                'bookservice'
-            );
-        }
-
         return $this->books;
     }
 
@@ -38,14 +30,6 @@ class BookRepo {
      */
     public function findOne(int $id): array {
         $this->book = $this->db->query()->fetchOne("SELECT * FROM books WHERE id = ?", [$id]);
-            
-        if (!is_array($this->book) || $this->book === []) {
-            App::getService('logger')->error(
-                "The 'BookRepo' dint get any books from the database",
-                'bookservice'
-            );
-        }
-
         return $this->book;
     }
 
@@ -61,6 +45,16 @@ class BookRepo {
         );
         
         return $this->db->query()->lastInsertId();
+    }
+
+    /*  Disabled book by id. */
+    public function disableBook(int $bookId): bool {
+        $result = $this->db->query()->run(
+            "UPDATE books SET active = 0 WHERE id = ?",
+            [$bookId]
+        );
+            
+        return $result !== false;
     }
 
     /** Update the book title for edit functions.
