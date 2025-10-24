@@ -1,10 +1,6 @@
 <?php
 /** TODO List:
- *      - Review the frontend JQuery for edit and add logic, there seems to be a few key issues atm:
- *          - Tags not being added currently, most other functions seem to work now ?
- *          - Requires more live testing.
- *      - Figure out how to redirect back to a book details dropdown, i used to have this functionality.
- *          - only required for the edit function, used needs to return to the book he/she was editing.
+ *      - Evaluate the Validation check logic, redirect and session flash data attached to it.
  */
 
 namespace Ext\Controllers;
@@ -56,29 +52,30 @@ class BookController {
         $newData    = [];
         $result     = false;
 
-
-        // Filter out unauthorized users first.
         if (!App::getService('auth')->can('manageBooks')) {
             setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
             return App::redirect('/');
         }
 
-        // Check if POST data exists and is 'sanitized'.
         if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'add')) {
-            $error = $this->valS->valErrors();
-            setFlash('global', 'failure', $error['book_id']);
+            $errors = $this->valS->valErrors();
+            if (!empty($errors['book_id'])) {
+                setFlash('global', 'failure', 'Geen geldige book data ontvangen !');
+                return App::redirect('/');
+            }
+
+            setFlash('global', 'failure', 'Book data kon niet verwerkt worden!');
             return App::redirect('/#add-book-popin');
-        } else {
-            $newData = $this->valS->sanData();
         }
 
-        //  Validate input, and return errors and old input on failure.
+        $newData = $this->valS->cleanData();
+
+        // Test/Refine/Re-factor below here
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'add')) {
             setFlash('inlinePop', 'data', $this->valS->valErrors());
             return App::redirect('/#add-book-popin');
         }
 
-        // Attempt to update book data if no errosr where set.
         if (!isset($_SESSION['_flash']['type'])) {
             $result = $this->bookS->addBook($newData);
             
@@ -95,9 +92,7 @@ class BookController {
         return App::redirect('/#add-book-popin');
     }
 
-    /** Filter and process book edit form data, and call the update function in the BooksService.
-     *      @return void Redirects to the landing page route, so user lands on the default view again.
-     */
+    /*  Filter and process book edit form data, and call the update function in the BooksService. */
     public function edit() {
         $hasError   = false;
         $newData    = [];
@@ -109,12 +104,21 @@ class BookController {
         }
 
         if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'edit')) {
-            $bookId = isset($_POST['book_id']) && is_numeric($_POST['book_id']) ? (int)$_POST['book_id'] : 0;
-            setFlash('inline', 'failure', $this->valS->valErrors());
-        } else {
-            $newData = $this->valS->sanData();
+            $errors = $this->valS->valErrors();
+            if (!empty($errors['book_id'])) {
+                setFlash('global', 'failure', 'Geen geldige book data ontvangen !');
+                return App::redirect('/');
+            }
+
+            $bookId = (int) $_POST['book_id'];
+            setFlash('single', 'book_id', $bookId);
+            setFlash('global', 'failure', 'Book data kon niet verwerkt worden!');
+            return App::redirect('/');
         }
 
+        $newData = $this->valS->cleanData();
+
+        // Test/Refine/Re-factor below here
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'edit')) {
             foreach($this->valS->valErrors() as $key => $value) {
                 $tempKeys[] = $key;
@@ -126,12 +130,12 @@ class BookController {
         }
 
         if (!isset($_SESSION['_flash']['type'])) {
+
             $result = $this->bookS->updateBook($newData);
-            
+
             if (!$result) {
                 setFlash('global', 'failure', 'Boekgegevens zijn niet bijgewerkt.');
                 setFlash('form', 'data', $newData);
-                return App::redirect('/');
             } else {
                 setFlash('global', 'success', 'Boekgegevens zijn bijgewerkt.');
             }
@@ -140,6 +144,7 @@ class BookController {
         return App::redirect('/');
     }
 
+    /* Authenticate and filter data, then set book to inactive. */
     public function delete() {
         dd($_POST);
     }
