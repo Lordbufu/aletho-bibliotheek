@@ -5,7 +5,7 @@
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#customItemDropdown-<?= $book['id'] ?>"
-                aria-expanded="false"
+                aria-expanded="<?= (isset($_SESSION['_flashSingle']) && (int)$_SESSION['_flashSingle']['message'] === (int)$book['id']) ? 'true' : 'false' ?>"
                 aria-controls="customItemDropdown-<?= $book['id'] ?>">
             ▼
         </button>
@@ -13,7 +13,7 @@
         <span class="status-dot statusOne d-flex justify-content-end" id="status-dot-<?= $book['id'] ?>"></span>
     </div>
 
-    <div id="customItemDropdown-<?= $book['id'] ?>" class="collapse aletho-item-dropdown <?= (isset($old['book_id']) && $old['book_id'] === $book['id']) ? ' show' : '' ?>">
+    <div id="customItemDropdown-<?= $book['id'] ?>" class="collapse aletho-item-dropdown <?= (isset($_SESSION['_flashSingle']) && (int)$_SESSION['_flashSingle']['message'] === (int)$book['id']) ? ' show' : '' ?>">
         <form class="book-edit-form p-1" data-book-id="<?= $book['id'] ?>" method="post" action="/editBook">
 
             <?php if ($canEdit): // Title section ?>
