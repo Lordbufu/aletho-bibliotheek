@@ -12,7 +12,7 @@
                     <label for="change-status-type" class="aletho-labels extra-popin-style">Status</label>
                     <select class="aletho-inputs extra-popin-style" id="change-status-type" name="change_status_type" required>
                         <option value="default" selected disabled hidden>Selecteer een status</option>
-                        <option value="<?= $status['id'] ?>"><?= htmlspecialchars($status['type']) ?></option>
+                        <option value="W.I.P."><?= htmlspecialchars('W.I.P.') ?></option>
                     </select>
 
                     <label for="change-loaner-email" class="aletho-labels extra-popin-style">E-mail</label>

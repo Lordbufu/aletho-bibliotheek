@@ -12,10 +12,10 @@
                     <label for="status-type" class="aletho-labels extra-popin-style">Status</label>
                     <select class="aletho-inputs extra-popin-style" id="status-type" name="status_type" required>
                         <option
-                            value="<?= $status['id'] ?>"
-                            data-periode_length="<?= $status['periode_length'] ?>"
-                            data-reminder_day="<?= $status['reminder_day'] ?>"
-                            data-overdue_day="<?= $status['overdue_day'] ?>">
+                            value="W.I.P."
+                            data-periode_length="W.I.P."
+                            data-reminder_day="W.I.P."
+                            data-overdue_day="W.I.P.">
                         </option>
                     </select>
 
