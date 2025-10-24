@@ -38,11 +38,12 @@ class FormValidation {
 			$expected['book_id'] = function($v) {
 				$id = filter_var($v, FILTER_VALIDATE_INT);
 
-				if ($id === false && $v !== null) {
-					$this->errors['book_id'] = 'Ongeldige boek-ID.';
+				if ($id === false || $id === null) {
+					$this->errors['book_id'] = 'Geen geldige book data ontvangen !';
+					return 0;
 				}
 
-				return $id !== false && $id !== null ? $id : 0;
+				return $id;
 			};
 		}
 
@@ -152,8 +153,6 @@ class FormValidation {
 				$this->errors['book_offices'] = 'Minimaal één locatie is verplicht.';
 			}
 		}
-
-		// Optionally: add more rules here
 
 		return empty($this->errors);
 	}
