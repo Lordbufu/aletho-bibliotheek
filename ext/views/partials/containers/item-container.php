@@ -197,10 +197,16 @@
 
                 <div class="input-group input-group-sm" data-context="details">
                     <select class="aletho-inputs extra-input-style" data-context="details">
-                        <option class="aletho-inputs extra-input-style" data-context="details" selected disabled> <?= htmlspecialchars($book['curLoaner']) ?> </option>
-                        <?php foreach ($book['prevLoaners'] as $key => $lName) : ?>
-                        <option class="aletho-inputs extra-input-style" data-context="details" disabled> <?= htmlspecialchars($lName) ?> </option>
-                        <?php endforeach; ?>    
+                    <?php if (!empty($book['curLoaner']) || !empty($book['prevLoaners'])): ?>
+                        <?php if (!empty($book['curLoaner'])): ?>
+                            <option selected disabled><?= htmlspecialchars($book['curLoaner']) ?></option>
+                        <?php endif; ?>
+                        <?php foreach ($book['prevLoaners'] as $lName): ?>
+                            <option disabled><?= htmlspecialchars($lName) ?></option>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <option selected disabled>Geen leners gevonden</option>
+                    <?php endif; ?>   
                     </select>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
