@@ -100,11 +100,7 @@ class BooksService {
         return $out;
     }
 
-    /** Add a new book, using our library classes.
-     *      @param array $data Associative array with book data to add.
-     *         Expected keys: title (string), writers (array), genres (array), offices (array)
-     *      @return bool True on success, false on failure.
-     */
+    /*  Add a new book, using our library classes. */
     public function addBook(array $data): mixed {
         $updated = false;
 
@@ -152,10 +148,10 @@ class BooksService {
                 $this->writers->addBookWriters($data['book_writers'], $bookId);
             }
 
-            $this->db->finishTransaction();
-
             // Set default book status to 'Aanwezig'.
-            $this->status->setBookStatus($data['book_name'], 1);
+            $this->status->setBookStatus($bookId , 1);
+
+            $this->db->finishTransaction();
 
             return true;
         } catch(\Throwable $e) {
@@ -164,18 +160,12 @@ class BooksService {
         }
     }
 
-    /** Update book data, using our library classes.
-     *      @param array $data Associative array with book data to update.
-     *         Expected keys: id (int), title (string), writers (array), genres (array), offices (array)
-     *      @return bool True on success, false on failure.
-     */
+    /*  Update book data, using our library classes. */
     public function updateBook(array $data): bool {
-        // Validate upfront
         if (empty($data['book_id']) || !is_numeric($data['book_id'])) {
             return false;
         }
 
-        // Temporary handling until many-to-many offices are supported
         $officeId = is_array($data['book_offices']) && count($data['book_offices']) > 0
             ? $data['book_offices'][0]
             : null;
@@ -222,20 +212,5 @@ class BooksService {
      */
     public function deleteBook(int $bookId): bool {
         // simply set the 'active' field to 0
-    }
-
-    /** W.I.P. (potentially obsolete)
-     *      @return array
-     */
-    public function getOneForDisplay(int $id): array {
-        $row = $this->books->findOne($id);
-
-        return [
-            'id'     => (int)$row['id'],
-            'title'  => $row['title'],
-            'genres' => $this->genres->getGenreNamesByBookId($id),
-            'writers' => $this->writers->getWriterNamesByBookId($id),
-            'status' => $this->status->getDisplayStatusByBookId($id),
-        ];
     }
 }
