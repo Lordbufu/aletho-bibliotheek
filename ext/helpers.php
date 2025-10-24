@@ -42,27 +42,22 @@ if (!function_exists('dd')) {
  */
 if (!function_exists('setFlash')) {
     function setFlash(string $bucket, $type, $message): void {
-        $bName;
-        switch($bucket) {
-            case "global":
-                $bName = "_flashGlobal";
-                break;
-            case "inline":
-                $bName = "_flashInline";
-                break;
-            case "inlinePop":
-                $bName = "_flashInlinePop";
-                break;
-            case "form":
-                $bName = "_flashForm";
-                break;
-            default:
-                throw new InvalidArgumentException("Unknown flash bucket: {$bucket}");
+        $buckets = [
+            'global'    => '_flashGlobal',
+            'inline'    => '_flashInline',
+            'inlinePop' => '_flashInlinePop',
+            'form'      => '_flashForm',
+            'single'    => '_flashSingle',
+            'multi'     => '_flashMulti',
+        ];
+
+        if (!isset($buckets[$bucket])) {
+            throw new InvalidArgumentException("Unknown flash bucket: {$bucket}");
         }
 
-        $_SESSION[$bName] = [
-            'type' => $type,
-            'message' => $message
+        $_SESSION[$buckets[$bucket]] = [
+            'type'    => $type,
+            'message' => $message,
         ];
     }
 }
