@@ -21,7 +21,7 @@ if (!is_dir($sesTempPath)) {
 session_save_path($sesTempPath);
 ini_set('session.gc_maxlifetime', 86400);
 ini_set('session.gc_probability', 1);
-ini_set('session.gc_divisor', 100);
+ini_set('session.gc_divisor', 10);
 
 /**
  * Turn on, create & set custom php error log location.
