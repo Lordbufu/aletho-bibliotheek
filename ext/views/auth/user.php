@@ -9,9 +9,13 @@
 
         <div class="items-list">
 
-            <?php foreach ($books as $book) {
+            <?php
+            foreach ($books as $book) {
                 require viewPath('partials/containers/item-container.php');
-            } ?>
+            }
+            
+            unset($_SESSION['_flashSingle']);
+            ?>
             
         </div>
 
