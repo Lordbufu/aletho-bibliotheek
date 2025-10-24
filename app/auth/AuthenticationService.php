@@ -113,15 +113,7 @@ class AuthenticationService {
     /*  Password reset, for Office Admins. */
     public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): array {
         if (!$this->can('pwChange')) {
-            App::getService('logger')->error(
-                'UNAUTHORIZED password reset attempt',
-                'auth'
-            );
-            
-            return [
-                'success' => false,
-                'message' => 'Unauthorized'
-            ];
+            return [ 'success' => false, 'message' => 'Unauthorized' ];
         }
 
 
@@ -131,17 +123,11 @@ class AuthenticationService {
         );
 
         if (!$storedHash || !password_verify($currentPassword, $storedHash)) {
-            return [
-                'success' => false,
-                'message' => 'Invalid credentials'
-            ];
+            return [ 'success' => false, 'message' => 'Invalid credentials' ];
         }
 
         if ($currentPassword === $newPassword) {
-            return [
-                'success' => false,
-                'message' => 'Password unchanged'
-            ];
+            return [ 'success' => false, 'message' => 'Password unchanged' ];
         }
 
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
@@ -153,38 +139,21 @@ class AuthenticationService {
         if ($success) {
             session_regenerate_id(true);
 
-            return [
-                'success' => true,
-                'message' => 'Your password was changed successfully.'
-            ];
+            return [ 'success' => true, 'message' => 'Your password was changed successfully.' ];
         }
 
-        return [
-            'success' => false,
-            'message' => 'Password update failed'
-        ];
+        return [ 'success' => false, 'message' => 'Password update failed' ];
     }
 
     /*  Password reset for Global Admins, allowing it for any account. */
     public function resetUserPassword(string $targetUserName, string $newPassword, string $confirmPassword): array {
         if (!$this->can('pwChanges')) {
-            App::getService('logger')->error(
-                'UNAUTHORIZED password reset attempt',
-                'auth'
-            );
-
-            return [
-                'success' => false,
-                'message' => 'Unauthorized'
-            ];
+            return [ 'success' => false, 'message' => 'Unauthorized' ];
         }
 
         $user = $this->findUserByName($targetUserName);
         if (!$user) {
-            return [
-                'success' => false,
-                'message' => 'User not found'
-            ];
+            return [ 'success' => false, 'message' => 'User not found' ];
         }
 
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
@@ -194,15 +163,9 @@ class AuthenticationService {
         );
 
         if ($success) {
-            return [
-                'success' => true,
-                'message' => "Password for {$targetUserName} was changed."
-            ];
+            return [ 'success' => true, 'message' => "Password for {$targetUserName} was changed." ];
         }
 
-        return [
-            'success' => false,
-            'message' => 'Password update failed'
-        ];
+        return [ 'success' => false, 'message' => 'Password update failed' ];
     }
 }

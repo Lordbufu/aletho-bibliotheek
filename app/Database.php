@@ -28,13 +28,8 @@ class Database {
                 $this->connection,
                 $config['schema_path'] ?? null
             );
-        } catch (Throwable $e) {
-            App::getServiceSafeLogger()->error(
-                "Failed to initialize Database service: {$e->getMessage()}",
-                'database'
-            );
-
-            throw $e;
+        } catch (\Throwable $t) {
+            throw $t;
         }
     }
 

@@ -3,41 +3,24 @@
 namespace App\Router;
 
 use App\App;
-use Throwable;
 
-/** Represents a single route definition.
- *  Stores the HTTP method, path pattern, and handler.
- *  Can match an incoming request method/URI and extract named parameters.
- */
+/*  Represents a single route definition: stores the HTTP method, path pattern, and handler, can match an incoming request method/URI and extract named parameters. */
 class Route {
     public string $method;
     public string $path;
     public $handler;
     public array $params = [];
 
-    /** Class constructor, ensuring the expected variable are populated.
-     *      @param string $method  -> HTTP method
-     *      @param string $path    -> Route path pattern
-     *      @param mixed  $handler -> Callable or controller action
-     */
+    /*  Class constructor, ensuring the expected variable are populated. */
     public function __construct(string $method, string $path, $handler) {
         $this->method  = strtoupper($method);
         $this->path    = $path;
         $this->handler = $handler;
     }
 
-    /** Determine if this route matches the given method and URI.
-     *  Extracts named parameters if the pattern matches.
-     *      @param string $method   -> HTTP method of incoming request
-     *      @param string $uri      -> Request URI path
-     *      @return bool            -> True if matched, false otherwise
-     */
+    /*  Determine if this route matches the given method and URI. */
     public function matches(string $method, string $uri): bool {
         if ($this->method !== strtoupper($method)) {
-            App::getService('logger')->warning(
-                "Route method mismatch: expected {$this->method}, got {$method}",
-                'router'
-            );
             return false;
         }
 
@@ -53,10 +36,6 @@ class Route {
             );
 
             if ($pattern === null) {
-                App::getService('logger')->error(
-                    "Failed to build regex pattern for route: {$this->path}",
-                    'router'
-                );
                 return false;
             }
 
@@ -70,11 +49,8 @@ class Route {
             }
 
             return false;
-        } catch (Throwable $e) {
-            App::getService('logger')->error(
-                "Error matching route {$this->path}: {$e->getMessage()}",
-                'router'
-            );
+        } catch (\Throwable $t) {
+            throw $t;
             return false;
         }
     }

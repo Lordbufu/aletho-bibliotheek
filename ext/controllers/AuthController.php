@@ -14,9 +14,8 @@ class AuthController {
         try {
             $this->auth = new Auth();
             $this->validator = App::getService('val')->formVal();
-        } catch(Exception $e) {
-            App::getService('logger')->error("Failed to construct the `AuthController`: {$e->getLine()}", "controllers");
-            error_log($e->getMessage(), 0);
+        } catch(\Throwable $t) {
+            throw $t;
         }
     }
 

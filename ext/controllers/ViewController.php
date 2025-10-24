@@ -10,7 +10,6 @@ class ViewController {
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
 
         if (!$userAgent) {
-            App::getService('logger')->warning('No user-agent found', 'ViewController');
             return App::redirect('/login');
         }
 

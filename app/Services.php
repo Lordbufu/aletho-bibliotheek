@@ -3,21 +3,13 @@
 namespace App;
 
 use App\App;
-use Throwable;
 
-/**
- * Simple service container / dependency injector.
- *
- * Loads service definitions from a config file or array and instantiates them on demand.
- */
+/*  Simple service container / dependency injector: Loads service definitions from a config file or array and instantiates them on demand. */
 class Services {
     protected array $instances = [];
     protected array $factories = [];
 
-    /** Construct the Services container.
-     *      @param string|array $configFile Path to a PHP config file returning an array, or an array of service definitions.
-     *      @throws \RuntimeException|\InvalidArgumentException
-     */
+    /*  Construct the Services container. */
     public function __construct(string|array $configFile) {
         if (is_string($configFile)) {
             if (!is_file($configFile)) {
@@ -38,11 +30,7 @@ class Services {
         }
     }
 
-    /** Retrieve a service instance by name, instantiating it if necessary.
-     *      @param string $name Service name
-     *      @return mixed The service instance
-     *      @throws \InvalidArgumentException|\RuntimeException
-     */
+    /*  Retrieve a service instance by name, instantiating it if necessary. */
     public function get(string $name) {
         if (isset($this->instances[$name])) {
             return $this->instances[$name];
@@ -65,6 +53,7 @@ class Services {
                     if ($name === 'router') {
                         $router = $instance;
                     }
+
                     require $definition['config'];
                 }
 
@@ -74,8 +63,8 @@ class Services {
             }
 
             return $this->instances[$name];
-        } catch (Throwable $e) {
-            throw $e;
+        } catch (\Throwable $t) {
+            throw $t;
         }
     }
 }
