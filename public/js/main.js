@@ -12,58 +12,23 @@ import { Utility } from './modules/utility.js';
 
 // Document ready: wire up modules and event handlers
 $(function() {
-    const CONSTANTS = {
-        SELECTORS: {
-            globalAlert: '.aletho-global-success, .aletho-global-failure',
-            hamburgerDropdown: '#customHamburgerDropdown',
-            searchDropdown: '#customSearchDropdown',
-            hamburgerButton: '#hamburgerButton',
-            alethoDropdownBody: '.aletho-dropdown-body.show',
-            alethoItemDropdown: '.collapse.aletho-item-dropdown.show',
-            searchButton: '#searchButton',
-            searchInp: '#search-inp',
-            searchOptions: '#search-options',
-            sortOptions: '#sort-options',
-            bookDetailsButton: '[id^="itemButton-"]',
-            bookAddButton: '#boek-add-button',
-            bookNameInput: '[id^="book-name-"]',
-            editButton: '.extra-button-style',
-            editableField: 'input.field-editable, select.field-editable',
-            statusType: '#status-type',
-            periodeLength: '#periode-length',
-            reminderDay: '#reminder-day',
-            overdueDay: '#overdue-day',
-            bookStatusButton: '.boek-status-button',
-            addBookPopin: '#add-book-popin',
-            closeAddBookPopin: '#close-add-book-popin',
-            statusPeriodeButton: '#status-periode-button',
-            statusPeriodPopin: '#status-period-popin',
-            closeStatusPeriodPopin: '#close-status-period-popin',
-            changeBookStatusPopin: '#change-book-status-popin',
-            closeChangeBookStatusPopin: '#close-change-book-status-popin',
-            statusDot: '.status-dot',
-            passwordChangeButton: '#password-change-button',
-            passwordResetPopin: '#password-reset-popin',
-            closePasswordResetPopin: '#close-password-reset-popin',
-        },
-        CLASSES: {
-            alertShow: 'aletho-global-show',
-            fieldEditable: 'field-editable',
-            fieldChanged: 'field-changed'
-        }
-    };
-
-    const DROPDOWNS_TO_CLOSE = [CONSTANTS.SELECTORS.hamburgerDropdown, CONSTANTS.SELECTORS.searchDropdown];
+    // Inline selectors for single-use, variables for repeated selectors
+    const alertShowClass = 'aletho-global-show';
+    const fieldEditableClass = 'field-editable';
+    const fieldChangedClass = 'field-changed';
+    const hamburgerDropdown = '#customHamburgerDropdown';
+    const searchDropdown = '#customSearchDropdown';
+    const DROPDOWNS_TO_CLOSE = [hamburgerDropdown, searchDropdown];
 
     // User feedback notifications.
-    const $alert = $(CONSTANTS.SELECTORS.globalAlert);
+    const $alert = $('.aletho-global-success, .aletho-global-failure');
     if ($alert.length) {
         setTimeout(() => {
-            $alert.addClass(CONSTANTS.CLASSES.alertShow);
+            $alert.addClass(alertShowClass);
         }, 100); // slight delay for transition
 
         setTimeout(() => {
-            $alert.removeClass(CONSTANTS.CLASSES.alertShow);
+            $alert.removeClass(alertShowClass);
         }, 3500); // show for 3.5 seconds
 
         setTimeout(() => {
@@ -73,22 +38,18 @@ $(function() {
 
     // Popins: hash-based open and setup for all popins
     Popins.initFromHash();
-    Popins.setup(CONSTANTS.SELECTORS.bookAddButton, CONSTANTS.SELECTORS.addBookPopin, CONSTANTS.SELECTORS.closeAddBookPopin);
-    Popins.setup(CONSTANTS.SELECTORS.statusPeriodeButton, CONSTANTS.SELECTORS.statusPeriodPopin, CONSTANTS.SELECTORS.closeStatusPeriodPopin);
-    Popins.setup(CONSTANTS.SELECTORS.passwordChangeButton, CONSTANTS.SELECTORS.passwordResetPopin, CONSTANTS.SELECTORS.closePasswordResetPopin);
+    Popins.setup('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
+    Popins.setup('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
+    Popins.setup('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
 
-    // Popins.setup(CONSTANTS.SELECTORS.bookStatusButton, CONSTANTS.SELECTORS.changeBookStatusPopin, CONSTANTS.SELECTORS.closeChangeBookStatusPopin);
     Popins.setup(
-        CONSTANTS.SELECTORS.bookStatusButton,
-        CONSTANTS.SELECTORS.changeBookStatusPopin,
-        CONSTANTS.SELECTORS.closeChangeBookStatusPopin,
+        '.boek-status-button',
+        '#change-book-status-popin',
+        '#close-change-book-status-popin',
         function (popinId, context) {
             const bookId = context.bookId;
-
-            // Set hidden input
             $('#change-book-id').val(bookId);
 
-            // Fetch statuses
             $.getJSON('/requestStatus', function (statuses) {
                 const $select = $('#change-status-type');
                 $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
@@ -111,15 +72,13 @@ $(function() {
     tagInputConfigs.forEach(config => TagInput.init(config));
 
     // Search & Sort: event handlers
-    SearchSort.initSearch(CONSTANTS.SELECTORS.searchInp, CONSTANTS.SELECTORS.searchOptions);
-    SearchSort.initSort(CONSTANTS.SELECTORS.sortOptions);
+    SearchSort.initSearch('#search-inp', '#search-options');
+    SearchSort.initSort('#sort-options');
 
     // Global click: close popins and dropdowns when clicking outside
     $(document).on('click', function(event) {
-        // Popins: close on outside click
         Popins.handleOutsideClick(event, Dropdowns.close);
 
-        // Dropdowns: close when focus is lost
         const $targetDropdown = $(event.target).closest(DROPDOWNS_TO_CLOSE.join(','));
         if ($targetDropdown.length === 0) {
             Dropdowns.close(DROPDOWNS_TO_CLOSE);
@@ -127,17 +86,16 @@ $(function() {
     });
 
     // Book details: close other dropdowns when details opened
-    $(document).on('click', CONSTANTS.SELECTORS.bookDetailsButton, function(event) {
-        event.stopPropagation(); // Prevent global click handler from firing
+    $(document).on('click', '[id^="itemButton-"]', function(event) {
+        event.stopPropagation();
         const $detailsBtn = $(this);
         const targetId = $detailsBtn.attr('data-bs-target');
 
-        if ($(CONSTANTS.SELECTORS.alethoDropdownBody).length) {
+        if ($('.aletho-dropdown-body.show').length) {
             Dropdowns.close(DROPDOWNS_TO_CLOSE);
         }
 
-        // Close other open book details sections for accordion behavior
-        $(CONSTANTS.SELECTORS.alethoItemDropdown).each(function() {
+        $('.collapse.aletho-item-dropdown.show').each(function() {
             if ('#' + this.id !== targetId) {
                 bootstrap.Collapse.getOrCreateInstance(this, { toggle: false }).hide();
             }
@@ -145,7 +103,7 @@ $(function() {
     });
 
     // Book details edit: make field editable and convert input to tags for all taggable fields
-    $(document).on('click', CONSTANTS.SELECTORS.editButton, function(event) {
+    $(document).on('click', '.extra-button-style', function(event) {
         event.stopPropagation();
         const selector = $(this).data('swapTargets');
         const $field = $(selector);
@@ -169,32 +127,32 @@ $(function() {
         }
 
         $field.prop('disabled', false)
-            .addClass(CONSTANTS.CLASSES.fieldEditable);
+            .addClass(fieldEditableClass);
 
         setTimeout(() => $field.focus(), 0);
     });
 
-    // Popins: status period popin input fill (could be refactored into Popins)
-    $(CONSTANTS.SELECTORS.statusType).on('change', function() {
+    // Popins: status period popin input fill
+    $('#status-type').on('change', function() {
         const $selected = $(this).find('option:selected');
-        $(CONSTANTS.SELECTORS.periodeLength).val($selected.data('periode_length'));
-        $(CONSTANTS.SELECTORS.reminderDay).val($selected.data('reminder_day'));
-        $(CONSTANTS.SELECTORS.overdueDay).val($selected.data('overdue_day'));
+        $('#periode-length').val($selected.data('periode_length'));
+        $('#reminder-day').val($selected.data('reminder_day'));
+        $('#overdue-day').val($selected.data('overdue_day'));
     });
 
     // Dropdowns: button click handlers
-    $(CONSTANTS.SELECTORS.hamburgerButton).on('click', function(e) {
+    $('#hamburgerButton').on('click', function(e) {
         e.stopPropagation();
-        Dropdowns.toggle([CONSTANTS.SELECTORS.hamburgerDropdown, CONSTANTS.SELECTORS.searchDropdown]);
+        Dropdowns.toggle([hamburgerDropdown, searchDropdown]);
     });
     
-    $(CONSTANTS.SELECTORS.searchButton).on('click', function(e) {
+    $('#searchButton').on('click', function(e) {
         e.stopPropagation();
-        Dropdowns.toggle([CONSTANTS.SELECTORS.searchDropdown, CONSTANTS.SELECTORS.hamburgerDropdown]);
+        Dropdowns.toggle([searchDropdown, hamburgerDropdown]);
     });
 
     // Book details: input/change listener for editable fields
-    $(document).on('input change', CONSTANTS.SELECTORS.editableField, function() {
+    $(document).on('input change', 'input.field-editable, select.field-editable', function() {
         const $field = $(this);
         const original = $field.data('originalValue');
         const current = $field.val();
@@ -206,7 +164,7 @@ $(function() {
     });
 
     // Blur event handler to revert input if unchanged for all taggable fields
-    $(document).on('blur', CONSTANTS.SELECTORS.editableField, function() {
+    $(document).on('blur', 'input.field-editable, select.field-editable', function() {
         const $field = $(this);
 
         setTimeout(() => {
@@ -228,7 +186,7 @@ $(function() {
                     $field.val(currentValues.join(', '));
                     $container.empty();
                     $field.prop('disabled', true)
-                        .removeClass(`${CONSTANTS.CLASSES.fieldEditable} ${CONSTANTS.CLASSES.fieldChanged}`)
+                        .removeClass(`${fieldEditableClass} ${fieldChangedClass}`)
                         .removeData('originalValue');
                     Utility.clearFieldChanged($field);
                 }
@@ -236,7 +194,7 @@ $(function() {
                 current = $field.val();
                 if (current === original) {
                     $field.prop('disabled', true)
-                        .removeClass(`${CONSTANTS.CLASSES.fieldEditable} ${CONSTANTS.CLASSES.fieldChanged}`)
+                        .removeClass(`${fieldEditableClass} ${fieldChangedClass}`)
                         .removeData('originalValue');
                     Utility.clearFieldChanged($field);
                 }
@@ -244,11 +202,8 @@ $(function() {
         }, 200);
     });
 
-    /*  Book-name-[$id] input, keydown event:
-     *      Stopping form submit when `Enter` is pressed, so its inline with other inputs.
-     *      Normalizing and trimming the input, and triggering `on blur` or `on change` events.
-     */
-    $(CONSTANTS.SELECTORS.bookNameInput).on('keydown', function(e) {
+    // Book-name-[$id] input, keydown event
+    $('[id^="book-name-"]').on('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             const $input = $(this);
@@ -265,10 +220,10 @@ $(function() {
     });
 
     // Trigger change on load to pre-fill with the first status
-    $(CONSTANTS.SELECTORS.statusType).trigger('change');
+    $('#status-type').trigger('change');
 
     // W.I.P. Testing functions
-    $(CONSTANTS.SELECTORS.statusDot).on('click', testLights);
+    $('.status-dot').on('click', testLights);
 });
 
 
