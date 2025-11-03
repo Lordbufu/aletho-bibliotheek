@@ -142,9 +142,9 @@
                             value="<?= htmlspecialchars($book['status']) ?>"
                             data-context="details"
                             disabled>
-                    <button id="boek-status-button"
-                            type="button"
-                            class="btn btn-link extra-button-style"
+                    <button type="button"
+                            class="btn btn-link extra-button-style boek-status-button"
+                            data-book-id="<?= $book['id'] ?>"
                             aria-label="Edit Book status">
                         ✏️
                     </button>
@@ -197,16 +197,18 @@
 
                 <div class="input-group input-group-sm" data-context="details">
                     <select class="aletho-inputs extra-input-style" data-context="details">
-                    <?php if (!empty($book['curLoaner']) || !empty($book['prevLoaners'])): ?>
                         <?php if (!empty($book['curLoaner'])): ?>
                             <option selected disabled><?= htmlspecialchars($book['curLoaner']) ?></option>
+                        <?php else :?>
+                            <option selected disabled>Geen huidige lener</option>
                         <?php endif; ?>
-                        <?php foreach ($book['prevLoaners'] as $lName): ?>
+                        <?php if (!empty($book['prevLoaners'])): ?>
+                            <?php foreach ($book['prevLoaners'] as $lName): ?>
                             <option disabled><?= htmlspecialchars($lName) ?></option>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <option selected disabled>Geen leners gevonden</option>
-                    <?php endif; ?>   
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <option disabled>Geen vorige leners</option>
+                        <?php endif; ?>
                     </select>
                     <div type="button" class="extra-fake-button"></div>
                 </div>

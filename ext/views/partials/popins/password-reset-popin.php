@@ -10,6 +10,7 @@
             <div class="aletho-modal-body p-1">
                 <form id="password-reset-form mb-1" method="POST" action="/resetPassword">
                     <input type="hidden" name="_method" value="PATCH">
+
                     <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Global Admin'): ?>
                         <label for="user-name" class="aletho-labels extra-popin-style">Account</label>
                         <input  type="text"
@@ -19,12 +20,12 @@
                                 value="<?= htmlspecialchars($old['user_name'] ?? '') ?>"
                                 required>
                     <?php else: ?>
-                    <label for="current-password" class="aletho-labels extra-popin-style">Huidig Wachtwoord</label>
-                    <input  type="password"
-                            class="aletho-inputs extra-popin-style"
-                            id="current-password"
-                            name="current_password"
-                            required>
+                        <label for="current-password" class="aletho-labels extra-popin-style">Huidig Wachtwoord</label>
+                        <input  type="password"
+                                class="aletho-inputs extra-popin-style"
+                                id="current-password"
+                                name="current_password"
+                                required>
                     <?php endif; ?>
 
                     <label for="new-password" class="aletho-labels extra-popin-style">Nieuw Wachtwoord</label>

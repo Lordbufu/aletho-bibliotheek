@@ -12,11 +12,11 @@ class BookController {
     protected BooksService $bookS;
     protected ValidationService $valS;
 
-    /*  Construct BooksService as default local service. */
+    /*  Construct App services as default local service. */
     public function __construct() {
         try {
-            $this->bookS = new BooksService();
-            $this->valS  = new ValidationService();
+            $this->bookS = App::getService('books');
+            $this->valS  = App::getService('val');
         } catch(\Throwable $t) {
             throw $t;
         }

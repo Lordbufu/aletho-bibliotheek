@@ -3,24 +3,30 @@
 namespace App;
 
 use App\App;
-use App\Libs\{BookRepo, GenreRepo, WriterRepo, StatusRepo, OfficeRepo};
+use App\Libs\{BookRepo, GenreRepo, WriterRepo, StatusRepo, OfficeRepo, LoanersRepo};
 
 class BooksService {
-    protected BookRepo   $books;
-    protected GenreRepo  $genres;
-    protected WriterRepo $writers;
-    protected StatusRepo $status;
-    protected OfficeRepo $offices;
-    protected Database   $db;
+    protected BookRepo      $books;
+    protected GenreRepo     $genres;
+    protected WriterRepo    $writers;
+    protected StatusRepo    $status;
+    protected OfficeRepo    $offices;
+    protected LoanersRepo   $loaners;
+    protected Database      $db;
 
     /*  Construct all associated library classes, and logs it. */
     public function __construct() {
-        $this->db      = App::getService('database');
-        $this->books   = new BookRepo($this->db);
-        $this->genres  = new GenreRepo($this->db);
-        $this->writers = new WriterRepo($this->db);
-        $this->status  = new StatusRepo($this->db);
-        $this->offices = new OfficeRepo($this->db);
+        try {
+            $this->db      = App::getService('database');
+            $this->books   = new BookRepo($this->db);
+            $this->genres  = new GenreRepo($this->db);
+            $this->writers = new WriterRepo($this->db);
+            $this->status  = new StatusRepo($this->db);
+            $this->offices = new OfficeRepo($this->db);
+            $this->loaners = new LoanersRepo($this->db);
+        } catch (\Throwable $t) {
+            throw $t;
+        }
     }
 
     /*  Get all books as an array, processed and formatted for views. */
@@ -33,6 +39,12 @@ class BooksService {
                 continue;
             }
 
+            $curLoaner = $this->loaners->getCurrentLoanerByBookId((int)$book['id'])['name'] ?? null;
+            $prevLoanersRaw = $this->loaners->getPreviousLoanersByBookId((int)$book['id']);
+            $prevLoaners = !empty($prevLoanersRaw)
+                ? array_map(fn($loaner) => $loaner['name'], $prevLoanersRaw)
+                : null;
+
             $out[] = [
                 'id'     => $book['id'],
                 'title'  => $book['title'],
@@ -41,13 +53,11 @@ class BooksService {
                 'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
                 'status' => $this->status->getBookStatus((int)$book['id']),
                 'dueDate' => $this->status->getBookDueDate((int)$book['id']),
-                'curLoaner' => $this->status->getBookLoaner((int)$book['id']),
-                'prevLoaners' => $this->status->getBookPrevLoaners((int)$book['id']),
+                'curLoaner' => $curLoaner,
+                'prevLoaners' => $prevLoaners,
                 'canEditOffice' => App::getService('auth')->canManageOffice($book['office_id'])
             ];
         }
-
-        // dd($out);
 
         return $out;
     }
@@ -104,12 +114,10 @@ class BooksService {
     public function addBook(array $data): mixed {
         $updated = false;
 
-        // Temporary handling until many-to-many offices are supported
         $officeName = is_array($data['book_offices']) && count($data['book_offices']) > 0
             ? $data['book_offices'][0]
             : null;
         
-        // Check if we still have the book data stored, if so set it to active agian.
         foreach($this->books->findAll() as $book) {
             if ($book['title'] === $data['book_name']) {
                 if ($book['active']) {
@@ -127,28 +135,23 @@ class BooksService {
 
         $officeId = $this->offices->getOfficeIdByName($officeName);
 
-        // Attempt to update book data within a PDO transaction.
         try {
             if (!$this->db->startTransaction()) {
                 throw new \RuntimeException('Failed to start database transaction.');
             }
 
-            // Attempt to store new book item and fetch its id
             if (!empty($data['book_name']) || !empty($data['book_offices'])) {
                 $bookId = $this->books->addBook($data['book_name'], $officeId);
             }
 
-            // Attempt to store genres
             if (!empty($data['book_genres'])) {
                 $this->genres->addBookGenres($data['book_genres'], $bookId);
             }
 
-            // Attempt to store writers
             if (!empty($data['book_writers'])) {
                 $this->writers->addBookWriters($data['book_writers'], $bookId);
             }
 
-            // Set default book status to 'Aanwezig'.
             $this->status->setBookStatus($bookId , 1);
 
             $this->db->finishTransaction();
@@ -171,7 +174,6 @@ class BooksService {
             ? $data['book_offices'][0]
             : null;
 
-        // Attempt to update book data within a PDO transaction.
         try {
             if (!$this->db->startTransaction()) {
                 throw new \RuntimeException('Failed to start database transaction.');
@@ -206,5 +208,15 @@ class BooksService {
     /*  Disabled book by id. */
     public function disableBook(int $bookId): bool {
         return $this->books->disableBook($bookId);
+    }
+
+    /*  Request all current status types. */
+    public function getAllStatuses() {
+        return $this->status->getAllStatuses();
+    }
+
+    /*  Change book status */
+    public function setBookStatus(int $bookId, int $statusId, ?int $metaId = null, ?int $loanerId = null, ?int $locationId = null, bool $sendMail = false): bool {
+        return $this->status->setBookStatus($bookId, $statusId, $metaId, $loanerId, $locationId, $sendMail);
     }
 }

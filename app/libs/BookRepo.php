@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Libs;
 
 use App\{App, Database};

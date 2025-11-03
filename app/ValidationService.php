@@ -33,6 +33,10 @@ class ValidationService {
         return $this->formValidator->validateBookForm($data, $mode);
     }
 
+    public function validateStatusChangeForm(array $data): bool {
+        return $this->formValidator->validateStatusChangeForm($data);
+    }
+
     /*  Return the book form validation errors. */
     public function valErrors(): array {
         return $this->formValidator->errors();

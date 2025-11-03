@@ -1,12 +1,15 @@
 <div id="add-book-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
+
             <div class="aletho-header modal-header pt-2 pb-2">
                 <h5 class="modal-title w-100">Boek Toevoegen</h5>
                 <button type="button" class="btn-close btn-close-white" id="close-add-book-popin"></button>
             </div>
+
             <div class="aletho-modal-body">
                 <form id="add-book-form" method="post" action="/addBook">
+                    
                     <div class="input-group input-group-sm">
                         <label for="book-name" class="aletho-labels extra-popin-style">Boeknaam</label>
                         <input  type="text"

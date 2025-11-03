@@ -1,9 +1,3 @@
-/**
- * Popins module: Handles modal popin logic for the app.
- * - Manages opening/closing popins and body scroll lock
- * - Centralizes popin selectors
- * - Handles outside click and hash-based popin opening
- */
 const Popins = (() => {
     // Centralized selectors for all popins
     const popinSelectors = [
@@ -16,14 +10,12 @@ const Popins = (() => {
     let scrollY = 0;
     let padRight = 0;
 
-    /** Get all popin selectors as an array.
-     *      @returns {string[]}
-     */
+    /*  Get all popin selectors as an array. */
     function getSelectors() {
         return popinSelectors;
     }
 
-    /* Lock body scroll and adjust padding when popin is open. */
+    /*  Lock body scroll and adjust padding when popin is open. */
     function lockBodyScroll() {
         scrollY = window.scrollY;
         padRight = window.innerWidth - document.body.clientWidth;
@@ -37,7 +29,7 @@ const Popins = (() => {
             });
     }
 
-    /* Unlock body scroll and reset padding when popin is closed. */
+    /*  Unlock body scroll and reset padding when popin is closed. */
     function unlockBodyScroll() {
         $('body')
             .removeClass('modal-open')
@@ -50,9 +42,7 @@ const Popins = (() => {
         window.scrollTo(0, scrollY);
     }
 
-    /** Open a popin by selector, lock scroll, and set open state.
-     *      @param {string} selector - Popin selector
-     */
+    /*  Open a popin by selector, lock scroll, and set open state. */
     function open(selector) {
         if (isOpen) return;
         lockBodyScroll();
@@ -60,9 +50,7 @@ const Popins = (() => {
         isOpen = true;
     }
 
-    /** Clears all input, select, and textarea fields, and empties tag containers within a popin.
-     *      @param {jQuery} $popin The popin element whose fields need to be cleared.
-     */
+    /*  Clears all input, select, and textarea fields, and empties tag containers within a popin. */
     function _clearFields($popin) {
         // Find and reset all input, select, and textarea fields
         $popin.find('input, select, textarea').each(function() {
@@ -78,9 +66,7 @@ const Popins = (() => {
         $popin.find('div[class*="-tags-container"]').empty();
     }
 
-    /** Close a popin by selector, unlock scroll, and reset open state.
-     *      @param {string} selector - Popin selector
-     */
+    /*  Close a popin by selector, unlock scroll, and reset open state. */
     function close(selector) {
         const $popin = $(selector);
         if ($popin.length === 0) {
@@ -99,18 +85,22 @@ const Popins = (() => {
         $popin.trigger('popin:close');
     }
 
-    /** Setup open/close event handlers for a popin.
-     *      @param {string} openBtn - Selector for open button
-     *      @param {string} popinId - Selector for popin
-     *      @param {string} closeBtn - Selector for close button
-     */
-    function setup(openBtn, popinId, closeBtn) {
-        $(openBtn).on('click', () => open(popinId));
+    /*  Setup open/close event handlers for a popin. */
+    function setup(openBtn, popinId, closeBtn, beforeOpenCb) {
+        $(document).on('click', openBtn, function () {
+            const $btn = $(this);
+            const context = $btn.data();
+
+            if (typeof beforeOpenCb === 'function') {
+                beforeOpenCb(popinId, context);
+            }
+
+            open(popinId);
+        });
+
         $(closeBtn).on('click', () => close(popinId));
 
         const $popin = $(popinId);
-
-        // Only close on backdrop click if the popin has the 'backdrop-close' class
         if ($popin.hasClass('backdrop-close')) {
             $popin.on('click', function (e) {
                 if (e.target === this) {
@@ -132,10 +122,7 @@ const Popins = (() => {
         }
     }
 
-    /** Handle outside click: closes dropdowns if click is outside any open popin.
-     *      @param {Event} event - Click event
-     *      @param {Function} closeDropdownFn - Function to close dropdowns
-     */
+    /*  Handle outside click: closes dropdowns if click is outside any open popin. */
     function handleOutsideClick(event, closeDropdownFn) {
         if (!isOpen) return;
         const ePopin = $(event.target).closest(popinSelectors.join(',') + ':visible');

@@ -33,7 +33,7 @@ $(function() {
             periodeLength: '#periode-length',
             reminderDay: '#reminder-day',
             overdueDay: '#overdue-day',
-            bookStatusButton: '#boek-status-button',
+            bookStatusButton: '.boek-status-button',
             addBookPopin: '#add-book-popin',
             closeAddBookPopin: '#close-add-book-popin',
             statusPeriodeButton: '#status-periode-button',
@@ -76,7 +76,28 @@ $(function() {
     Popins.setup(CONSTANTS.SELECTORS.bookAddButton, CONSTANTS.SELECTORS.addBookPopin, CONSTANTS.SELECTORS.closeAddBookPopin);
     Popins.setup(CONSTANTS.SELECTORS.statusPeriodeButton, CONSTANTS.SELECTORS.statusPeriodPopin, CONSTANTS.SELECTORS.closeStatusPeriodPopin);
     Popins.setup(CONSTANTS.SELECTORS.passwordChangeButton, CONSTANTS.SELECTORS.passwordResetPopin, CONSTANTS.SELECTORS.closePasswordResetPopin);
-    Popins.setup(CONSTANTS.SELECTORS.bookStatusButton, CONSTANTS.SELECTORS.changeBookStatusPopin, CONSTANTS.SELECTORS.closeChangeBookStatusPopin);
+
+    // Popins.setup(CONSTANTS.SELECTORS.bookStatusButton, CONSTANTS.SELECTORS.changeBookStatusPopin, CONSTANTS.SELECTORS.closeChangeBookStatusPopin);
+    Popins.setup(
+        CONSTANTS.SELECTORS.bookStatusButton,
+        CONSTANTS.SELECTORS.changeBookStatusPopin,
+        CONSTANTS.SELECTORS.closeChangeBookStatusPopin,
+        function (popinId, context) {
+            const bookId = context.bookId;
+
+            // Set hidden input
+            $('#change-book-id').val(bookId);
+
+            // Fetch statuses
+            $.getJSON('/requestStatus', function (statuses) {
+                const $select = $('#change-status-type');
+                $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
+                statuses.forEach(status => {
+                    $select.append(`<option value="${status.id}">${status.type}</option>`);
+                });
+            });
+        }
+    );
 
     // Setup for all TagInputs: autocomplete/tagging
     const tagInputConfigs = [

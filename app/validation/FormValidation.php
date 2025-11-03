@@ -157,6 +157,49 @@ class FormValidation {
 		return empty($this->errors);
 	}
 
+	/*	Validate status-change form data. */
+	public function validateStatusChangeForm(array $data): bool {
+		$this->errors = [];
+		$this->cleanData = [];
+
+		$bookId = filter_var($data['book_id'] ?? null, FILTER_VALIDATE_INT);
+		if (!$bookId) {
+			$this->errors['book_id'] = 'Geen geldig boek ontvangen!';
+		} else {
+			$this->cleanData['book_id'] = $bookId;
+		}
+
+		$statusId = filter_var($data['change_status_type'] ?? null, FILTER_VALIDATE_INT);
+		if (!$statusId) {
+			$this->errors['change_status_type'] = 'Geen geldige status geselecteerd!';
+		} else {
+			$this->cleanData['status_id'] = $statusId;
+		}
+
+		$email = filter_var(trim($data['change_loaner_email'] ?? ''), FILTER_VALIDATE_EMAIL);
+		if (!$email) {
+			$this->errors['change_loaner_email'] = 'Geen geldig e-mailadres!';
+		} else {
+			$this->cleanData['loaner_email'] = $email;
+		}
+
+		$name = trim(strip_tags($data['change_loaner_name'] ?? ''));
+		if ($name === '') {
+			$this->errors['change_loaner_name'] = 'Naam mag niet leeg zijn!';
+		} else {
+			$this->cleanData['loaner_name'] = $name;
+		}
+
+		$location = trim(strip_tags($data['change_loaner_location'] ?? ''));
+		if ($location === '') {
+			$this->errors['change_loaner_location'] = 'Locatie mag niet leeg zijn!';
+		} else {
+			$this->cleanData['loaner_location'] = $location;
+		}
+
+		return empty($this->errors);
+	}
+
 	/* Simple get errors helper. */
 	public function errors(): array {
 		return $this->errors;

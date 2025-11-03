@@ -26,5 +26,9 @@ return [
     // Core Books Service
     'books' => [
         'class' => \App\BooksService::class
+    ],
+    // Core Loaners Service
+    'loaners' => [
+        'class' => \App\LoanersService::class
     ]
 ];
