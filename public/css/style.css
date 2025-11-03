@@ -550,7 +550,7 @@ button:disabled.needs-save {
 }
 
 /* Tag container font style and margin. */
-.add-writer-tags-container, .writer-tags-container {
+[class$="-tags-container"] {
 	font-family: Quicksand;
 	font-style: normal;
 	margin-bottom: 0.2rem;
@@ -650,6 +650,19 @@ button:disabled.needs-save {
 }
 
 .suggestion:hover { background: #f0f0f0; }
+
+/* Loaner suggestion list */
+.loaner-suggestions {
+	box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.loaner-suggestions .loaner-suggestion {
+	padding: 6px 10px; cursor: pointer;
+}
+
+.loaner-suggestions .loaner-suggestion:hover {
+	background: #f3f3f3;
+}
 
 /* Temp status dot styles for prototype reasons */
 .status-dot {
