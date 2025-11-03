@@ -30,13 +30,13 @@ class LoanersRepo {
     }
 
     public function create(string $name, string $email): array {
-        $this->db->query->run(
+        $this->db->query()->run(
             "INSERT INTO loaners (name, email, active) VALUES (?, ?, 1)",
             [$name, $email]
         );
 
         $id = (int)$this->db->query->lastInsertId();
-        $row = $this->db->query->fetchOne(
+        $row = $this->db->query()->fetchOne(
             "SELECT * FROM loaners WHERE id = ?",
             [$id]
         );
@@ -45,7 +45,7 @@ class LoanersRepo {
     }
 
     public function findById(int $id): ?array {
-        $row = $this->db->query->fetchOne(
+        $row = $this->db->query()->fetchOne(
             "SELECT * FROM loaners WHERE id = ? AND active = 1",
             [$id]
         );
@@ -54,7 +54,7 @@ class LoanersRepo {
     }
 
     public function findByEmail(string $email): ?array {
-        $row = $this->db->query->fetchOne(
+        $row = $this->db->query()->fetchOne(
             "SELECT * FROM loaners WHERE email = ? AND active = 1",
             [$email]
         );
@@ -72,7 +72,7 @@ class LoanersRepo {
         }
         $params[] = $id;
 
-        $result = $this->db->query->run(
+        $result = $this->db->query()->run(
             "UPDATE loaners SET " . implode(", ", $set) . " WHERE id = ?",
             $params
         );
@@ -81,7 +81,7 @@ class LoanersRepo {
     }
 
     public function deactivate(int $id): bool {
-        $result = $this->db->query->run(
+        $result = $this->db->query()->run(
             "UPDATE loaners SET active = 0 WHERE id = ?",
             [$id]
         );
@@ -90,7 +90,7 @@ class LoanersRepo {
     }
 
     public function allActive(): array {
-        $rows = $this->db->query->fetchAll(
+        $rows = $this->db->query()->fetchAll(
             "SELECT * FROM loaners WHERE active = 1"
         );
 
