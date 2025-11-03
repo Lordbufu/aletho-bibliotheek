@@ -38,7 +38,7 @@ class ValidationService {
     }
 
     /*  Return the book form validation errors. */
-    public function valErrors(): array {
+    public function errors(): array {
         return $this->formValidator->errors();
     }
 

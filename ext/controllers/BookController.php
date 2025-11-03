@@ -53,7 +53,7 @@ class BookController {
         }
 
         if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'add')) {
-            $errors = $this->valS->valErrors();
+            $errors = $this->valS->errors();
             if (!empty($errors['book_id'])) {
                 setFlash('global', 'failure', 'Geen geldige book data ontvangen !');
                 return App::redirect('/');
@@ -67,7 +67,7 @@ class BookController {
 
         // Test/Refine/Re-factor below here
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'add')) {
-            setFlash('inlinePop', 'data', $this->valS->valErrors());
+            setFlash('inlinePop', 'data', $this->valS->errors());
             return App::redirect('/#add-book-popin');
         }
 
@@ -99,7 +99,7 @@ class BookController {
         }
 
         if (empty($_POST) || !$this->valS->sanitizeInput($_POST, 'edit')) {
-            $errors = $this->valS->valErrors();
+            $errors = $this->valS->errors();
             if (!empty($errors['book_id'])) {
                 setFlash('global', 'failure', 'Geen geldige book data ontvangen !');
                 return App::redirect('/');
@@ -115,12 +115,12 @@ class BookController {
 
         // Test/Refine/Re-factor below here
         if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'edit')) {
-            foreach($this->valS->valErrors() as $key => $value) {
+            foreach($this->valS->errors() as $key => $value) {
                 $tempKeys[] = $key;
                 $tempValues[] = $value;
             }
 
-            setFlash('inlinePop', 'data', $this->valS->valErrors());
+            setFlash('inlinePop', 'data', $this->valS->errors());
             return App::redirect('/');
         }
 
