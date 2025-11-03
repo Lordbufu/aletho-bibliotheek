@@ -7,6 +7,9 @@
 	$popErrors = $_SESSION['_flashInlinePop']['message'] ?? [];
 	unset($_SESSION['_flashInlinePop']);
 
+    // ensure $errors exists to avoid undefined notices
+    $errors = [];
+
 	// Store the correct inline error formats, for book details.
     if (!empty($_SESSION['_flashInline']) && $_SESSION['_flashInline']['type'] !== 'data') {
         $errors[$_SESSION['_flashInline']['type']] = $_SESSION['_flashInline']['message'];
@@ -16,6 +19,10 @@
 		}
 	}
 	unset($_SESSION['_flashInline']);
+
+	// expose server flash to javascript so client can restore popins / old input
+    $appFlash = $_SESSION['_flashJs'] ?? [];
+	unset($_SESSION['_flashJs']);
 ?>
 
 <!DOCTYPE html>
@@ -37,6 +44,10 @@
 		<script type="module" src="js/main.js"></script>
 		<!-- PHP code for device specific styles etc goes here -->
 	</head>
+
+	<script>
+		window.__appFlash = <?= json_encode($appFlash, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?> || {};
+	</script>
 
 	<body class="aletho-background">
 		<!-- user feedback container for the entire app -->

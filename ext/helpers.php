@@ -49,6 +49,7 @@ if (!function_exists('setFlash')) {
             'form'      => '_flashForm',
             'single'    => '_flashSingle',
             'multi'     => '_flashMulti',
+            'js'        => '_flashJs'
         ];
 
         if (!isset($buckets[$bucket])) {
