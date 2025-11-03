@@ -15,8 +15,8 @@ INSERT INTO `writers` (`id`, `name`) VALUES
 
 -- Test loaners
 INSERT INTO `loaners` (`id`, `name`, `email`, `office_id`, `active`) VALUES
-    (NULL, 'test loaner 001', 'test.loaner001.mail.com', '1', '1'),
-    (NULL, 'test loaner 002', 'test.loaner002.mail.com', '2', '1');
+    (NULL, 'test loaner 001', 'test.loaner001@mail.com', '1', '1'),
+    (NULL, 'test loaner 002', 'test.loaner002@mail.com', '2', '1');
 
 -- Test book-genres
 INSERT INTO `book_genre` (`book_id`, `genre_id`) VALUES
