@@ -33,6 +33,7 @@ class ValidationService {
         return $this->formValidator->validateBookForm($data, $mode);
     }
 
+    /*  Validate status change form data. */
     public function validateStatusChangeForm(array $data): bool {
         return $this->formValidator->validateStatusChangeForm($data);
     }
@@ -47,10 +48,12 @@ class ValidationService {
         return $this->formValidator->cleanData();
     }
 
+    /*  Validate the user login form data. */
     public function validateUserLogin(array $data): bool {
         return $this->formValidator->validateUserLogin($data);
     }
 
+    /*  Validate password change form data. */
     public function validatePasswordChange(array $data, bool $isGlobalAdmin = false): bool {
         return $this->formValidator->validatePasswordChange($data, $isGlobalAdmin);
     }
