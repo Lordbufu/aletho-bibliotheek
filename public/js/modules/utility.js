@@ -47,8 +47,59 @@ const Utility = (() => {
         return values.map(v => v.trim()).filter(Boolean).sort().join(',');
     }
 
+    // Tag config helpers
+    function makeTagConfig(type, opts = {}) {
+        return {
+            inputSelector: `.${type}-input`,
+            containerSelector: `.${type}-tags-container`,
+            endpoint: `/bookdata?data=${type}s`,
+            tagClass: `${type}-tag`,
+            suggestionClass: `${type}-suggestion`,
+            hiddenInputName: `book_${type}s[]`,
+            maxTags: 3,
+            allowCustom: true,
+            ...opts
+        };
+    }
+
+    function makePopTagConfig(type, opts = {}) {
+        return {
+            inputSelector: `.${type}-input-pop`,
+            containerSelector: `.add-${type}-tags-container`,
+            endpoint: `/bookdata?data=${type}s`,
+            tagClass: `${type}-tag`,
+            suggestionClass: `${type}-suggestion-pop`,
+            hiddenInputName: `book_${type}s[]`,
+            maxTags: 3,
+            allowCustom: true,
+            ...opts
+        };
+    }
+
+    // Request helper (GET, POST, etc.)
+    function request({ url, method = 'GET', data = {}, success, error }) {
+        $.ajax({
+            url,
+            method,
+            dataType: 'json',
+            data,
+            success,
+            error: error || function(xhr, status, err) {
+                console.error('Request error:', status, err);
+            }
+        });
+    }
+
     // Exported API
-    return { markFieldChanged, clearFieldChanged, getFieldConfig, normalizeValues };
+    return {
+        markFieldChanged,
+        clearFieldChanged,
+        getFieldConfig,
+        normalizeValues,
+        makeTagConfig,
+        makePopTagConfig,
+        request
+    };
 })();
 
 export { Utility };
