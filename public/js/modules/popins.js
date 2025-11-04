@@ -1,3 +1,5 @@
+import { Utility } from './utility.js';
+
 const Popins = (() => {
     // Centralized selectors for all popins
     const popinSelectors = [
@@ -48,6 +50,103 @@ const Popins = (() => {
         lockBodyScroll();
         $(selector).show();
         isOpen = true;
+
+        // Prefill status select for status-period-popin
+        if (selector === '#status-period-popin') {
+            Utility.request({
+                url: '/requestStatus',
+                success: function (statuses) {
+                    const $select = $('#status-type');
+                    $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
+                    statuses.forEach(status => {
+                        $select.append(`
+                            <option value="${status.id}"
+                                    data-periode_length="${status.periode_length ?? ''}"
+                                    data-reminder_day="${status.reminder_day ?? ''}"
+                                    data-overdue_day="${status.overdue_day ?? ''}">${status.type}
+                            </option>
+                        `);
+                    });
+
+                    // Pre-select status if present in flash
+                    if (window.__appFlash && window.__appFlash.type === 'status_type') {
+                        $select.val(window.__appFlash.message);
+                    }
+
+                    // Now trigger change to prefill fields
+                    $select.trigger('change');
+                }
+            });
+        }
+
+        // status period popin input fill for #status-period-popin
+        $('#status-type').on('change', function() {
+            const $selected = $(this).find('option:selected');
+
+            // Only set the value if the field is empty
+            if (!$('#periode-length').val()) {
+                $('#periode-length').val($selected.data('periode_length') || '');
+            }
+            if (!$('#reminder-day').val()) {
+                $('#reminder-day').val($selected.data('reminder_day') || '');
+            }
+            if (!$('#overdue-day').val()) {
+                $('#overdue-day').val($selected.data('overdue_day') || '');
+            }
+        });
+
+        if (selector === '#change-book-status-popin') {
+            const bookId = window.__appFlash && window.__appFlash.type === 'book_id' ? window.__appFlash.message : null;
+
+            if (bookId) {
+                $('#change-book-id').val(bookId);
+                // Now request loaner data to populate the status select ? ... this seems wrong on many levels.
+                Utility.request({
+                    url: '/requestLoanerForBook',
+                    data: { data: 'book', book_id: bookId },
+                    success: function(loaner) {
+                        if (loaner && loaner.name) {
+                            $('#change-loaner-name').val(loaner.name || '');
+                            $('#change-loaner-email').val(loaner.email || '');
+                            $('#change-loaner-location').val(loaner.location || '');
+                        } else {
+                            $('#change-loaner-name').val('');
+                            $('#change-loaner-email').val('');
+                            $('#change-loaner-location').val('');
+                        }
+                    }
+                });
+
+                Utility.request({
+                    url: '/requestStatus',
+                    data: { data: 'book', book_id: bookId },
+                    success: function (statuses) {
+                        const $select = $('#change-status-type');
+                        $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
+                        statuses.forEach(status => {
+                            $select.append(`<option value="${status.id}">${status.type}</option>`);
+                        });
+                    }
+                });
+
+                Utility.request({
+                    url: '/requestBookStatus',
+                    data: { data: 'book', book_id: bookId },
+                    success: function (status) {
+                        const $select = $('#change-status-type');
+                        const targetText = status[0].type;
+
+                        const $match = $select.find('option').filter(function () {
+                            return $(this).text().trim() === targetText;
+                        });
+
+                        if ($match.length) {
+                            $select.val($match.val());
+                        }
+                    }
+                });
+            }
+        }
     }
 
     /*  Clears all input, select, and textarea fields, and empties tag containers within a popin. */
@@ -86,16 +185,75 @@ const Popins = (() => {
     }
 
     /*  Setup open/close event handlers for a popin. */
-    function setup(openBtn, popinId, closeBtn, beforeOpenCb) {
+    function setup(openBtn, popinId, closeBtn) {
         $(document).on('click', openBtn, function () {
-            const $btn = $(this);
-            const context = $btn.data();
-
-            if (typeof beforeOpenCb === 'function') {
-                beforeOpenCb(popinId, context);
-            }
-
             open(popinId);
+
+            // For change-book-status-popin, set book_id from triggering button
+            if (popinId === '#change-book-status-popin') {
+                // Try to get book_id from the clicked button
+                let bookId = $(this).data('book-id');
+
+                // Fallback: if not found, try to get from open dropdown (item-container)
+                if (!bookId) {
+                    const $openDropdown = $('.aletho-item-dropdown.show').closest('.aletho-item-container');
+                    bookId = $openDropdown.length ? $openDropdown.attr('id')?.replace('item-container-', '') : null;
+                }
+
+                // Fallback: if still not found, try from window.__appFlash (for redirects)
+                if (!bookId && window.__appFlash && window.__appFlash.single && window.__appFlash.single.book_id) {
+                    bookId = window.__appFlash.single.book_id;
+                }
+
+                // Set the hidden input
+                $('#change-book-id').val(bookId || '');
+
+                // Now request status data as before
+                Utility.request({
+                    url: '/requestStatus',
+                    success: function (statuses) {
+                        const $select = $('#change-status-type');
+                        $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
+                        statuses.forEach(status => {
+                            $select.append(`<option value="${status.id}">${status.type}</option>`);
+                        });
+                    }
+                });
+
+                Utility.request({
+                    url: '/requestBookStatus',
+                    data: { data: 'book', book_id: bookId },
+                    success: function (status) {
+                        const $select = $('#change-status-type');
+                        const targetText = status[0].type;
+
+                        const $match = $select.find('option').filter(function () {
+                            return $(this).text().trim() === targetText;
+                        });
+
+                        if ($match.length) {
+                            $select.val($match.val());
+                        }
+                    }
+                });
+
+                Utility.request({
+                    url: '/requestLoanerForBook',
+                    data: { data: 'book', book_id: bookId },
+                    success: function(loaner) {
+                        if (loaner && loaner.name) {
+                            $('#change-loaner-name').val(loaner.name || '');
+                            $('#change-loaner-email').val(loaner.email || '');
+                            $('#change-loaner-location').val(loaner.location || '');
+                        } else {
+                            $('#change-loaner-name').val('');
+                            $('#change-loaner-email').val('');
+                            $('#change-loaner-location').val('');
+                        }
+                    }
+                });
+            }
+            // You can add similar blocks for other popins here as needed
         });
 
         $(closeBtn).on('click', () => close(popinId));
@@ -133,7 +291,14 @@ const Popins = (() => {
     }
 
     // Exported API
-    return { getSelectors, open, close, setup, initFromHash, handleOutsideClick };
+    return {
+        getSelectors,
+        open,
+        close,
+        setup,
+        initFromHash,
+        handleOutsideClick
+    };
 })();
 
 export { Popins };
