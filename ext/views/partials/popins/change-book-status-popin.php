@@ -24,7 +24,12 @@
 
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-name" class="aletho-labels extra-popin-style">Lener Naam</label>
-                        <input type="text" class="aletho-inputs extra-popin-style mb-2" id="change-loaner-name" name="change_loaner_name" required>
+                        <input  type="text"
+                                class="aletho-inputs extra-popin-style mb-2"
+                                id="change-loaner-name"
+                                name="change_loaner_name"
+                                autocomplete="off"
+                                required>
 
                         <?php if (!empty($popErrors['change_loaner_name'])): ?>
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['change_loaner_name']) ?></div>
@@ -33,7 +38,12 @@
 
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-email" class="aletho-labels extra-popin-style">E-mail</label>
-                        <input type="email" class="aletho-inputs extra-popin-style" id="change-loaner-email" name="change_loaner_email" required>
+                        <input  type="email"
+                                class="aletho-inputs extra-popin-style"
+                                id="change-loaner-email"
+                                name="change_loaner_email"
+                                autocomplete="off"
+                                required>
 
                         <?php if (!empty($popErrors['change_loaner_email'])): ?>
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['change_loaner_email']) ?></div>
@@ -42,7 +52,12 @@
 
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-location" class="aletho-labels extra-popin-style">Lener Locatie</label>
-                        <input type="text" class="aletho-inputs extra-popin-style mb-2" id="change-loaner-location" name="change_loaner_location" required>
+                        <input  type="text"
+                                class="aletho-inputs extra-popin-style mb-2"
+                                id="change-loaner-location"
+                                name="change_loaner_location"
+                                autocomplete="off"
+                                required>
 
                         <?php if (!empty($popErrors['change_loaner_location'])): ?>
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['change_loaner_location']) ?></div>

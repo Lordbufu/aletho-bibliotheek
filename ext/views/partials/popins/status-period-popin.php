@@ -8,25 +8,57 @@
             </div>
 
             <div class="aletho-modal-body p-1">
-                <form id="status-period-form mb-1">
-                    <label for="status-type" class="aletho-labels extra-popin-style">Status</label>
-                    <select class="aletho-inputs extra-popin-style" id="status-type" name="status_type" required>
-                        <option
-                            value="W.I.P."
-                            data-periode_length="W.I.P."
-                            data-reminder_day="W.I.P."
-                            data-overdue_day="W.I.P.">
-                        </option>
-                    </select>
+                <form id="status-period-form" method="post" action="/setStatusPeriod">
+                    <input type="hidden" name="_method" value="PATCH">
 
-                    <label for="periode-length" class="aletho-labels extra-popin-style">Periode Lengte (dagen)</label>
-                    <input type="number" class="aletho-inputs extra-popin-style" id="periode-length" name="periode_length" min="1" required>
+                    <div class="input-group input-group-sm">
+                        <label for="status-type" class="aletho-labels extra-popin-style">Status</label>
+                        <select class="aletho-inputs extra-popin-style" id="status-type" name="status_type" required>
+                        </select>
 
-                    <label for="reminder-day" class="aletho-labels extra-popin-style">Herinnering (dagen voor einde)</label>
-                    <input type="number" class="aletho-inputs extra-popin-style" id="reminder-day" name="reminder_day" min="0" required>
+                        <?php if (!empty($popErrors['status_type'])): ?>
+                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['status_type']) ?></div>
+                        <?php endif; ?>
+                    </div>
 
-                    <label for="overdue-day" class="aletho-labels extra-popin-style">Overdue (dagen na einde)</label>
-                    <input type="number" class="aletho-inputs extra-popin-style mb-2" id="overdue-day" name="overdue_day" min="0" required>
+                    <div class="input-group input-group-sm">
+                        <label for="periode-length" class="aletho-labels extra-popin-style">Periode Lengte (dagen)</label>
+                        <input  type="number"
+                                class="aletho-inputs extra-popin-style"
+                                id="periode-length"
+                                name="periode_length"
+                                value="<?= htmlspecialchars($old['periode_length'] ?? '') ?>">
+
+                        <?php if (!empty($popErrors['periode_length'])): ?>
+                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['periode_length']) ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="input-group input-group-sm">
+                        <label for="reminder-day" class="aletho-labels extra-popin-style">Herinnering (dagen voor einde)</label>
+                        <input  type="number"
+                                class="aletho-inputs extra-popin-style"
+                                id="reminder-day"
+                                name="reminder_day"
+                                value="<?= htmlspecialchars($old['reminder_day'] ?? '') ?>">
+
+                        <?php if (!empty($popErrors['reminder_day'])): ?>
+                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['reminder_day']) ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="input-group input-group-sm">
+                        <label for="overdue-day" class="aletho-labels extra-popin-style">Overdue (dagen na einde)</label>
+                        <input  type="number"
+                                class="aletho-inputs extra-popin-style"
+                                id="overdue-day"
+                                name="overdue_day"
+                                value="<?= htmlspecialchars($old['overdue_day'] ?? '') ?>">
+                        
+                        <?php if (!empty($popErrors['overdue_day'])): ?>
+                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['overdue_day']) ?></div>
+                        <?php endif; ?>
+                    </div>
 
                     <button type="submit" class="aletho-buttons extra-popin-style">Opslaan</button>
                 </form>
