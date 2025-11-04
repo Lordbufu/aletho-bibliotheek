@@ -36,8 +36,8 @@ if (!function_exists('dd')) {
 }
 
 /** Set custom SESSION flash data, supports arrays of types and message.
- *      @param string $bucket           -> One of: global, inline, form
- *      @param string|array $type       -> e.g. success, failure, warning
+ *      @param string $bucket           -> One of: global, inline, inlinePop, form, single, multi, js
+ *      @param string|array $type       -> e.g. success, failure, warning, info
  *      @param string|array $message    -> Message string or array (for form data)
  */
 if (!function_exists('setFlash')) {
