@@ -1,14 +1,10 @@
-/**
- * main.js - Aletho Bibliotheek frontend orchestrator
- * Loads and wires up all modules, event handlers, and page-level logic.
- * All feature logic is delegated to modules for maintainability.
- */
-
+/*  main.js - Aletho Bibliotheek frontend orchestrator. */
 import { Popins } from './modules/popins.js';
 import { Dropdowns } from './modules/dropdowns.js';
 import { TagInput } from './modules/taginput.js';
 import { SearchSort } from './modules/searchSort.js';
 import { Utility } from './modules/utility.js';
+import { Suggestions } from './modules/suggestions.js';
 
 // Document ready: wire up modules and event handlers
 $(function() {
@@ -23,17 +19,9 @@ $(function() {
     // User feedback notifications.
     const $alert = $('.aletho-global-success, .aletho-global-failure');
     if ($alert.length) {
-        setTimeout(() => {
-            $alert.addClass(alertShowClass);
-        }, 100); // slight delay for transition
-
-        setTimeout(() => {
-            $alert.removeClass(alertShowClass);
-        }, 3500); // show for 3.5 seconds
-
-        setTimeout(() => {
-            $alert.remove();
-        }, 4000); // remove from DOM after hiding
+        setTimeout(() => { $alert.addClass(alertShowClass); }, 100);
+        setTimeout(() => { $alert.removeClass(alertShowClass); }, 3500);
+        setTimeout(() => { $alert.remove(); }, 4000);
     }
 
     // Popins: hash-based open and setup for all popins
@@ -41,33 +29,16 @@ $(function() {
     Popins.setup('#boek-add-button', '#add-book-popin', '#close-add-book-popin');
     Popins.setup('#status-periode-button', '#status-period-popin', '#close-status-period-popin');
     Popins.setup('#password-change-button', '#password-reset-popin', '#close-password-reset-popin');
-
-    Popins.setup(
-        '.boek-status-button',
-        '#change-book-status-popin',
-        '#close-change-book-status-popin',
-        function (popinId, context) {
-            const bookId = context.bookId;
-            $('#change-book-id').val(bookId);
-
-            $.getJSON('/requestStatus', function (statuses) {
-                const $select = $('#change-status-type');
-                $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
-                statuses.forEach(status => {
-                    $select.append(`<option value="${status.id}">${status.type}</option>`);
-                });
-            });
-        }
-    );
+    Popins.setup('.boek-status-button', '#change-book-status-popin', '#close-change-book-status-popin');
 
     // Setup for all TagInputs: autocomplete/tagging
     const tagInputConfigs = [
-        makeTagConfig('writer'),
-        makeTagConfig('genre'),
-        makeTagConfig('office', { allowCustom: false, maxTags: 1 }),
-        makePopTagConfig('writer'),
-        makePopTagConfig('genre'),
-        makePopTagConfig('office', { allowCustom: false, maxTags: 1 })
+        Utility.makeTagConfig('writer'),
+        Utility.makeTagConfig('genre'),
+        Utility.makeTagConfig('office', { allowCustom: false, maxTags: 1 }),
+        Utility.makePopTagConfig('writer'),
+        Utility.makePopTagConfig('genre'),
+        Utility.makePopTagConfig('office', { allowCustom: false, maxTags: 1 })
     ];
     tagInputConfigs.forEach(config => TagInput.init(config));
 
@@ -130,14 +101,6 @@ $(function() {
             .addClass(fieldEditableClass);
 
         setTimeout(() => $field.focus(), 0);
-    });
-
-    // Popins: status period popin input fill
-    $('#status-type').on('change', function() {
-        const $selected = $(this).find('option:selected');
-        $('#periode-length').val($selected.data('periode_length'));
-        $('#reminder-day').val($selected.data('reminder_day'));
-        $('#overdue-day').val($selected.data('overdue_day'));
     });
 
     // Dropdowns: button click handlers
@@ -219,41 +182,87 @@ $(function() {
         $('#shared-delete-form').trigger('submit');
     });
 
+    // Loaner name suggestion logic for change-book-status-popin
+    $('#change-loaner-name').on('input', function() {
+        const $input = $(this);
+        const query = $input.val().trim();
+        
+        if (query.length < 2) {
+            Suggestions.close();
+            return;
+        }
+
+        Utility.request({
+            url: '/requestLoaners',
+            data: { query },
+            success: function(list) {
+                if (!Array.isArray(list) || list.length === 0) {
+                    Suggestions.close();
+                    return;
+                }
+
+                // Show name suggestions
+                Suggestions.show($input, list.map(l => l.name), 'loaner-suggestion');
+                Suggestions.bindCloseOnBlur($input);
+
+                // Click handler for suggestion selection
+                $(document).off('mousedown.loaner-suggestion').on('mousedown.loaner-suggestion', '.loaner-suggestion', function(e) {
+                    e.preventDefault();
+                    const name = $(this).text().trim();
+                    const selected = list.find(l => l.name === name);
+                    if (selected) {
+                        $input.val(selected.name);
+                        $('#change-loaner-email').val(selected.email || '');
+                        $('#change-loaner-location').val(selected.location || '');
+                        // Optionally store office id for later use if needed: $input.data('office-id', selected.office_id);
+                    }
+                    Suggestions.close();
+                });
+            }
+        });
+    });
+
+    // Office location suggestion logic for change-book-status-popin
+    $('#change-loaner-location').on('input', function() {
+        const $input = $(this);
+        const query = $input.val().trim().toLowerCase();
+
+        if (query.length < 1) {
+            Suggestions.close();
+            return;
+        }
+
+        Utility.request({
+            url: '/bookdata',
+            data: { data: 'offices' },
+            success: function(list) {
+                if (!Array.isArray(list) || list.length === 0) {
+                    Suggestions.close();
+                    return;
+                }
+
+                // Filter office names by query
+                const filtered = list.filter(o => o.name.toLowerCase().includes(query));
+                Suggestions.show($input, filtered.map(o => o.name), 'office-suggestion');
+                Suggestions.bindCloseOnBlur($input);
+
+                // Click handler for suggestion selection
+                $(document).off('mousedown.office-suggestion').on('mousedown.office-suggestion', '.office-suggestion', function(e) {
+                    e.preventDefault();
+                    const name = $(this).text().trim();
+                    $input.val(name);
+                    Suggestions.close();
+                });
+            }
+        });
+    });
+
     // Trigger change on load to pre-fill with the first status
     $('#status-type').trigger('change');
 
     // W.I.P. Testing functions
     $('.status-dot').on('click', testLights);
 });
-
-
-function makeTagConfig(type, opts = {}) {
-    return {
-        inputSelector: `.${type}-input`,
-        containerSelector: `.${type}-tags-container`,
-        endpoint: `/bookdata?data=${type}s`,
-        tagClass: `${type}-tag`,
-        suggestionClass: `${type}-suggestion`,
-        hiddenInputName: `book_${type}s[]`,
-        maxTags: 3,
-        allowCustom: true,
-        ...opts
-    };
-}
-
-function makePopTagConfig(type, opts = {}) {
-    return {
-        inputSelector: `.${type}-input-pop`,
-        containerSelector: `.add-${type}-tags-container`,
-        endpoint: `/bookdata?data=${type}s`,
-        tagClass: `${type}-tag`,
-        suggestionClass: `${type}-suggestion-pop`,
-        hiddenInputName: `book_${type}s[]`,
-        maxTags: 3,
-        allowCustom: true,
-        ...opts
-    };
-}
 
 // W.I.P. helper, to review the basic status light colors via a simple click to change/rotate.
 function testLights(e) {
