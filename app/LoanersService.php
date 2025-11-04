@@ -27,6 +27,10 @@ class LoanersService {
         return $this->loaners->findById($id);
     }
 
+    public function findByName(string $query): array {
+        return $this->loaners->findByName($query);
+    }
+
     public function findByEmail(string $email): ?array {
         return $this->loaners->findByEmail($email);
     }
