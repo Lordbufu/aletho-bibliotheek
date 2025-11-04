@@ -25,6 +25,7 @@ class LoanersRepo {
             'id'     => (int)$row['id'],
             'name'   => $row['name'],
             'email'  => $row['email'],
+            'office_id' => (int)$row['office_id'],
             'active' => (bool)$row['active'],
         ];
     }
@@ -51,6 +52,13 @@ class LoanersRepo {
         );
         
         return $row ? $this->formatLoaner($row) : null;
+    }
+
+    public function findByName(string $query): array {
+        return $this->db->query()->fetchAll(
+            "SELECT id, name, email, office_id FROM loaners WHERE name LIKE ? ORDER BY name LIMIT 15",
+            ['%' . $query . '%']
+        ) ?: [];
     }
 
     public function findByEmail(string $email): ?array {
