@@ -62,6 +62,23 @@ class BooksService {
         return $out;
     }
 
+    public function getBookById(int $bookId): ?array {
+        $book = $this->books->findOne($bookId);
+        if (!$book || !$book['active']) {
+            return null;
+        }
+
+        return [
+            'id'     => $book['id'],
+            'title'  => $book['title'],
+            'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
+            'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
+            'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
+            'status' => $this->status->getBookStatus((int)$book['id']),
+            'dueDate' => $this->status->getBookDueDate((int)$book['id']),
+        ];
+    }
+
     /*  Get all writer names, for frontend autocomplete JQuery. */
     public function getWritersForDisplay(): array {
         $temp = $this->writers->getAllWriters();
@@ -72,7 +89,10 @@ class BooksService {
                 continue;
             }
 
-            $out[] = $writer['name'];
+            $out[] = [
+                'id' => $writer['id'],
+                'name' => $writer['name']
+            ];
         }
 
         return $out;
@@ -88,7 +108,10 @@ class BooksService {
                 continue;
             }
 
-            $out[] = $genre['name'];
+            $out[] = [
+                'id' => $genre['id'],
+                'name' => $genre['name']
+            ];
         }
 
         return $out;
@@ -104,7 +127,10 @@ class BooksService {
                 continue;
             }
 
-            $out[] = $office['name'];
+            $out[] = [
+                'id' => $office['id'],
+                'name' => $office['name']
+            ];
         }
 
         return $out;
@@ -213,6 +239,12 @@ class BooksService {
     /*  Request all current status types. */
     public function getAllStatuses() {
         return $this->status->getAllStatuses();
+    }
+
+    /*  Update status period settings */
+    public function updateStatusPeriod(int $statusId, ?int $periode_length, ?int $reminder_day, ?int $overdue_day): bool {
+        $sql = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
+        return $this->db->query()->run($sql, [$periode_length, $reminder_day, $overdue_day, $statusId]) !== false;
     }
 
     /*  Change book status */
