@@ -651,17 +651,13 @@ button:disabled.needs-save {
 
 .suggestion:hover { background: #f0f0f0; }
 
-/* Loaner suggestion list */
-.loaner-suggestions {
-	box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+/* Loaner and office suggestion styling */
+.loaner-suggestion, .office-suggestion {
+    padding: 6px 10px;
+    cursor: pointer;
 }
-
-.loaner-suggestions .loaner-suggestion {
-	padding: 6px 10px; cursor: pointer;
-}
-
-.loaner-suggestions .loaner-suggestion:hover {
-	background: #f3f3f3;
+.loaner-suggestion:hover, .office-suggestion:hover {
+    background: #f3f3f3;
 }
 
 /* Temp status dot styles for prototype reasons */
