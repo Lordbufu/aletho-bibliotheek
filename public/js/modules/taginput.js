@@ -1,17 +1,32 @@
 import { Utility } from './utility.js';
+import { Suggestions } from './suggestions.js';
 
 const TagInput = (() => {
-    let activeTagInput      = null;
+    let activeTagInput = null;
+    const optionsCache = {}; // Cache options per endpoint
 
     /*  Initialize tag input and tag container. */
     function init(config) {
         const $inputs   = $(config.inputSelector);
         const allowCustom = config.allowCustom !== false;
         const maxTags = config.maxTags || null;
+
         let allOptions = [];
 
-        // Fetch all options once for autocomplete
-        $.getJSON(config.endpoint, data => { allOptions = data; });
+        // Fetch options only when input is focused, and cache per endpoint
+        $inputs.on('focus', function() {
+            if (optionsCache[config.endpoint]) {
+                allOptions = optionsCache[config.endpoint];
+                return;
+            }
+            Utility.request({
+                url: config.endpoint,
+                success: data => {
+                    allOptions = data;
+                    optionsCache[config.endpoint] = data;
+                }
+            });
+        });
 
         // Input handler: filter suggestions with debounce for performance
         $inputs.on('input', function() {
@@ -19,20 +34,38 @@ const TagInput = (() => {
             const query = $input.val().trim().toLowerCase();
 
             if (query.length < 2) {
-                closeAllSuggestions();
+                Suggestions.close();
                 return;
             }
 
-            const suggestions = allOptions.filter(name =>
-                name.toLowerCase().includes(query)
-            );
-
-            if (suggestions.length > 0) {
-                showSuggestions($input, suggestions, config.suggestionClass);
-            } else {
-                closeAllSuggestions();
+            // If not loaded yet, fetch now (rare edge case)
+            if (!allOptions.length && !optionsCache[config.endpoint]) {
+                Utility.request({
+                    url: config.endpoint,
+                    success: data => {
+                        allOptions = data;
+                        optionsCache[config.endpoint] = data;
+                        showSuggestions($input, allOptions, query, config.suggestionClass);
+                    }
+                });
+                return;
             }
+
+            showSuggestions($input, allOptions, query, config.suggestionClass);
         });
+
+        function showSuggestions($input, options, query, suggestionClass) {
+            const filtered = options.filter(opt =>
+                opt.name.toLowerCase().includes(query)
+            );
+            
+            if (filtered.length > 0) {
+                Suggestions.show($input, filtered.map(opt => opt.name), suggestionClass);
+                Suggestions.bindCloseOnBlur($input);
+            } else {
+                Suggestions.close();
+            }
+        }
 
         // Mousedown on suggestion: add tag before blur closes
         $(document).on('click', `.${config.suggestionClass}`, function(e) {
@@ -46,7 +79,7 @@ const TagInput = (() => {
             const status = addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
 
             if (status) {
-                closeAllSuggestions();
+                Suggestions.close();
                 $input.val('');
             }
 
@@ -72,7 +105,7 @@ const TagInput = (() => {
                 const status        = addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
 
                 if (status) {
-                    closeAllSuggestions();
+                    Suggestions.close();
                     $input.focus();
                     $input.val('');
                 } else {
@@ -96,27 +129,22 @@ const TagInput = (() => {
         });
     }
 
-    /*  Closes any open suggestion list on page and clears the active input reference. */
-    function closeAllSuggestions() {
-        $('.suggestion-list').remove();
-    }
-
     /*  Add a tag to the container, if not already present and maxTags not exceeded. */
     function addTag(name, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, allOptions = []) {
         if ($container.find(`.${tagClass}[data-name="${name}"]`).length) {
-            closeAllSuggestions();
+            Suggestions.close();
             showTagLimitWarning($input, 1, `"${name}" is al toegevoegd.`);
             return false;
         }
 
         if (maxTags && $container.find(`.${tagClass}`).length >= maxTags) {
-            closeAllSuggestions();
+            Suggestions.close();
             showTagLimitWarning($input, maxTags);
             return false;
         }
 
         if (!allowCustom && !allOptions.includes(name)) {
-            closeAllSuggestions();
+            Suggestions.close();
             showTagLimitWarning($input, 1, "Alleen bestaande locaties toegestaan.");
             return false;
         }
@@ -202,29 +230,14 @@ const TagInput = (() => {
         $field.data('originalValue', Utility.normalizeValues(origValues));
     }
 
-    /*  Show suggestions below the input field. */
-    function showSuggestions($input, suggestions, suggestionClass) {
-        closeAllSuggestions();
-        activeTagInput = $input;
-
-        const rect = $input[0].getBoundingClientRect();
-        const $list = $(`<div class="suggestion-list ${suggestionClass}s"></div>`).css({
-            position: 'fixed',
-            top: rect.bottom + 'px',
-            left: rect.left + 'px',
-            width: rect.width + 'px',
-            zIndex: 9999
-        });
-
-        suggestions.forEach(s => {
-            $list.append(`<div class="${suggestionClass}">${s}</div>`);
-        });
-
-        $('body').append($list);
-    }
-
     // Exported API
-    return { init, addTag, getTagsContainer, getValuesFromContainer, restoreTagsFromInput };
+    return {
+        init,
+        addTag,
+        getTagsContainer,
+        getValuesFromContainer,
+        restoreTagsFromInput
+    };
 })();
 
 export { TagInput };
