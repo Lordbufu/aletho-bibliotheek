@@ -30,5 +30,10 @@ return [
     // Core Loaners Service
     'loaners' => [
         'class' => \App\LoanersService::class
+    ],
+    // Mail Template Service
+    'mail' => [
+        'class' => \App\MailTemplateService::class,
+        'config' => BASE_PATH . '/ext/config/mail.php'
     ]
 ];
