@@ -46,6 +46,25 @@ $(function() {
     SearchSort.initSearch('#search-inp', '#search-options');
     SearchSort.initSort('#sort-options');
 
+    // Search input clear icon: show/hide and clear behavior (jQuery)
+    const $searchInput = $('#search-inp');
+    const $clearIcon = $('#clear-search-icon');
+
+    // initialize clear icon visibility based on current input value
+    $clearIcon.css('display', $searchInput.val() ? 'block' : 'none');
+
+    // show/hide the clear icon as the user types
+    $searchInput.on('input', function () {
+        $clearIcon.css('display', $(this).val() ? 'block' : 'none');
+    });
+
+    // clear the input and trigger input event so SearchSort resets the results
+    $clearIcon.on('click', function () {
+        $searchInput.val('').trigger('input');
+        $clearIcon.hide();
+        $searchInput.focus();
+    });
+
     // Global click: close popins and dropdowns when clicking outside
     $(document).on('click', function(event) {
         Popins.handleOutsideClick(event, Dropdowns.close);
