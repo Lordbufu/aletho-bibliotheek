@@ -17,18 +17,19 @@
 	--dropdown-inset: 0.75rem;
 }
 
-/* Alétho homestyle tekst definitions.
+/*	Alétho homestyle tekst definitions, for refference:
 .titel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 400; font-style: normal; }
 .ondertitel-tekst { font-family: "bc-alphapipe", sans-serif; font-weight: 700; font-style: normal; }
 .tussenkoppen-tekst { font-family: Quicksand; font-weight: bold; }
-.overige-tekst { font-family: Quicksand; font-style: normal; } */
+.overige-tekst { font-family: Quicksand; font-style: normal; }
+*/
 
 /* Basic website setup, prepping it for custom edits and bootstrap tags. */
 * {
 	padding: 0;
 	margin: 0;
 	box-sizing: border-box;
-	/* font-size: 16px; */
+	font-size: 16px;
 }
 
 ::placeholder {
@@ -48,7 +49,9 @@ body {
 	font-style: normal;
 }
 
-body.modal-open { overflow: hidden; }
+body.modal-open {
+	overflow: hidden;
+}
 
 /* Intergrate housestyle */ 
 .aletho-background {
@@ -131,6 +134,23 @@ body.modal-open { overflow: hidden; }
 	border-radius: 0 0 0.375rem 0.375rem;
 	margin: auto;
 	margin-inline: auto;
+}
+
+.aletho-searchSort-container {
+	background-color: var(--color-sec-1);
+	margin: auto;
+	margin-top: 0.4rem;
+	margin-bottom: 0.2rem;
+	padding: 0.2rem;
+	min-width: 18rem;
+	max-width: 75%;
+}
+
+.aletho-input-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    max-width: 320px;
 }
 
 .aletho-modal-content {
@@ -224,7 +244,6 @@ body.modal-open { overflow: hidden; }
 
 /* Custom global/inline alert style */
 /* TODO: - Normalize all error tags, inline with the rest of the housestyle designs. */
-/* Global alert styling */
 .aletho-alert-global {
     position: fixed;
     top: -80px;
@@ -246,11 +265,18 @@ body.modal-open { overflow: hidden; }
     word-wrap: break-word;
 }
 
-.aletho-global-show { top: 4rem; }
-.aletho-global-success { background: var(--color-success); }
-.aletho-global-failure { background: var(--color-failure); }
+.aletho-global-show {
+	top: 4rem;
+}
 
-/* Inline alert styling */
+.aletho-global-success {
+	background: var(--color-success);
+}
+
+.aletho-global-failure {
+	background: var(--color-failure);
+}
+
 .aletho-alert-inline {
 	width: 85%;
     color: #fff;
@@ -290,7 +316,7 @@ body.modal-open { overflow: hidden; }
 /* Header/Banner/Nav items. */
 .banner-nav {
 	display: grid;
-	grid-template-areas: "hMenu logo search";
+	grid-template-areas: "hMenu logo";
 	grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 0.25rem;
@@ -307,10 +333,6 @@ body.modal-open { overflow: hidden; }
 
 .banner-nav #hamburger-button {
 	grid-area: hMenu;
-}
-
-.banner-nav #search-button {
-	grid-area: search;
 }
 
 /* Main view container */
@@ -335,22 +357,6 @@ body.modal-open { overflow: hidden; }
 	gap: 0.75rem;
 }
 
-.form-row {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.form-row select {
-	width: 7.5rem;
-	flex: 0 0 auto;
-}
-
-.form-row input[type="text"] {
-  flex: 1;
-  min-width: 6rem;
-}
-
 .items-list {
 	display: flex;
 	flex-direction: column;
@@ -370,33 +376,53 @@ body.modal-open { overflow: hidden; }
 	width: 70%;
 }
 
-/* Search input element */
-.search-label {
-  	background-color: transparent;
-  	color: var(--color-text-1);
-  	font-weight: 500;
-  	font-size: 1rem;
-}
-
-/* Sort elements */
-.sort-container {
-    display: flex;
-    justify-content: center;
+/* Search & Sort styles */
+.search-form, .sort-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
     font-size: 0.9rem;
     font-family: Quicksand;
     font-weight: bold;
-    max-width: 23.25rem;
-    margin: 1rem auto;
 }
 
-.sort-group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.search-form select {
+  	width: fit-content;
+	margin-bottom: 0.2rem;
 }
 
-.sort-group label {
-	margin: 0;
+.search-form input {
+	line-height: normal;
+}
+
+.clear-search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: none;
+    user-select: none;
+}
+
+.clear-search-icon:hover {
+    color: red;
+}
+
+.sort-container {
+	margin-top: 0.2rem;
+}
+
+.sort-container label {
+	width: fit-content;
+	margin-right: 0.2rem;
+}
+
+.sort-container select {
+	text-align: center;
 }
 
 /* Pop-in styles for alignment */
@@ -464,91 +490,6 @@ button:disabled.needs-save {
     animation: none;
 }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255, 66, 66, 0.5); }
-    50% { box-shadow: 0 0 8px 6px rgba(255, 66, 66, 0.4); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 66, 66, 0); }
-}
-
-/* Change a bootstap opacity, so the color is displayed correctly */
-.btn-close {
-	--bs-btn-close-opacity: 1;
-}
-
-/* Footer stuff */
-.site-footer {
-    padding: 0.25rem;
-    background-color: var(--color-primary-1);
-    color: var(--color-text-1);
-    text-align: center;
-}
-
-/* Responsive styles */
-@media (min-width: 768px) {
-    .aletho-background {
-		padding: 0.25rem;
-	}
-
-	.item-details {
-		max-width: 720px;
-		margin: 0.2rem auto 1rem;
-	}
-
-	/* Breaks the website now ¿?¿ */
-    /* .view-container {
-        flex-direction: row;
-        margin-inline: auto;
-    } */
-
-  	.aletho-labels {
-    	display: inline-block;
-    	background-color: transparent;
-    	margin: 0.2rem;
-  	}
-
-	.aletho-inputs {
-		display: inline-block;
-		width: auto;
-		max-width: none;
-	}
-
-	.aletho-modal-body .aletho-inputs,
-	.aletho-modal-body .aletho-buttons,
-	.aletho-modal-body .aletho-labels {
-		width: 65%;
-	}
-}
-
-/* Not entirely sure if useful or required */ 
-@media (min-width: 992px) {
-	.aletho-header .aletho-menu-buttons {
-		margin-inline: 0.5rem;
-	}
-
-	#hamburger-button {
-		order: 1;
-	}
-
-	.banner-image {
-		order: 2;
-	}
-
-	#search-button {
-		order: 3;
-	}
-}
-
-@media (min-width: 1200px) {
-    .aletho-background {
-		padding: 0.25rem;
-	}
-}
-
-/* Test code */
-#add-book-form {
-	width: 100%;
-}
-
 /* Tag container font style and margin. */
 [class$="-tags-container"] {
 	font-family: Quicksand;
@@ -558,7 +499,7 @@ button:disabled.needs-save {
 	width: 85%;
 }
 
-/* Popin-specific tags */
+/* Popin-specific tag styles*/
 [data-context="popin"] .writer-tag,
 [data-context="popin"] .genre-tag,
 [data-context="popin"] .office-tag {
@@ -583,7 +524,14 @@ button:disabled.needs-save {
 	transition: background 0.2s, color 0.2s;
 }
 
-/* Book-details-specific tags */
+[data-context="popin"] .remove-writer-tag:hover,
+[data-context="popin"] .remove-genre-tag:hover,
+[data-context="popin"] .remove-office-tag:hover {
+    background: rgba(0,0,0,0.05);
+    color: var(--color-accent, crimson);
+}
+
+/* Book-details-specific tag styles */
 [data-context="details"] .writer-tag,
 [data-context="details"] .genre-tag,
 [data-context="details"] .office-tag {
@@ -608,22 +556,95 @@ button:disabled.needs-save {
 	transition: background 0.2s, color 0.2s;
 }
 
-/* Target inputs and buttons in book-details, they dont play nice otherwhise */
 [data-context="details"] .aletho-inputs,
 [data-context="details"] .aletho-buttons {
 	margin: 0;
 	margin-bottom: 0.2rem;
 }
 
-/* Shared styles, for popin and dropdown content. */
 [data-context="details"] .remove-writer-tag:hover,
 [data-context="details"] .remove-genre-tag:hover,
-[data-context="details"] .remove-office-tag:hover,
-[data-context="popin"] .remove-writer-tag:hover,
-[data-context="popin"] .remove-genre-tag:hover,
-[data-context="popin"] .remove-office-tag:hover {
+[data-context="details"] .remove-office-tag:hover {
     background: rgba(0,0,0,0.05);
-    color: var(--color-accent, crimson); /* accent color on hover */
+    color: var(--color-accent, crimson);
+}
+
+/* Footer stuff */
+.site-footer {
+    padding: 0.25rem;
+    background-color: var(--color-primary-1);
+    color: var(--color-text-1);
+    text-align: center;
+}
+
+/* Bootstrap specific overwrites */
+.btn-close {
+	--bs-btn-close-opacity: 1;
+}
+
+/* Pulse Animation for button highlighting. */
+@keyframes pulse {
+    0% {
+		box-shadow: 0 0 0 0 rgba(255, 66, 66, 0.5);
+	} 50% {
+		box-shadow: 0 0 8px 6px rgba(255, 66, 66, 0.4);
+	} 100% {
+		box-shadow: 0 0 0 0 rgba(255, 66, 66, 0);
+	}
+}
+
+/* Media Queries for a more responsive design */ 
+@media (min-width: 768px) {
+    .aletho-background {
+		padding: 0.25rem;
+	}
+
+	.item-details {
+		max-width: 720px;
+		margin: 0.2rem auto 1rem;
+	}
+
+  	.aletho-labels {
+    	display: inline-block;
+    	background-color: transparent;
+    	margin: 0.2rem;
+  	}
+
+	.aletho-inputs {
+		display: inline-block;
+		width: auto;
+		max-width: none;
+	}
+
+	.aletho-modal-body .aletho-inputs,
+	.aletho-modal-body .aletho-buttons,
+	.aletho-modal-body .aletho-labels {
+		width: 65%;
+	}
+}
+
+@media (min-width: 992px) {
+	.aletho-header .aletho-menu-buttons {
+		margin-inline: 0.5rem;
+	}
+
+	#hamburger-button {
+		order: 1;
+	}
+
+	.banner-image {
+		order: 2;
+	}
+
+	#search-button {
+		order: 3;
+	}
+}
+
+@media (min-width: 1200px) {
+    .aletho-background {
+		padding: 0.25rem;
+	}
 }
 
 /** AI suggested make-up:
@@ -649,13 +670,16 @@ button:disabled.needs-save {
 	cursor: pointer;
 }
 
-.suggestion:hover { background: #f0f0f0; }
+.suggestion:hover {
+	background: #f0f0f0;
+}
 
 /* Loaner and office suggestion styling */
 .loaner-suggestion, .office-suggestion {
     padding: 6px 10px;
     cursor: pointer;
 }
+
 .loaner-suggestion:hover, .office-suggestion:hover {
     background: #f3f3f3;
 }
@@ -669,7 +693,73 @@ button:disabled.needs-save {
 	margin-right: 0.2rem !important;
 }
 
-.statusOne { background-color: rgb(41, 126, 38); }
-.statusTwo { background-color: rgb(255, 56, 35); }
-.statusThree { background-color: rgb(121, 117, 19); }
-.statusFour { background-color: rgb(105, 103, 103); }
+.statusOne {
+	background-color: rgb(41, 126, 38);
+}
+
+.statusTwo {
+	background-color: rgb(255, 56, 35);
+}
+
+.statusThree {
+	background-color: rgb(121, 117, 19);
+}
+
+.statusFour {
+	background-color: rgb(105, 103, 103);
+}
+
+#add-book-form {
+	width: 100%;
+}
+
+/* Old snippets for reference:
+	.banner-nav #search-button {
+		grid-area: search;
+	}
+
+	.form-row {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.form-row select {
+		width: 7.5rem;
+		flex: 0 0 auto;
+	}
+
+	.form-row input[type="text"] {
+		flex: 1;
+		min-width: 6rem;
+	}
+
+	.sort-group {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.sort-group label {
+		margin: 0;
+	}
+
+	.sort-container {
+		display: flex;
+		align-items: center;
+		font-size: 0.9rem;
+		font-family: Quicksand;
+		font-weight: bold;
+		max-width: 23.25rem;
+		margin: 1rem auto;
+	}
+
+	.search-form input {
+		margin: 0.2rem;
+	}
+
+	.search-form {
+		display: flex;
+		flex-direction: row;
+	}
+*/
