@@ -1,14 +1,15 @@
 <div class="view-container container-fluid">
     <div class="view-stack" role="main">
+        <?php require viewPath('partials/containers/hamburger-container.php'); ?>
 
-        <?php
-            require viewPath('partials\containers\search-container.php');
-            require viewPath('partials\containers\hamburger-container.php');
-            require viewPath('partials\containers\sort-container.php');
-        ?>
+        <div class="aletho-searchSort-container aletho-border">
+            <?php
+                require viewPath('partials/containers/search-container.php');
+                require viewPath('partials/containers/sort-container.php');
+            ?>
+        </div>
 
         <div class="items-list">
-
             <?php
             foreach ($books as $book) {
                 require viewPath('partials/containers/item-container.php');
@@ -16,7 +17,6 @@
             
             unset($_SESSION['_flashSingle']);
             ?>
-            
         </div>
 
         <form id="shared-delete-form" method="post" action="/delBook" style="display:none;">
