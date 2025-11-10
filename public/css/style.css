@@ -394,6 +394,7 @@ body.modal-open {
 
 .search-form input {
 	line-height: normal;
+	max-width: 95%;
 }
 
 .clear-search-icon {
