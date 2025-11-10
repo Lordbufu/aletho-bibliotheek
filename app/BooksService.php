@@ -247,8 +247,9 @@ class BooksService {
         return $this->db->query()->run($sql, [$periode_length, $reminder_day, $overdue_day, $statusId]) !== false;
     }
 
-    /*  Change book status */
-    public function setBookStatus(int $bookId, int $statusId, ?int $metaId = null, ?int $loanerId = null, ?int $locationId = null, bool $sendMail = false): bool {
-        return $this->status->setBookStatus($bookId, $statusId, $metaId, $loanerId, $locationId, $sendMail);
-    }
+    // Offloaded to @LoanerService
+    // /*  Change book status */
+    // public function setBookStatus(int $bookId, int $statusId, ?int $metaId = null, ?int $loanerId = null, ?int $locationId = null, bool $sendMail = false): bool {
+    //     return $this->status->setBookStatus($bookId, $statusId, $metaId, $loanerId, $locationId, $sendMail);
+    // }
 }
