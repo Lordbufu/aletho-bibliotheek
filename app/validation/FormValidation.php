@@ -22,6 +22,18 @@ class FormValidation {
 		return array_values($cleaned);
 	}
 
+	protected function validatePositiveInt($value, string $field): ?int {
+		if ($value === null || $value === '') {
+			return null;
+		}
+		$intVal = filter_var($value, FILTER_VALIDATE_INT);
+		if ($intVal === false || $intVal < 0) {
+			$this->errors[$field] = 'Moet een positief getal zijn.';
+			return null;
+		}
+		return $intVal;
+	}
+
 	/*	Sanitize and filter input data, always keeps all expected keys, never drops them. */
 	public function sanitizeInput(array $input, string $mode = 'add'): bool {
 		$this->errors = [];
@@ -196,6 +208,28 @@ class FormValidation {
 		} else {
 			$this->cleanData['loaner_location'] = $location;
 		}
+
+		return empty($this->errors);
+	}
+
+	public function validateStatusPeriod(array $data): bool {
+		$this->errors = [];
+		$this->cleanData = [];
+
+		$statusId = filter_var($data['status_type'] ?? null, FILTER_VALIDATE_INT);
+		if (!$statusId) {
+			$this->errors['status_type'] = 'Dit veld is verplicht.';
+		} else {
+			$this->cleanData['status_type'] = $statusId;
+		}
+
+		$periode_length = $this->validatePositiveInt($data['periode_length'] ?? null, 'periode_length');
+		$reminder_day   = $this->validatePositiveInt($data['reminder_day'] ?? null, 'reminder_day');
+		$overdue_day    = $this->validatePositiveInt($data['overdue_day'] ?? null, 'overdue_day');
+
+		$this->cleanData['periode_length'] = $periode_length;
+		$this->cleanData['reminder_day']   = $reminder_day;
+		$this->cleanData['overdue_day']    = $overdue_day;
 
 		return empty($this->errors);
 	}
