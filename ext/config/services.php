@@ -35,5 +35,9 @@ return [
     'mail' => [
         'class' => \App\MailTemplateService::class,
         'config' => BASE_PATH . '/ext/config/mail.php'
+    ],
+    'notification' => [
+        'class' => \App\NotificationService::class,
+        'config' => BASE_PATH . '/ext/config/mail.php'
     ]
 ];
