@@ -57,4 +57,9 @@ class ValidationService {
     public function validatePasswordChange(array $data, bool $isGlobalAdmin = false): bool {
         return $this->formValidator->validatePasswordChange($data, $isGlobalAdmin);
     }
+
+    /*  Validate status periode change data */
+    public function validateStatusPeriod(array $data): bool {
+        return $this->formValidator->validateStatusPeriod($data);
+    }
 }
