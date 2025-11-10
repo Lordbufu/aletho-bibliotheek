@@ -2,65 +2,67 @@
 
 namespace App\Router;
 
-use App\App;
-
-/*  HTTP Request abstraction: Encapsulates HTTP method, path, query parameters, body data, and headers for use by the router and controllers. */
-class Request {
-    protected string    $method;
-    protected string    $path;
-    protected array     $query;
-    protected array     $body;
-    protected array     $headers;
+/**
+ * Simple HTTP Request abstraction.
+ * Responsible for reading basic request data from PHP superglobals.
+ * Intentionally small: method, path, query, body, headers and route params.
+ */
+class Request
+{
+    protected string $method;
+    protected string $path;
+    protected array $query;
+    protected array $body;
+    protected array $headers;
     public array $params = [];
 
-    /*  Build a Request object from PHP superglobals. */
-    public function __construct() {
-        try {
-            $this->method  = $this->detectMethod();
-            $this->path    = $this->detectPath();
-            $this->query   = $_GET ?? [];
-            $this->body    = $_POST ?? [];
-            $this->headers = $this->detectHeaders();
-        } catch (\Throwable $t) {
-            throw $t;
-            $this->method  = 'GET';
-            $this->path    = '/';
-            $this->query   = [];
-            $this->body    = [];
-            $this->headers = [];
-        }
+    /**
+     * Construct request from PHP globals. This is deliberately simple and
+     * deterministic so future maintainers can easily see what's available.
+     */
+    public function __construct()
+    {
+        $this->method  = $this->detectMethod();
+        $this->path    = $this->detectPath();
+        $this->query   = $_GET ?? [];
+        $this->body    = $_POST ?? [];
+        $this->headers = $this->detectHeaders();
     }
 
-    /*  Detect the HTTP method, supporting method override via _method POST param. */
-    protected function detectMethod(): string {
+    /** Detect the HTTP method. Supports _method override in form POST bodies. */
+    protected function detectMethod(): string
+    {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
         if ($method === 'POST' && isset($_POST['_method'])) {
-            $method = strtoupper($_POST['_method']);
+            $method = strtoupper((string) $_POST['_method']);
         }
 
         return strtoupper($method);
     }
 
-    /*  Detect and normalize the request path from the URI. */
-    protected function detectPath(): string {
+    /** Detect and normalize request path (no trailing slash, root is '/'). */
+    protected function detectPath(): string
+    {
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
 
         return rtrim($path, '/') ?: '/';
     }
 
-    /*  Detect HTTP request headers. */
-    protected function detectHeaders(): array {
+    /**
+     * Read request headers. Uses getallheaders() when available, otherwise
+     * builds a list from $_SERVER entries starting with HTTP_.
+     */
+    protected function detectHeaders(): array
+    {
         if (function_exists('getallheaders')) {
-            $headers = getallheaders() ?: [];
-            return $headers;
+            return getallheaders() ?: [];
         }
 
         $headers = [];
-
         foreach ($_SERVER as $key => $value) {
-            if (str_starts_with($key, 'HTTP_')) {
+            if (strpos($key, 'HTTP_') === 0) {
                 $name = str_replace('_', '-', substr($key, 5));
                 $headers[$name] = $value;
             }
@@ -69,33 +71,54 @@ class Request {
         return $headers;
     }
 
-    /*  Get the HTTP method. */
-    public function getMethod(): string {
+    /** Return HTTP method (GET|POST|PUT|... ). */
+    public function getMethod(): string
+    {
         return $this->method;
     }
 
-    /*  Get the normalized request path. */
-    public function getPath(): string {
+    /** Return normalized request path. */
+    public function getPath(): string
+    {
         return $this->path;
     }
 
-    /*  Get query string parameters. */   
-    public function getQuery(): array {
+    /** Return query parameters as an array. */
+    public function getQuery(): array
+    {
         return $this->query;
     }
 
-    /*  Get POST/PUT body parameters. */
-    public function getBody(): array {
+    /** Return POST/PUT body parameters as an array. */
+    public function getBody(): array
+    {
         return $this->body;
     }
 
-    /*  Get HTTP request headers. */
-    public function getHeaders(): array {
+    /** Return the parsed request headers. */
+    public function getHeaders(): array
+    {
         return $this->headers;
     }
 
-    /*  Retrieve a single input value from body or query parameters. */
-    public function input(string $key, $default = null) {
-        return $this->body[$key] ?? $this->query[$key] ?? $default;
+    /**
+     * Convenience accessor: look up an input value from body first, then query.
+     * Returns $default when not present.
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function input(string $key, $default = null)
+    {
+        if (array_key_exists($key, $this->body)) {
+            return $this->body[$key];
+        }
+
+        if (array_key_exists($key, $this->query)) {
+            return $this->query[$key];
+        }
+
+        return $default;
     }
 }
