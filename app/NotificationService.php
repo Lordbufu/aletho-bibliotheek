@@ -1,4 +1,6 @@
 <?php
+namespace App;
+
 use App\App;
 use PHPMailer\PHPMailer\{PHPMailer, Exception};
 
@@ -61,7 +63,7 @@ use PHPMailer\PHPMailer\{PHPMailer, Exception};
  */
 class NotificationService {
     protected array $config;
-    protected array $mailer;
+    protected PHPMailer $mailer;
 
     public function __construct(array $config) {
         $this->config = $config;
