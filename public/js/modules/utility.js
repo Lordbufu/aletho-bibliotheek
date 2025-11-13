@@ -90,16 +90,8 @@ const Utility = (() => {
         });
     }
 
-    // Exported API
-    return {
-        markFieldChanged,
-        clearFieldChanged,
-        getFieldConfig,
-        normalizeValues,
-        makeTagConfig,
-        makePopTagConfig,
-        request
-    };
+
+    return { markFieldChanged, clearFieldChanged, getFieldConfig, normalizeValues, makeTagConfig, makePopTagConfig, request };
 })();
 
 export { Utility };

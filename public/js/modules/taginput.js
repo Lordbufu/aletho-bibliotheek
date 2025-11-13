@@ -3,18 +3,18 @@ import { Suggestions } from './suggestions.js';
 
 const TagInput = (() => {
     let activeTagInput = null;
-    const optionsCache = {}; // Cache options per endpoint
+    const optionsCache = {};
 
     /*  Initialize tag input and tag container. */
     function init(config) {
         const $inputs   = $(config.inputSelector);
         const allowCustom = config.allowCustom !== false;
         const maxTags = config.maxTags || null;
-
         let allOptions = [];
 
-        // Fetch options only when input is focused, and cache per endpoint
         $inputs.on('focus', function() {
+            activeTagInput = $(this);
+
             if (optionsCache[config.endpoint]) {
                 allOptions = optionsCache[config.endpoint];
                 return;
@@ -28,9 +28,14 @@ const TagInput = (() => {
             });
         });
 
+        $inputs.on('blur', function() {
+            setTimeout(() => { activeTagInput = null; }, 200);
+        });
+
         // Input handler: filter suggestions with debounce for performance
         $inputs.on('input', function() {
             const $input = $(this);
+            activeTagInput = $input;
             const query = $input.val().trim().toLowerCase();
 
             if (query.length < 2) {
@@ -38,7 +43,6 @@ const TagInput = (() => {
                 return;
             }
 
-            // If not loaded yet, fetch now (rare edge case)
             if (!allOptions.length && !optionsCache[config.endpoint]) {
                 Utility.request({
                     url: config.endpoint,
@@ -132,21 +136,26 @@ const TagInput = (() => {
     /*  Add a tag to the container, if not already present and maxTags not exceeded. */
     function addTag(name, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, allOptions = []) {
         if ($container.find(`.${tagClass}[data-name="${name}"]`).length) {
-            Suggestions.close();
             showTagLimitWarning($input, 1, `"${name}" is al toegevoegd.`);
             return false;
         }
 
         if (maxTags && $container.find(`.${tagClass}`).length >= maxTags) {
-            Suggestions.close();
             showTagLimitWarning($input, maxTags);
             return false;
         }
 
-        if (!allowCustom && !allOptions.includes(name)) {
-            Suggestions.close();
-            showTagLimitWarning($input, 1, "Alleen bestaande locaties toegestaan.");
-            return false;
+        if (!allowCustom) {
+            const exists = Array.isArray(allOptions) && allOptions.some(opt => {
+                if (typeof opt === 'string') return opt === name;
+                if (opt && typeof opt.name === 'string') return opt.name === name;
+                return false;
+            });
+
+            if (!exists) {
+                showTagLimitWarning($input, 1, "Alleen bestaande locaties toegestaan.");
+                return false;
+            }
         }
 
         const $tag = $(`
@@ -156,17 +165,19 @@ const TagInput = (() => {
                 <input type="hidden" name="${hiddenInputName}" value="${name}">
             </span>
         `);
+
         $container.append($tag);
         $input.val('');
+
         if ($input.data('context') !== 'popin') {
             Utility.markFieldChanged($input);
         }
+
         return true;
     }
 
     /*  Show a tooltip near the input if user tries to add more than allowed tags. */
     function showTagLimitWarning($input, maxTags, customMsg) {
-        console.log("Tag limit function reached!");
         if (!$input || !$input.length) return;
 
         const msg = customMsg || `Maximaal ${maxTags} ${maxTags > 1 ? 'items' : 'item'} toegestaan.`;
@@ -176,17 +187,14 @@ const TagInput = (() => {
 
         let $tooltip = $('<div class="tag-limit-tooltip"></div>').text(msg);
 
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const topRem = ($input.offset().top + $input.outerHeight() + 2) / rootFont + 'rem';
+        const leftRem = ($input.offset().left) / rootFont + 'rem';
+
         $tooltip.css({
             position: 'absolute',
-            background: '#ffc',
-            color: '#333',
-            border: '1px solid #e0c06d',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '0.85em',
-            zIndex: 2000,
-            top: $input.offset().top + $input.outerHeight() + 2,
-            left: $input.offset().left
+            top: topRem,
+            left: leftRem
         });
 
         $('body').append($tooltip);
@@ -230,14 +238,7 @@ const TagInput = (() => {
         $field.data('originalValue', Utility.normalizeValues(origValues));
     }
 
-    // Exported API
-    return {
-        init,
-        addTag,
-        getTagsContainer,
-        getValuesFromContainer,
-        restoreTagsFromInput
-    };
+    return { init, addTag, getTagsContainer, getValuesFromContainer, restoreTagsFromInput};
 })();
 
 export { TagInput };

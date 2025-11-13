@@ -1,5 +1,4 @@
 <?php
-
 /* Function to set viewpaths more cleanly. */
 if (!function_exists('viewPath')) {
     function viewPath($string) {
@@ -24,7 +23,7 @@ if (!function_exists('handleBootFailure')) {
 /* Dump and Die data on screen for debug reasons. */
 if (!function_exists('dd')) {
     function dd($data) {
-        echo '<pre style="background:#222;color:#0f0;padding:10px;font-size:14px;line-height:1.4;">';
+        echo '<pre style="background:#222;color:#0f0;padding:0.625rem;font-size:0.875rem;line-height:1.4;">';
         if (is_array($data) || is_object($data)) {
             print_r($data);
         } else {

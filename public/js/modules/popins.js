@@ -100,7 +100,7 @@ const Popins = (() => {
 
             if (bookId) {
                 $('#change-book-id').val(bookId);
-                // Now request loaner data to populate the status select ? ... this seems wrong on many levels.
+                // Now request loaner data to populate the status select ?
                 Utility.request({
                     url: '/requestLoanerForBook',
                     data: { data: 'book', book_id: bookId },

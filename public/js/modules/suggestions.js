@@ -5,16 +5,20 @@ const Suggestions = (() => {
         if (!$input.length) return;
 
         const rect = $input[0].getBoundingClientRect();
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const topRem = (rect.bottom / rootFont) + 'rem';
+        const leftRem = (rect.left / rootFont) + 'rem';
+        const widthRem = (rect.width / rootFont) + 'rem';
+
         const $list = $(`<div class="suggestion-list ${suggestionClass}s"></div>`).css({
             position: 'fixed',
-            top: rect.bottom + 'px',
-            left: rect.left + 'px',
-            width: rect.width + 'px',
-            zIndex: 9999
+            top: topRem,
+            left: leftRem,
+            width: widthRem
         });
 
         suggestions.forEach(s => {
-            $list.append(`<div class="${suggestionClass}">${s}</div>`);
+            $list.append(`<div class="suggestion ${suggestionClass}">${s}</div>`);
         });
 
         $('body').append($list);
@@ -34,11 +38,7 @@ const Suggestions = (() => {
         });
     }
 
-    return {
-        show,
-        close,
-        bindCloseOnBlur
-    };
+    return { show, close, bindCloseOnBlur };
 })();
 
 export { Suggestions };
