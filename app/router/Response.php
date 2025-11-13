@@ -6,15 +6,13 @@ namespace App\Router;
  * Small HTTP Response helper.
  * Stores status code, headers and content and sends them when requested.
  */
-class Response
-{
+class Response {
     protected int $statusCode = 200;
     protected array $headers = [];
     protected string $content = '';
 
     /** Set the HTTP status code (defaults to 200 when out of range). */
-    public function setStatusCode(int $code): self
-    {
+    public function setStatusCode(int $code): self {
         if ($code < 100 || $code > 599) {
             $code = 200;
         }
@@ -25,16 +23,14 @@ class Response
     }
 
     /** Add or replace a response header. */
-    public function header(string $name, string $value): self
-    {
+    public function header(string $name, string $value): self {
         $this->headers[$name] = $value;
 
         return $this;
     }
 
     /** Set raw response content. */
-    public function setContent(string $content): self
-    {
+    public function setContent(string $content): self {
         $this->content = $content;
         return $this;
     }
@@ -45,9 +41,10 @@ class Response
      *
      * @param mixed $data
      */
-    public function json($data, int $statusCode = 200): self
-    {
+    public function json($data, int $statusCode = 200): self {
         $json = json_encode($data, JSON_UNESCAPED_UNICODE);
+
+        // dd($json);
 
         if ($json === false) {
             // Encoding failed — return a safe generic payload.
@@ -67,8 +64,7 @@ class Response
     /**
      * Send status, headers and body to the client.
      */
-    public function send(): void
-    {
+    public function send(): void {
         http_response_code($this->statusCode);
 
         foreach ($this->headers as $name => $value) {

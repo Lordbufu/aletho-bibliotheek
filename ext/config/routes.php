@@ -1,26 +1,24 @@
 <?php
-/*  App User-Managment routes */
-$router->get(       '/',                        'ViewController@landing');
-$router->get(       '/login',                   'AuthController@showform');
-$router->post(      '/login',                   'AuthController@authenticate');
-$router->post(      '/logout',                  'AuthController@logout');
-$router->patch(     '/resetPassword',           'AuthController@resetPassword');
-
-/*  App main view routes */
-$router->get(       '/home',                    'ViewController@home');
-
-/*  App book related routes */
-$router->get(       '/bookdata',                'BookController@bookdata');
-$router->post(      '/addBook',                 'BookController@add');
-$router->patch(     '/editBook',                'BookController@edit');
-$router->delete(    '/delBook',                 'BookController@delete');
-
-/*  App status related routes */
-$router->patch(     '/setStatusPeriod',         'StatusController@setStatusPeriod');
-$router->patch(     '/changeStatus',            'StatusController@changeStatus');
-$router->get(       '/requestStatus',           'StatusController@requestStatus');
-$router->get(       '/requestBookStatus',       'StatusController@requestBookStatus');
-
-/*  App loaner related routes */
-$router->get(       '/requestLoaners',          'LoanerController@requestLoaners');
-$router->get(       '/requestLoanerForBook',    'LoanerController@requestLoanerForBook');
+return [
+    /*  App User-Managment routes */
+    ['GET',    '/',                     'ViewController@landing'],
+    ['GET',    '/login',                'AuthController@showform'],
+    ['POST',   '/login',                'AuthController@authenticate'],
+    ['POST',   '/logout',               'AuthController@logout'],
+    ['PATCH',  '/resetPassword',        'AuthController@resetPassword'],
+    /*  App main view route */
+    ['GET',    '/home',                 'ViewController@home'],
+    /*  App book related routes */
+    ['GET',    '/bookdata',             'BookController@bookdata'],
+    ['POST',   '/addBook',              'BookController@add'],
+    ['PATCH',  '/editBook',             'BookController@edit'],
+    ['DELETE', '/delBook',              'BookController@delete'],
+    /*  App status related routes */
+    ['PATCH',  '/setStatusPeriod',      'StatusController@setStatusPeriod'],
+    ['PATCH',  '/changeStatus',         'StatusController@changeStatus'],
+    ['GET',    '/requestStatus',        'StatusController@requestStatus'],
+    ['GET',    '/requestBookStatus',    'StatusController@requestBookStatus'],
+    /*  App loaner related routes */
+    ['GET',    '/requestLoaners',       'LoanerController@requestLoaners'],
+    ['GET',    '/requestLoanerForBook', 'LoanerController@requestLoanerForBook'],
+];

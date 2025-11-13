@@ -5,58 +5,75 @@ namespace App;
 use App\Router\{Request, Response, Route};
 
 /**
- * Minimal HTTP router used by the application.
+ * Router service for registering and dispatching HTTP routes.
  *
- * Supports simple route registration and dispatching. Routes may be registered
- * with HTTP methods and path patterns that include named captures such as
- * /books/{id:\\d+}.
+ * This class maintains a registry of routes and matches incoming requests
+ * against them. Routes can be loaded declaratively via `loadRoutes()` from
+ * a configuration file, or added programmatically using `addRoute()`.
+ *
+ * Responsibilities:
+ * - Store route definitions keyed by HTTP method.
+ * - Match requests to routes and invoke the appropriate handler.
+ * - Support controller@method string handlers by instantiating controllers.
+ * - Provide error handling and logging for failed dispatches.
+ *
+ * Usage:
+ *   $router = new Router();
+ *   $router->loadRoutes(require 'routes.php');
+ *   $router->dispatch();
  */
-class Router
-{
+class Router {
+    /** @var array<string, Route[]> Registered routes grouped by HTTP method */
     protected array $routes = [];
 
-    /** Register a GET route. */
-    public function get(string $path, $handler): void
-    {
-        $this->addRoute('GET', $path, $handler);
-    }
-
-    /** Register a POST route. */
-    public function post(string $path, $handler): void
-    {
-        $this->addRoute('POST', $path, $handler);
-    }
-
-    /** Register a PUT route. */
-    public function put(string $path, $handler): void
-    {
-        $this->addRoute('PUT', $path, $handler);
-    }
-
-    /** Register a PATCH route. */
-    public function patch(string $path, $handler): void
-    {
-        $this->addRoute('PATCH', $path, $handler);
-    }
-
-    /** Register a DELETE route. */
-    public function delete(string $path, $handler): void
-    {
-        $this->addRoute('DELETE', $path, $handler);
-    }
-
-    /** Internal helper to store a route. */
-    protected function addRoute(string $method, string $path, $handler): void
-    {
+    /** Register a single route for the given HTTP method, path, and handler. */
+    private function addRoute(string $method, string $path, $handler): void {
         $this->routes[$method][] = new Route($method, $path, $handler);
     }
 
-    /**
-     * Dispatch the incoming request to the first matching route. Creates
-     * Request/Response objects when not provided.
-     */
-    public function dispatch(?Request $request = null, ?Response $response = null): void
-    {
+    /** Resolve and invoke a route handler, handling controller@method strings. */
+    private function handle($handler, Request $request, Response $response): void {
+        try {
+            if (is_string($handler) && str_contains($handler, '@')) {
+                [$class, $method] = explode('@', $handler, 2);
+                $fqcn = "Ext\\Controllers\\{$class}";
+                $controller = new $fqcn();
+                $handler = [$controller, $method];
+            }
+
+            if (!is_callable($handler)) {
+                $response->setStatusCode(500)->setContent('Internal Server Error')->send();
+                return;
+            }
+
+            $args = array_values($request->params);
+            $args[] = $request;
+            $args[] = $response;
+
+            call_user_func_array($handler, $args);
+
+        } catch (\Throwable $t) {
+            error_log(sprintf(
+                '[Router] Controller instantiation failed: %s in %s:%d',
+                $t->getMessage(),
+                $t->getFile(),
+                $t->getLine()
+            ));
+            error_log('[Router] Trace: ' . $t->getTraceAsString());
+
+            $response->setStatusCode(500)->setContent('Internal Server Error')->send();
+        }
+    }
+
+    /** Bulk‑load routes from a declarative array of [method, path, handler]. */
+    public function loadRoutes(array $routes): void {
+        foreach ($routes as [$method, $path, $handler]) {
+            $this->addRoute(strtoupper($method), $path, $handler);
+        }
+    }
+
+    /** Match the current request against registered routes and execute its handler. */
+    public function dispatch(?Request $request = null, ?Response $response = null): void {
         $request  ??= new Request();
         $response ??= new Response();
 
@@ -69,37 +86,5 @@ class Router
         }
 
         $response->setStatusCode(404)->setContent('Not Found')->send();
-    }
-
-    /**
-     * Invoke the matched route handler. Supports "Controller@method" style
-     * strings that map to Ext\Controllers\<Controller>.
-     */
-    protected function handle($handler, Request $request, Response $response): void
-    {
-        try {
-            if (is_string($handler) && str_contains($handler, '@')) {
-                [$class, $method] = explode('@', $handler, 2);
-                $fqcn = "Ext\\Controllers\\{$class}";
-                $controller = new $fqcn();
-                $handler = [$controller, $method];
-            }
-
-            if (!is_callable($handler)) {
-                // Non-callable handlers indicate a configuration issue.
-                $response->setStatusCode(500)->setContent('Internal Server Error')->send();
-                return;
-            }
-
-            $args = array_values($request->params);
-            $args[] = $request;
-            $args[] = $response;
-
-            call_user_func_array($handler, $args);
-
-        } catch (\Throwable $t) {
-            // Avoid rethrowing to keep routing deterministic. Send 500.
-            $response->setStatusCode(500)->setContent('Internal Server Error')->send();
-        }
     }
 }

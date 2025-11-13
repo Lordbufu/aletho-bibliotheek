@@ -35,10 +35,11 @@ class App {
                     if ($name === 'router') {
                         $routerConfig = $serviceDefinitions[$name]['config'] ?? null;
                         if ($routerConfig && is_file($routerConfig)) {
-                            $router = $instance;
-                            require $routerConfig;
+                            $routes = require $routerConfig;
+                            $instance->loadRoutes($routes);
                         }
                     }
+                    
                     if ($name === 'database') {
                         if (!$instance->installer()->isInstalled()) {
                             $instance->installer()->install(true);

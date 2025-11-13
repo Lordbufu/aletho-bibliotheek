@@ -7,8 +7,7 @@ namespace App\Router;
  * Responsible for reading basic request data from PHP superglobals.
  * Intentionally small: method, path, query, body, headers and route params.
  */
-class Request
-{
+class Request {
     protected string $method;
     protected string $path;
     protected array $query;
@@ -20,8 +19,7 @@ class Request
      * Construct request from PHP globals. This is deliberately simple and
      * deterministic so future maintainers can easily see what's available.
      */
-    public function __construct()
-    {
+    public function __construct() {
         $this->method  = $this->detectMethod();
         $this->path    = $this->detectPath();
         $this->query   = $_GET ?? [];
@@ -30,8 +28,7 @@ class Request
     }
 
     /** Detect the HTTP method. Supports _method override in form POST bodies. */
-    protected function detectMethod(): string
-    {
+    protected function detectMethod(): string {
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
         if ($method === 'POST' && isset($_POST['_method'])) {
@@ -42,8 +39,7 @@ class Request
     }
 
     /** Detect and normalize request path (no trailing slash, root is '/'). */
-    protected function detectPath(): string
-    {
+    protected function detectPath(): string {
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
 
@@ -54,8 +50,7 @@ class Request
      * Read request headers. Uses getallheaders() when available, otherwise
      * builds a list from $_SERVER entries starting with HTTP_.
      */
-    protected function detectHeaders(): array
-    {
+    protected function detectHeaders(): array {
         if (function_exists('getallheaders')) {
             return getallheaders() ?: [];
         }
@@ -72,32 +67,27 @@ class Request
     }
 
     /** Return HTTP method (GET|POST|PUT|... ). */
-    public function getMethod(): string
-    {
+    public function getMethod(): string {
         return $this->method;
     }
 
     /** Return normalized request path. */
-    public function getPath(): string
-    {
+    public function getPath(): string {
         return $this->path;
     }
 
     /** Return query parameters as an array. */
-    public function getQuery(): array
-    {
+    public function getQuery(): array {
         return $this->query;
     }
 
     /** Return POST/PUT body parameters as an array. */
-    public function getBody(): array
-    {
+    public function getBody(): array {
         return $this->body;
     }
 
     /** Return the parsed request headers. */
-    public function getHeaders(): array
-    {
+    public function getHeaders(): array {
         return $this->headers;
     }
 
@@ -109,8 +99,7 @@ class Request
      * @param mixed $default
      * @return mixed
      */
-    public function input(string $key, $default = null)
-    {
+    public function input(string $key, $default = null) {
         if (array_key_exists($key, $this->body)) {
             return $this->body[$key];
         }

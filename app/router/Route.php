@@ -7,8 +7,7 @@ namespace App\Router;
  * handler. Capable of matching an incoming method+URI and extracting named
  * parameters.
  */
-class Route
-{
+class Route {
     public string $method;
     public string $path;
     public $handler;
@@ -19,8 +18,7 @@ class Route
      * @param string $path   Route path pattern (e.g. /books/{id:\\d+})
      * @param callable|string $handler Controller handler or callable
      */
-    public function __construct(string $method, string $path, $handler)
-    {
+    public function __construct(string $method, string $path, $handler) {
         $this->method  = strtoupper($method);
         $this->path    = $path;
         $this->handler = $handler;
@@ -30,8 +28,7 @@ class Route
      * Check whether this route matches the provided method and URI.
      * If matched, $this->params will contain named regex captures.
      */
-    public function matches(string $method, string $uri): bool
-    {
+    public function matches(string $method, string $uri): bool {
         if ($this->method !== strtoupper($method)) {
             return false;
         }
