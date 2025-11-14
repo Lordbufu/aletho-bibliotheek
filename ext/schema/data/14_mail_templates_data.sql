@@ -5,23 +5,31 @@ VALUES
     'Leen bevestiging voor: :book_name',
     ':from_mail',
     ':from_name',
-    '<body>
-        <div class="header-content">
-            <h2 class="titel-tekst">Hallo :user_name.</h2>
-        </div>
-        <div class="body-content">
-            <p class="tussenkoppen-tekst">
-                Bedankt voor het lenen van <strong>:book_name</strong>, we hopen dat het boek je gaat bevallen.
-                Als de leenperiode bijna is verstreken, krijg je nog een herrinering van ons.
+    '<tr>
+        <td style="background-color:rgb(28, 50, 105); color:#ffffff; padding:16px; border-top-left-radius:6px; border-top-right-radius:6px; text-align:center;">
+            <h2 style="margin:0; font-family:'BC Alphapipe', Arial, sans-serif;">Hallo :user_name,</h2>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:20px; font-family:'Quicksand', Arial, sans-serif; color:#333; text-align:center;">
+            <p style="margin:0 0 16px;">
+            Bedankt voor het lenen van:<br><strong>:book_name</strong><br><br>
+            We hopen dat het boek je gaat bevallen.<br><br>
+            Als de leenperiode bijna is verstreken, krijg je nog een herinnering van ons.
             </p>
-            <p class="tussenkoppen-tekst">
-                Het einde van de huidige leenperiode is: <strong>:due_date</strong>.
+            <p style="margin:0;">
+            Het einde van de huidige leenperiode is:<br><strong>:due_date</strong>.
             </p>
-        </div>
-    </body>
-    <footer class="footer-content">
-        <p class="overige-tekst">Mvg & Bvd, <br> De Aletho Bibliotheek.</p><hr>
-    </footer>',
+            :action_block
+        </td>
+    </tr>
+    <tr>
+        <td style="background-color:rgb(28, 50, 105); color:#ffffff; padding:16px; border-bottom-left-radius:6px; border-bottom-right-radius:6px; text-align:center;">
+            <p style="margin:0; font-family:'Quicksand', Arial, sans-serif;">
+            Mvg & Bvd,<br>De Aletho Bibliotheek.
+            </p>
+        </td>
+    </tr>',
     'Hallo :user_name. Bedankt voor het lenen van :book_name. Het einde van de huidige leenperiode is: :due_date. Mvg & Bvd, De Aletho Bibliotheek.',
     1
 ),
