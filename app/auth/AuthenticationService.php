@@ -97,7 +97,7 @@ class AuthenticationService {
             'name'    => $user['name'],
             'role'    => $role,
             'office'  => $office,
-            'canEdit' => in_array($role, ['Global Admin', 'Office Admin'], true),
+            'canEdit' => in_array($role, ['Gadmin', 'Oadmin'], true),
         ];
 
         return true;
@@ -105,9 +105,11 @@ class AuthenticationService {
 
     /*  Log out the current user, and destory its session. */
     public function logout(): void {
-        session_destroy();
-        $_SESSION = [];
-        session_regenerate_id(true);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+            $_SESSION = [];
+            session_destroy();
+        }
     }
 
     /*  Password reset, for Office Admins. */
