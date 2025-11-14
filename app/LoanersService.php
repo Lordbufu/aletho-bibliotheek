@@ -78,14 +78,7 @@ class LoanersService {
             $loanerId = $loaner['id'];
 
             // Persist status change
-            $result = $this->status->setBookStatus(
-                $bookId,
-                $statusId,
-                null,
-                $loanerId,
-                null,
-                false
-            );
+            $result = $this->status->setBookStatus($bookId, $statusId, null, $loanerId, null, false);
 
             if (!$result) {
                 throw new \RuntimeException('Status kon niet worden bijgewerkt');
@@ -93,30 +86,33 @@ class LoanersService {
 
             $this->db->finishTransaction();
 
-            // Build context for notifications
+            /* Fetch single book data for notifications, and build placeholder context. */
+            $book = App::getService('books')->getBookById($bookId);
+
             $context = [
-                ':book_id'    => $bookId,
-                ':loaner_id'  => $loanerId,
-                ':loaner_name'=> $loanerName,
-                ':loaner_email'=> $loanerEmail,
-                ':status_id'  => $statusId,
+                ':book_name'    => $book['title'],
+                ':user_name'    => $loaner['name'],
+                ':user_mail'    => $loaner['email'],
+                ':user_office'  => $loaner['office_id'],
+                ':due_date'     => $book['dueDate'],
+                ':book_office'  => $book['office'],
+                ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
+                ':action_link'  => 'https://biblioapp.nl/',
+                ':action_label' => 'Boek Verlengen'
             ];
 
-            // Send notifications based on mapping
             if (isset($this->statusEventMap[$statusId])) {
                 foreach ($this->statusEventMap[$statusId] as $target => $event) {
                     try {
                         if ($target === 'user') {
                             $this->notificationService->notifyUser($loanerId, $event, $context);
                         } elseif ($target === 'office') {
-                            // You’d need officeId in context; fetch from book or loaner
-                            if (!empty($context[':office_id'])) {
-                                $this->notificationService->notifyOffice($context[':office_id'], $event, $context);
+                            if (!empty($context[':user_office'])) {
+                                $this->notificationService->notifyOffice($context[':user_office'], $event, $context);
                             }
                         }
                     } catch (\Throwable $t) {
                         error_log("[LoanerService] Notification failed: " . $t->getMessage());
-                        // Don’t rethrow — status change succeeded
                     }
                 }
             }
