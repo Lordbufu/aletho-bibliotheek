@@ -32,7 +32,7 @@ class AuthController {
     /*  Handle login submission. */
     public function authenticate() {
         if (!$this->validator->validateUserLogin($_POST)) {
-            setFlash('inline', 'failure', 'Vul zowel gebruikersnaam als wachtwoord in.');
+            setFlash('inline', 'credentials', 'Vul zowel gebruikersnaam als wachtwoord in.');
             setFlash('form', 'data', ['userName' => $this->validator->cleanData()['userName'] ?? '']);
             return App::redirect('/login');
         }
@@ -40,7 +40,7 @@ class AuthController {
         $data = $this->validator->cleanData();
 
         if (!$this->auth->login($data['userName'], $data['userPw'])) {
-            setFlash('inline', 'failure', 'Ongeldige gebruikersnaam of wachtwoord.');
+            setFlash('inline', 'credentials', 'Ongeldige gebruikersnaam of wachtwoord.');
             setFlash('form', 'data', ['userName' => $data['userName']]);
             return App::redirect('/login');
         }
