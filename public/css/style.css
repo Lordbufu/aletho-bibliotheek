@@ -13,7 +13,7 @@
 	--color-sec-3: rgb(251, 189, 75);
 	--color-sec-4: rgb(253, 211, 135);
 	--color-success: rgba(46, 204, 64, 0.7);
-	--color-failure: rgba(231, 76, 60, 0.7);
+	--color-failure: rgba(253, 59, 39, 0.79);
 	--dropdown-inset: 0.75rem;
 }
 
@@ -317,6 +317,9 @@ body.modal-open {
 	margin-inline: auto;
 }
 
+.login-cont input { width: 85% !important; }
+.login-cont .aletho-alert-inline { margin-top: 0.5rem !important; }
+
 /* Header/Banner/Nav items. */
 .banner-nav {
 	display: grid;
@@ -376,9 +379,9 @@ body.modal-open {
 	margin: auto;
 }
 
-.hamburger-container input {
-	width: 70%;
-}
+.hamburger-container input, .hamburger-container form { width: 70%; }
+.hamburger-container button { width: 100%; }
+
 
 /* Search & Sort styles */
 .search-form, .sort-container {
