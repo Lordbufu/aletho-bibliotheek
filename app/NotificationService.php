@@ -76,9 +76,21 @@ class NotificationService {
             $this->mailer->isSMTP();
             $this->mailer->Host       = $this->config['host'];
             $this->mailer->Port       = $this->config['port'];
+            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $this->mailer->SMTPAuth   = true;
             $this->mailer->Username   = $this->config['username'];
             $this->mailer->Password   = $this->config['password'];
+
+            if (!PHPMailer::validateAddress($to)) {
+                error_log("[NotificationService] Invalid recipient address: $to");
+                return;
+            }
+
+            if (!PHPMailer::validateAddress($email['from_mail'])) {
+                $adress = $email['from_mail'];
+                error_log("[NotificationService] Invalid from address: $adress");
+                return;
+            }
 
             $this->mailer->setFrom($email['from_mail'], $email['from_name']);
             $this->mailer->addAddress($to);
@@ -87,26 +99,20 @@ class NotificationService {
             $this->mailer->Body    = $email['html'];
             $this->mailer->AltBody = $email['text'];
 
-            $this->mailer->send();
+            // Disable verbose debug in production
+            $this->mailer->SMTPDebug = 0;
+            // $this->mailer->Debugoutput = 'error_log'
+
+            if (!$this->mailer->send()) {
+                error_log("[NotificationService] Mail send failed: " . $this->mailer->ErrorInfo);
+            }
         } catch (Exception $e) {
             error_log("[NotificationService] Mail error: " . $e->getMessage());
         }
     }
 
     /*  Notify a specific user about an event. */
-    public function notifyUser(int $userId, string $event, array $context): void {
-        $user = App::getService('database')->query()->fetchOne(
-            "SELECT email, name FROM users WHERE id = :id",
-            ['id' => $userId]
-        );
-
-        if (!$user) {
-            error_log("[NotificationService] User not found: $userId");
-            return;
-        }
-
-        $context[':user_name'] = $user['name'];
-
+    public function notifyUser(int $loanerId, string $event, array $context): void {
         $email = App::getService('mail')->render($event, $context);
 
         if (!$email) {
@@ -114,7 +120,7 @@ class NotificationService {
             return;
         }
 
-        $this->sendMail($user['email'], $email);
+        $this->sendMail($context[':user_mail'], $email);
     }
 
     /*  Notify a specific office about an event. */
