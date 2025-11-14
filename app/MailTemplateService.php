@@ -17,6 +17,7 @@
         ];
  */
 
+// TODO: Refactor DB templates to include styles inline, since mail clients usually dont respect <style> tags or specific css syntaxes.
 namespace App;
 
 class MailTemplateService {
@@ -30,11 +31,14 @@ class MailTemplateService {
 
     /*  Get file contents of pre-defined frame/template files */
     protected function getFrame(string $name = 'frame.html'): string {
+        $path = $this->frameDir . '/' . $name;
+        $frame = @file_get_contents($path);
+
         if ($frame === false) {
             throw new \RuntimeException("Frame template not found: $name");
         }
 
-        return file_get_contents($this->frameDir . '/' . $name);
+        return $frame;
     }
 
     /*  Simple token replacement */
@@ -57,48 +61,40 @@ class MailTemplateService {
 
     /* Create action block with token confirmation, for extending book loans (HTML based). */
     protected function createActionBlock(array $tokens): string {
-        try {
-            if (empty($tokens[':action_link'])) {
-                throw new \RuntimeException("Missing :action_link token for action block");
-            }
-
-            $fragment = $this->getFrame('action.html');
-            $intro = $tokens[':action_intro'] ?? '';
-            $intro = $this->replaceTokens($intro, $tokens);
-            $fragment = str_replace(':action_intro', $intro, $fragment);
-
-            $button = sprintf(
-                '<a href="%s" class="action-button">Verleng</a>',
-                htmlspecialchars($tokens[':action_link'], ENT_QUOTES, 'UTF-8')
-            );
-
-            return str_replace(':action_button', $button, $fragment);
-        } catch (\Throwable $e) {
-            error_log("[MailTemplateService] Action block error: " . $e->getMessage());
-            return '<div class="action-content"><p class="action-text">Fout: Verleng link niet verzonden!</p></div>';
+        if (empty($tokens[':action_link'])) {
+            return ''; // optional, nothing to render
         }
+
+        $fragment = $this->getFrame('action.html');
+        $intro = $tokens[':action_intro'] ?? '';
+        $intro = $this->replaceTokens($intro, $tokens);
+
+        $fragment = str_replace(':action_intro', $intro, $fragment);
+
+        $label = !empty($tokens[':action_label']) ? $tokens[':action_label'] : 'Verlengen';
+        $button = sprintf(
+            '<a href="%s" style="display:inline-block; padding:12px 24px; background-color:rgb(251, 189, 75); box-shadow: 0 2px 4px rgba(0,0,0,0.2); color:rgb(255, 255, 255); text-decoration:none; border-radius:4px; font-weight:bold; font-size:16px;">%s</a>',
+            htmlspecialchars($tokens[':action_link'], ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+        );
+
+        return str_replace(':action_button', $button, $fragment);
     }
 
     /* Create action block with token confirmation, for extending book loans (text based). */
     protected function createActionBlockText(array $tokens): string {
-        try {
-            if (empty($tokens[':action_link'])) {
-                throw new \RuntimeException("Missing :action_link token for plain-text action block");
-            }
-
-            $intro = $tokens[':action_intro'] ?? 'Klik op de onderstaande link om uw lening te verlengen:';
-
-            return $intro . "\n" . $tokens[':action_link'];
-
-        } catch (\Throwable $e) {
-            error_log("[MailTemplateService] Plain-text action block error: " . $e->getMessage());
-            return "Fout: Verleng link niet verzonden!";
+        if (empty($tokens[':action_link'])) {
+            return ''; // optional, nothing to render
         }
+
+        $intro = $tokens[':action_intro'] ?? 'Klik op de onderstaande link om uw lening te verlengen:';
+        return $intro . "\n" . $tokens[':action_link'];
     }
 
     /*  Render a template with given tokens */
     public function render(string $eventType, array $tokens): ?array {
         $tpl = $this->getTemplate($eventType);
+        
         if (!$tpl) {
             return null;
         }
@@ -107,12 +103,16 @@ class MailTemplateService {
         $bodyHtml  = $this->replaceTokens($tpl['body_html'], $tokens);
         $bodyText  = $this->replaceTokens($tpl['body_text'] ?? '', $tokens);
 
-        // Deal with a potential action_block for extending loans.
-        $actionBlockHtml = $this->createActionBlock($tokens);
-        $actionBlockText = $this->createActionBlockText($tokens);
+        // Only process action blocks if template contains :action_block
+        if (strpos($tpl['body_html'], ':action_block') !== false) {
+            $actionBlockHtml = $this->createActionBlock($tokens);
+            $bodyHtml = str_replace(':action_block', $actionBlockHtml, $bodyHtml);
+        }
 
-        $bodyHtml = str_replace(':action_block', $actionBlockHtml, $bodyHtml);
-        $bodyText = str_replace(':action_block', $actionBlockText, $bodyText);
+        if (strpos($tpl['body_text'], ':action_block') !== false) {
+            $actionBlockText = $this->createActionBlockText($tokens);
+            $bodyText = str_replace(':action_block', $actionBlockText, $bodyText);
+        }
 
         $frame = $this->getFrame();
         $finalHtml = str_replace(':body', $bodyHtml, $frame);
