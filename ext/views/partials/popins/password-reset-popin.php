@@ -11,7 +11,7 @@
                 <form id="password-reset-form mb-1" method="POST" action="/resetPassword">
                     <input type="hidden" name="_method" value="PATCH">
 
-                    <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Global Admin'): ?>
+                    <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Gadmin'): ?>
                         <label for="user-name" class="aletho-labels extra-popin-style">Account</label>
                         <input  type="text"
                                 class="aletho-inputs extra-popin-style"
