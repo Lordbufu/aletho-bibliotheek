@@ -21,14 +21,11 @@
 					type="password"
 					autocomplete="current-password"
 					required>
-			<?php if (!empty($_SESSION['_flashInline'])): ?>
-				<div class="aletho-border aletho-alert-inline-<?= $_SESSION['_flashInline']['type'] ?>" role="alert">
-					<?= htmlspecialchars($_SESSION['_flashInline']['message']) ?>
+			<?php if (!empty($errors)): ?>
+				<div class="aletho-border aletho-alert-inline" role="alert">
+					<?= htmlspecialchars($errors['credentials']) ?>
 				</div>
-			<?php
-				unset($_SESSION['_flashInline']);
-				endif;
-			?>
+			<?php endif; ?>
 			<input class="aletho-buttons extra-popin-style mt-2 mb-2" id="login-submit" type="submit" value="Inloggen">
 		</form>
 	</div>
