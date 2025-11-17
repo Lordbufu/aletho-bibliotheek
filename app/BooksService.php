@@ -62,6 +62,7 @@ class BooksService {
         return $out;
     }
 
+    /* Get a specific book */
     public function getBookById(int $bookId): ?array {
         $book = $this->books->findOne($bookId);
         if (!$book || !$book['active']) {
@@ -236,20 +237,40 @@ class BooksService {
         return $this->books->disableBook($bookId);
     }
 
-    /*  Request all current status types. */
-    public function getAllStatuses() {
-        return $this->status->getAllStatuses();
-    }
+    /* */
+    public function changeBookStatus($bookId, $statusId, $loanerName, $loanerEmail, $loanerLoc): bool {
+        $book   = App::getService('books')->getBookById($bookId);                                               // Fetch the book in question
+        $this->db->startTransaction();                                                                          // Start DB Transaction
 
-    /*  Update status period settings */
-    public function updateStatusPeriod(int $statusId, ?int $periode_length, ?int $reminder_day, ?int $overdue_day): bool {
-        $sql = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
-        return $this->db->query()->run($sql, [$periode_length, $reminder_day, $overdue_day, $statusId]) !== false;
-    }
+        try {
+            $loaner = $this->loaners->findOrCreateByEmail($loanerName, $loanerEmail);                           // Deal with the loaner
+            $result = $this->status->setBookStatus($bookId, $statusId, null, $loaner['id'], null, false);       // Deal with the actual status
 
-    // Offloaded to @LoanerService
-    // /*  Change book status */
-    // public function setBookStatus(int $bookId, int $statusId, ?int $metaId = null, ?int $loanerId = null, ?int $locationId = null, bool $sendMail = false): bool {
-    //     return $this->status->setBookStatus($bookId, $statusId, $metaId, $loanerId, $locationId, $sendMail);
-    // }
+            if (!$result) {                                                                                     // Throw exception on fail
+                throw new \RuntimeException('Status kon niet worden bijgewerkt');
+            }
+
+            $this->db->finishTransaction();
+        } catch (\Throwable $t) {                                                                               // Throw general uncaught exception if failed
+            $this->db->cancelTransaction();
+            throw $t;
+        }
+
+        $context = [
+            ':book_name'    => $book['title'],
+            ':user_name'    => $loaner['name'],
+            ':user_mail'    => $loaner['email'],
+            ':user_office'  => $loaner['office_id'],
+            ':due_date'     => $book['dueDate'],
+            ':book_office'  => $book['office'],
+            // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
+            // ':action_link'  => 'https://biblioapp.nl/',
+            // ':action_label' => 'Boek Verlengen'
+        ];
+
+        // Trigger notifications after commit (or via an async job)
+        $this->dispatchStatusEvents($statusId, $book, $loaner);
+
+        return true;
+    }
 }
