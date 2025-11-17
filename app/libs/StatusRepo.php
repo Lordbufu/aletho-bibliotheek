@@ -102,6 +102,12 @@ class StatusRepo {
         return $this->calculateDueDate($startDate, (int)$periodeLength);
     }
 
+    /*  Update status period settings */
+    public function updateStatusPeriod(int $statusId, ?int $periode_length, ?int $reminder_day, ?int $overdue_day): bool {
+        $sql = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
+        return $this->db->query()->run($sql, [$periode_length, $reminder_day, $overdue_day, $statusId]) !== false;
+    }
+
     /*  To set a book status we need (for now): */
     public function setBookStatus(int $bookId, int $statusId, ?int $metaId = null, ?int $loanerId = null, ?int $locationId = null, bool $sendMail = false): bool {
         $sqlDeactivate = "UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1";
