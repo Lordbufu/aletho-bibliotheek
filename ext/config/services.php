@@ -1,43 +1,16 @@
 <?php
 
 return [
-    // Core router service
-    'router' => [
-        'class' => \App\Router::class,
-        'config' => BASE_PATH . '/ext/config/routes.php'
-    ],
-    // Core database service
-    'database' => [
-        'class'  => \App\Database::class,
-        'config' => BASE_PATH . '/ext/config/database.php'
-    ],
-    // Core logger service
-    'logger' => [
-        'class'  => \App\Logger::class
-    ],
-    // Core authentication service
-    'auth' => [
-        'class'  => \App\Auth::class
-    ],
-    // Core validation service
-    'val' => [
-        'class'  => \App\ValidationService::class
-    ],
-    // Core Books Service
-    'books' => [
-        'class' => \App\BooksService::class
-    ],
-    // Core Loaners Service
-    'loaners' => [
-        'class' => \App\LoanersService::class
-    ],
-    // Mail Template Service
-    'mail' => [
-        'class' => \App\MailTemplateService::class,
-        'config' => BASE_PATH . '/ext/config/mail.php'
-    ],
-    'notification' => [
-        'class' => \App\NotificationService::class,
-        'config' => BASE_PATH . '/ext/config/mail.php'
-    ]
+    // Core App services
+    'router' => [ 'class' => \App\Router::class, 'config' => BASE_PATH . '/ext/config/routes.php' ],
+    'database' => [ 'class'  => \App\Database::class, 'config' => BASE_PATH . '/ext/config/database.php' ],
+    'logger' => [ 'class'  => \App\Logger::class ],
+    'auth' => [ 'class'  => \App\Auth::class ],
+    'val' => [ 'class'  => \App\ValidationService::class ],
+    // Library specific services
+    'books' => [ 'class' => \App\BooksService::class ],
+    'status' => [ 'class' => \App\StatusService::class ],
+    'loaners' => [ 'class' => \App\LoanersService::class ],
+    'mail' => [ 'class' => \App\MailTemplateService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ],
+    'notification' => [ 'class' => \App\NotificationService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ]
 ];
