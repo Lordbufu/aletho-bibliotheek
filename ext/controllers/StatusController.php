@@ -1,21 +1,19 @@
 <?php
 namespace Ext\Controllers;
 
-use App\{App, Database, BooksService, LoanersService, ValidationService};
+use App\App;
 
 class StatusController {
-    protected BooksService      $bookS;
-    protected LoanersService    $loaners;
-    protected ValidationService $valS;
-    protected Database          $db;
+    protected \App\BooksService         $bookS;
+    protected \App\StatusService        $status;
+    protected \App\ValidationService    $valS;
 
     /*  Construct App services as default local service. */
     public function __construct() {
         try {
             $this->bookS    = App::getService('books');
-            $this->loaners  = App::getService('loaners');
             $this->valS     = App::getService('val');
-            $this->db       = App::getService('database');
+            $this->status   = App::getService('status');
         } catch (\Throwable $t) {
             throw $t;
         }
@@ -23,7 +21,7 @@ class StatusController {
 
     /*  Return all book statuses as JSON. */
     public function requestStatus() {
-        $statuses = $this->bookS->getAllStatuses();
+        $statuses = $this->status->getAllStatuses();
         header('Content-Type: application/json');
         echo json_encode($statuses);
     }
@@ -52,7 +50,7 @@ class StatusController {
         }
 
         $clean = $this->valS->cleanData();
-        $result = $this->bookS->updateStatusPeriod(
+        $result = $this->status->updateStatusPeriod(
             $clean['status_type'],
             $clean['periode_length'],
             $clean['reminder_day'],
@@ -95,7 +93,9 @@ class StatusController {
         $bookId     = $clean['book_id'];
         $statusId   = $clean['status_id'];
 
-        $result = $this->loaners->changeBookStatus(
+        dd($_POST);
+
+        $result = $this->books->changeBookStatus(
             $bookId,
             $statusId,
             $clean['loaner_name'],
