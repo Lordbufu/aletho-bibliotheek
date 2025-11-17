@@ -5,13 +5,7 @@ namespace App;
 use App\App;
 use App\Database\{Connection, Query, Installer};
 
-/** Database service container:
- * 
- *  Acts as a single entry point for database-related services:
- *      - Connection: low-level PDO connection
- *      - Query: query execution helper
- *      - Installer: schema/data installation manager
- */
+/*  Database service container */
 class Database {
     protected Connection $connection;
     protected Query $query;

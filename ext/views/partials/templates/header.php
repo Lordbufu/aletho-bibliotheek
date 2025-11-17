@@ -18,6 +18,8 @@
 			$errors[$value] = $_SESSION['_flashInline']['message'][$key];
 		}
 	}
+
+	
 	unset($_SESSION['_flashInline']);
 
 	// expose server flash to javascript so client can restore popins / old input
