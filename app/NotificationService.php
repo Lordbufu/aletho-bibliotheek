@@ -65,6 +65,15 @@ class NotificationService {
     protected array $config;
     protected PHPMailer $mailer;
 
+    // Status event map.
+    protected array $statusEventMap = [
+        2 => ['user' => 'loan_confirm'],                                    // Afwezig
+        5 => ['user' => 'reserv_confirm'],                                  // Gereserveerd
+        3 => ['office' => 'transport_request'],                             // Transport
+        4 => ['user' => 'pickup_ready_confirm'],                            // Ligt Klaar
+        6 => ['user' => 'overdue_reminder', 'office' => 'overdue_notice'],  // Overdatum
+    ];
+
     public function __construct(array $config) {
         $this->config = $config;
         $this->mailer = new PHPMailer(true);
@@ -111,8 +120,38 @@ class NotificationService {
         }
     }
 
+    /* Attemp to generalize status event triggers. */
+    public function dispatchStatusEvents(int $statusId, array $book, array $loaner): void {
+        $context = [
+            ':book_name'    => $book['title'],
+            ':user_name'    => $loaner['name'],
+            ':user_mail'    => $loaner['email'],
+            ':user_office'  => $loaner['office_id'],
+            ':due_date'     => $book['dueDate'],
+            ':book_office'  => $book['office'],
+            // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
+            // ':action_link'  => 'https://biblioapp.nl/',
+            // ':action_label' => 'Boek Verlengen'
+        ];
+
+        foreach ($this->statusEventMap[$statusId] ?? [] as $target => $event) {
+            try {
+                if ($target === 'user') {
+                    $this->notifyUser($event, $context);
+                } elseif ($target === 'office') {
+                    if (!empty($context[':user_office'])) {
+                        $this->notifyOffice($context[':user_office'], $event, $context);
+                    }
+                }
+            } catch (\Throwable $t) {
+                error_log("[BookStatusOrchestrator] Notification failed: " . $t->getMessage());
+            }
+        }
+    }
+
+
     /*  Notify a specific user about an event. */
-    public function notifyUser(int $loanerId, string $event, array $context): void {
+    public function notifyUser(string $event, array $context): void {
         $email = App::getService('mail')->render($event, $context);
 
         if (!$email) {
