@@ -30,10 +30,10 @@ class LoanersRepo {
         ];
     }
 
-    public function create(string $name, string $email): array {
+    private function createLoaner(string $name, string $email, int $office): array {
         $this->db->query()->run(
-            "INSERT INTO loaners (name, email, active) VALUES (?, ?, 1)",
-            [$name, $email]
+            "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)",
+            [$name, $email, $office]
         );
 
         $id = (int)$this->db->query->lastInsertId();
@@ -54,13 +54,6 @@ class LoanersRepo {
         return $row ? $this->formatLoaner($row) : null;
     }
 
-    public function findByName(string $query): array {
-        return $this->db->query()->fetchAll(
-            "SELECT id, name, email, office_id FROM loaners WHERE name LIKE ? ORDER BY name LIMIT 15",
-            ['%' . $query . '%']
-        ) ?: [];
-    }
-
     public function findByEmail(string $email): ?array {
         $row = $this->db->query()->fetchOne(
             "SELECT * FROM loaners WHERE email = ? AND active = 1",
@@ -68,6 +61,20 @@ class LoanersRepo {
         );
 
         return $row ? $this->formatLoaner($row) : null;
+    }
+
+    public function findOrCreatByEmail(string $name, string $email, int $office): ?array {
+        $loaner = $this->findByEmail($email);
+        return $loaner ?: $this->createLoaner($name, $email, $office);
+    }
+
+    public function deactivate(int $id): bool {
+        $result = $this->db->query()->run(
+            "UPDATE loaners SET active = 0 WHERE id = ?",
+            [$id]
+        );
+
+        return $result && $result->rowCount() > 0;
     }
 
     public function update(int $id, array $fields): bool {
@@ -83,15 +90,6 @@ class LoanersRepo {
         $result = $this->db->query()->run(
             "UPDATE loaners SET " . implode(", ", $set) . " WHERE id = ?",
             $params
-        );
-
-        return $result && $result->rowCount() > 0;
-    }
-
-    public function deactivate(int $id): bool {
-        $result = $this->db->query()->run(
-            "UPDATE loaners SET active = 0 WHERE id = ?",
-            [$id]
         );
 
         return $result && $result->rowCount() > 0;
