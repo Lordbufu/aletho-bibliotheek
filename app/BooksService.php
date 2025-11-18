@@ -26,6 +26,18 @@ class BooksService {
         }
     }
 
+    /* Formate loaner data for display */
+    protected function formatLoanersForDisplay(?array $loanersRaw, string $fallback = 'Geen leners'): array {
+        if (empty($loanersRaw)) {
+            return [$fallback];
+        }
+
+        // Normalize: if it's a single loaner (current), wrap it in an array
+        $loaners = isset($loanersRaw[0]) ? $loanersRaw : [$loanersRaw];
+
+        return array_map(fn($loaner) => $loaner['name'], $loaners);
+    }
+
     /*  Get all books as an array, processed and formatted for views. */
     public function getAllForDisplay(): array {
         $books = $this->books->findAll();
@@ -36,15 +48,8 @@ class BooksService {
                 continue;
             }
 
-            $curLoaner = $this->loaners->getCurrentLoanerByBookId((int)$book['id'])['name'] ?? null;
+            $curLoanerRaw = $this->loaners->getCurrentLoanerByBookId((int)$book['id']);
             $prevLoanersRaw = $this->loaners->getPreviousLoanersByBookId((int)$book['id']);
-            $prevLoaners = !empty($prevLoanersRaw)
-                ? array_map(fn($loaner) => $loaner['name'], $prevLoanersRaw)
-                : null;
-
-            if($book['id'] === 7) {
-                dd($prevLoanersRaw);
-            }
         
             $out[] = [
                 'id'     => $book['id'],
@@ -54,8 +59,8 @@ class BooksService {
                 'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
                 'status' => $this->status->getBookStatus((int)$book['id']),
                 'dueDate' => $this->status->getBookDueDate((int)$book['id']),
-                'curLoaner' => $curLoaner,
-                'prevLoaners' => $prevLoaners,
+                'curLoaner' => $this->formatLoanersForDisplay($curLoanerRaw, 'Geen huidige lener'),
+                'prevLoaners' => $this->formatLoanersForDisplay($prevLoanersRaw, 'Geen vorige leners'),
                 'canEditOffice' => App::getService('auth')->canManageOffice($book['office_id'])
             ];
         }

@@ -20,11 +20,12 @@ class LoanersRepo {
 
     private function formatLoaner(array $row): array {
         return [
-            'id'     => (int)$row['id'],
-            'name'   => $row['name'],
-            'email'  => $row['email'],
-            'office_id' => (int)$row['office_id'],
-            'active' => (bool)$row['active'],
+            'id'            => (int)$row['id'],
+            'name'          => $row['name'],
+            'email'         => $row['email'],
+            'office_id'     => (int)$row['office_id'],
+            'start_date'    => $row['start_date'] ?? null,
+            'active'        => (bool)$row['active']
         ];
     }
 
@@ -117,13 +118,14 @@ class LoanersRepo {
 
     public function getPreviousLoanersByBookId(int $bookId): array {
         $rows = $this->db->query()->fetchAll(
-            "SELECT DISTINCT l.*
+            "SELECT l.*, bs.start_date
             FROM book_status bs
             JOIN loaners l ON l.id = bs.loaner_id
             WHERE bs.book_id = ?
             AND bs.active = 0
             AND l.name IS NOT NULL
-            ORDER BY bs.start_date DESC",
+            ORDER BY bs.start_date DESC
+            LIMIT 5",
             [$bookId]
         );
 
