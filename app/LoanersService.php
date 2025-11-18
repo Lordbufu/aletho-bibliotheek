@@ -2,14 +2,13 @@
 namespace App;
 
 use App\App;
-use App\Libs\LoanersRepo;
 
 class LoanersService {
-    protected LoanersRepo   $loaners;
+    protected \App\Libs\LoanersRepo   $loaners;
 
     public function __construct() {
         try {
-            $this->loaners = new LoanersRepo(App::getService('database'));
+            $this->loaners = new \App\Libs\LoanersRepo();
         } catch (\Throwable $t) {
             throw $t;
         }

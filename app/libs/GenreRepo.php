@@ -2,7 +2,7 @@
 
 namespace App\Libs;
 
-use App\{App, Database};
+use App\App;
 
 /** Repository for managing genres and their many-to-many relation with books.
  *  Design notes:
@@ -11,11 +11,11 @@ use App\{App, Database};
  *      - Provides both additive (`addBookGenres`) and replace (`updateBookGenres`) flows.
  */
 class GenreRepo {
-    protected ?array $genres = null;
-    protected Database $db;
+    protected ?array        $genres = null;
+    protected \App\Database $db;
 
-    public function __construct(Database $db) {
-        $this->db = $db;
+    public function __construct() {
+        $this->db = App::getService('database');
     }
 
     /** Resolve an array of genre names or IDs into valid genre IDs.

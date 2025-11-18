@@ -6,8 +6,8 @@ use App\App;
 
 /*  Simple service container / dependency injector: Loads service definitions from a config file or array and instantiates them on demand. */
 class Services {
-    protected array $instances = [];
-    protected array $factories = [];
+    protected array $instances          = [];
+    protected array $factories          = [];
 
     /*  Construct the Services container. */
     public function __construct(string|array $configFile) {
@@ -32,12 +32,10 @@ class Services {
 
     /*  Retrieve a service instance by name, instantiating it if necessary. */
     public function get(string $name) {
-        // Return cached instance if already created
         if (isset($this->instances[$name])) {
             return $this->instances[$name];
         }
 
-        // Ensure service is registered
         if (!isset($this->factories[$name])) {
             throw new \InvalidArgumentException("Service '{$name}' not registered.");
         }
@@ -45,15 +43,12 @@ class Services {
         $definition = $this->factories[$name];
 
         try {
-            // Case 1: factory callable
             if (is_callable($definition)) {
                 $instance = $definition();
 
-            // Case 2: array definition with class + optional config
             } elseif (is_array($definition) && isset($definition['class'])) {
                 $class = $definition['class'];
 
-                // Load config if present
                 $config = null;
                 if (!empty($definition['config'])) {
                     if (is_string($definition['config']) && is_file($definition['config'])) {
@@ -73,19 +68,14 @@ class Services {
                     }
                 }
 
-                // Instantiate with or without config
                 $instance = $config !== null ? new $class($config) : new $class();
-
             } else {
                 throw new \RuntimeException("Invalid service definition for '{$name}'");
             }
 
-            // Cache and return
             $this->instances[$name] = $instance;
             return $instance;
-
         } catch (\Throwable $t) {
-            // Log detailed error before rethrowing
             error_log(sprintf(
                 "[Service] Failed to instantiate '%s': %s in %s:%d",
                 $name,
@@ -94,7 +84,7 @@ class Services {
                 $t->getLine()
             ));
             error_log($t->getTraceAsString());
-            throw $t; // rethrow so caller can handle
+            throw $t;
         }
     }
 }

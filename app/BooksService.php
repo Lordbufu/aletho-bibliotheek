@@ -3,27 +3,24 @@
 namespace App;
 
 use App\App;
-use App\Libs\{BookRepo, GenreRepo, WriterRepo, StatusRepo, OfficeRepo, LoanersRepo};
 
 class BooksService {
-    protected BookRepo      $books;
-    protected GenreRepo     $genres;
-    protected WriterRepo    $writers;
-    protected StatusRepo    $status;
-    protected OfficeRepo    $offices;
-    protected LoanersRepo   $loaners;
-    protected Database      $db;
+    protected \App\Libs\LoanersRepo $loaners;
+    protected \App\Libs\StatusRepo  $status;
+    protected \App\Libs\BookRepo    $books;
+    protected \App\Libs\GenreRepo   $genres;
+    protected \App\Libs\WriterRepo  $writers;
+    protected \App\Libs\OfficeRepo  $offices;
 
     /*  Construct all associated library classes, and logs it. */
     public function __construct() {
         try {
-            $this->db      = App::getService('database');
-            $this->books   = new BookRepo($this->db);
-            $this->genres  = new GenreRepo($this->db);
-            $this->writers = new WriterRepo($this->db);
-            $this->status  = new StatusRepo($this->db);
-            $this->offices = new OfficeRepo($this->db);
-            $this->loaners = new LoanersRepo($this->db);
+            $this->loaners = new \App\Libs\LoanersRepo();
+            $this->status  = new \App\Libs\StatusRepo();
+            $this->books   = new \App\Libs\BookRepo();
+            $this->genres  = new \App\Libs\GenreRepo();
+            $this->writers = new \App\Libs\WriterRepo();
+            $this->offices = new \App\Libs\OfficeRepo();
         } catch (\Throwable $t) {
             throw $t;
         }
@@ -45,6 +42,10 @@ class BooksService {
                 ? array_map(fn($loaner) => $loaner['name'], $prevLoanersRaw)
                 : null;
 
+            if($book['id'] === 7) {
+                dd($prevLoanersRaw);
+            }
+        
             $out[] = [
                 'id'     => $book['id'],
                 'title'  => $book['title'],

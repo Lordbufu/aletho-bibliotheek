@@ -1,18 +1,16 @@
 <?php
 namespace App\Libs;
 
-use App\{App, Database};
+use App\App;
 
 /* Your basic books library, dealing with all books table data & relations . */
 class BookRepo {
-    protected array $books;
-    protected array $book;
-    protected Database $db;
+    protected array         $books;
+    protected array         $book;
+    protected \App\Database $db;
 
-    public function __construct($con = []) {
-        if  (!empty($con)) {
-            $this->db = $con;
-        }
+    public function __construct() {
+        $this->db = App::getService('database');
     }
 
     /** Simple get all book table data to caller.

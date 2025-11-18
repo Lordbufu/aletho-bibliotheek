@@ -62,7 +62,7 @@ use PHPMailer\PHPMailer\{PHPMailer, Exception};
  *   - Cron-driven batch processing (e.g. overdue reminders) can be added via processCronEvents().
  */
 class NotificationService {
-    protected array $config;
+    protected array     $config;
     protected PHPMailer $mailer;
 
     // Status event map.

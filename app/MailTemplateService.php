@@ -24,11 +24,11 @@
 namespace App;
 
 class MailTemplateService {
-    protected array $config;
-    protected string $frameDir;
+    protected array     $config;
+    protected string    $frameDir;
 
     public function __construct(array $config) {
-        $this->config = $config;
+        $this->config   = $config;
         $this->frameDir = realpath(__DIR__ . '/../ext/mailFrames');
     }
 

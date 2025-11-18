@@ -11,11 +11,11 @@ use App\Validation\PasswordValidation;
 
 class Auth {
     protected AuthenticationService $service;
-    protected PasswordValidation $validator;
+    protected PasswordValidation    $validator;
 
     public function __construct(array $config = []) {
-        $this->validator = new PasswordValidation();
-        $this->service = new AuthenticationService($this->validator);
+        $this->validator    = new PasswordValidation();
+        $this->service      = new AuthenticationService($this->validator);
     }
 
     public function can(string $permission): bool {

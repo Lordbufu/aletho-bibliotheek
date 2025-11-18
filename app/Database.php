@@ -7,18 +7,18 @@ use App\Database\{Connection, Query, Installer};
 
 /*  Database service container */
 class Database {
-    protected Connection $connection;
-    protected Query $query;
-    protected Installer $installer;
+    protected Connection    $connection;
+    protected Query         $query;
+    protected Installer     $installer;
 
     /** Constructor initializes database services.
      *      @param array $config Database configuration arrays
      */
     public function __construct(array $config) {
         try {
-            $this->connection = new Connection($config);
-            $this->query = new Query($this->connection);
-            $this->installer = new Installer(
+            $this->connection   = new Connection($config);
+            $this->query        = new Query($this->connection);
+            $this->installer    = new Installer(
                 $this->connection,
                 $config['schema_path'] ?? null
             );

@@ -28,14 +28,14 @@
 
 namespace App\Libs;
 
-use App\{App, Database};
+use App\App;
 
 class StatusRepo {
-    protected ?array $statuses = null;
-    protected Database $db;
+    protected ?array        $statuses = null;
+    protected \App\Database $db;
 
-    public function __construct(Database $db) {
-        $this->db = $db;
+    public function __construct() {
+        $this->db = App::getService('database');
     }
 
     /*  Helper: calculate due date */

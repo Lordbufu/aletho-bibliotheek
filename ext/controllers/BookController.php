@@ -5,12 +5,12 @@
 
 namespace Ext\Controllers;
 
-use App\{App, BooksService, ValidationService};
+use App\App;
 
 /*  Handles books related user logic. */
 class BookController {
-    protected BooksService $bookS;
-    protected ValidationService $valS;
+    protected \App\BooksService         $bookS;
+    protected \App\ValidationService    $valS;
 
     /*  Construct App services as default local service. */
     public function __construct() {

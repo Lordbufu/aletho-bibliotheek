@@ -2,7 +2,7 @@
 
 namespace App\Libs;
 
-use App\{App, Database};
+use App\App;
 
 /** Repository for managing writers and their many-to-many relation with books.
  *  Design notes:
@@ -11,11 +11,11 @@ use App\{App, Database};
  *      - Provides both additive (`addBookWriters`) and replace (`updateBookWriters`) flows.
  */
 class WriterRepo {
-    protected ?array $writers = null;
-    protected Database $db;
+    protected ?array        $writers = null;
+    protected \App\Database $db;
 
-    public function __construct(Database $db) {
-        $this->db = $db;
+    public function __construct() {
+        $this->db = App::getService('database');
     }
 
     /** Helper: resolve writer names/IDs into valid writer IDs. 

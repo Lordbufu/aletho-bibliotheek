@@ -3,17 +3,14 @@
 namespace App;
 
 use App\App;
-use App\Libs\{StatusRepo, LoanersRepo};
 
 class StatusService {
-    protected StatusRepo    $status;
-    protected LoanersRepo   $loaners;
-    protected Database      $db;
+    protected \App\Libs\StatusRepo    $status;
+    protected \App\Libs\LoanersRepo   $loaners;
 
     public function __construct() {
-        $this->db       = App::getService('database');
-        $this->status   = new StatusRepo($this->db);
-        $this->loaners  = new LoanersRepo($this->db);
+        $this->status   = new \App\Libs\StatusRepo();
+        $this->loaners  = new \App\Libs\LoanersRepo();
     }
 
     /* */

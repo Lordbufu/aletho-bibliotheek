@@ -1,19 +1,18 @@
 <?php
 namespace Ext\Controllers;
 
-use App\{App, Auth};
-use App\Validation\FormValidation;
+use App\App;
 
 /*  Handles authentication-related HTTP requests. */
 class AuthController {
-    protected Auth $auth;
-    protected FormValidation $validator;
+    protected \App\Auth                         $auth;
+    protected \App\Validation\FormValidation    $validator;
 
     /*  Construct Auth as default local service. */
     public function __construct() {
         try {
-            $this->auth = new Auth();
-            $this->validator = App::getService('val')->formVal();
+            $this->auth         = new Auth();
+            $this->validator    = App::getService('val')->formVal();
         } catch(\Throwable $t) {
             throw $t;
         }

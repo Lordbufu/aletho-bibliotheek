@@ -9,15 +9,13 @@
 
 namespace App\Libs;
 
-use App\{App, Database};
+use App\App;
 
 class LoanersRepo {
-    protected Database $db;
+    protected \App\Database $db;
 
-    public function __construct($con = []) {
-        if  (!empty($con)) {
-            $this->db = $con;
-        }
+    public function __construct() {
+        $this->db = App::getService('database');
     }
 
     private function formatLoaner(array $row): array {

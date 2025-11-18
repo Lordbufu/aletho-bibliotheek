@@ -2,7 +2,7 @@
 
 namespace App\Libs;
 
-use App\{App, Database};
+use App\App;
 
 
 /** Repository for managing offices and their relations to books and users.
@@ -12,11 +12,11 @@ use App\{App, Database};
  *      - Provides both additive (`addBookOffices`) and replace (`updateBookOffices`) flows.
  */
 class OfficeRepo {
-    protected ?array $offices = null;
-    protected Database $db;
+    protected ?array        $offices = null;
+    protected \App\Database $db;
 
-    public function __construct(Database $db) {
-        $this->db = $db;
+    public function __construct() {
+        $this->db = App::getService('database');
     }
 
     /** Resolve office names/IDs into valid office IDs, creating if needed. */

@@ -4,12 +4,12 @@ namespace App;
 use App\Validation\{FormValidation, PasswordValidation};
 
 class ValidationService {
-    protected FormValidation $formValidator;
+    protected FormValidation     $formValidator;
     protected PasswordValidation $passwordValidator;
 
     /*  Construct the validation service. */
     public function __construct() {
-        $this->formValidator = new FormValidation();
+        $this->formValidator     = new FormValidation();
         $this->passwordValidator = new PasswordValidation();
     }
 

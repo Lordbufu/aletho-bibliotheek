@@ -1,12 +1,12 @@
 <?php
 namespace Ext\Controllers;
 
-use App\{App, BooksService, LoanersService, ValidationService};
+use App\App;
 
 class LoanerController {
-    protected BooksService      $bookS;
-    protected LoanersService    $loaners;
-    protected ValidationService $valS;
+    protected \App\BooksService         $bookS;
+    protected \App\LoanersService       $loaners;
+    protected \App\ValidationService    $valS;
 
     /*  Construct App services as default local service. */
     public function __construct() {
@@ -29,17 +29,14 @@ class LoanerController {
             exit;
         }
 
-        // Get matching loaners
         $loaners = $this->loaners->findByName($query);
 
-        // Get all offices for display (id => name)
         $offices = $this->bookS->getOfficesForDisplay();
         $officeMap = [];
         foreach ($offices as $office) {
             $officeMap[$office['id']] = $office['name'];
         }
 
-        // Build output with office name
         $out = [];
         foreach ($loaners as $l) {
             $out[] = [
@@ -50,6 +47,7 @@ class LoanerController {
         }
 
         echo json_encode($out);
+
         exit;
     }
 
@@ -65,7 +63,6 @@ class LoanerController {
             exit;
         }
 
-        // Optionally resolve office name
         $officeName = '';
 
         if (!empty($loaner['office_id'])) {
@@ -83,6 +80,7 @@ class LoanerController {
             'email' => $loaner['email'] ?? '',
             'location' => $officeName
         ]);
+
         exit;
     }
 }
