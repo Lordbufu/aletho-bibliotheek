@@ -11,7 +11,7 @@ class AuthController {
     /*  Construct Auth as default local service. */
     public function __construct() {
         try {
-            $this->auth         = new Auth();
+            $this->auth         = new \App\Auth();
             $this->validator    = App::getService('val')->formVal();
         } catch(\Throwable $t) {
             throw $t;
