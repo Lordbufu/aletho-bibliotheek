@@ -41,8 +41,10 @@ class App {
                     }
                     
                     if ($name === 'database') {
-                        if (!$instance->installer()->isInstalled()) {
-                            $instance->installer()->install(true);
+                        $installer = $instance->installer();
+
+                        if (!$installer->isInstalled()) {
+                            $installer->install(true);
                         }
                     }
                 } catch (\Throwable $t) {
