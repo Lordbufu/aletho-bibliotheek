@@ -2,6 +2,9 @@
 
 namespace App\Database;
 
+use Throwable;
+use RuntimeException;
+use PDO;
 use DirectoryIterator;
 use App\App;
 
@@ -10,11 +13,16 @@ use App\App;
  * Uses a lock file to prevent reinstallation and verifies required tables exist.
  */
 class Installer {
-    protected Connection $connection;
-    protected Query $query;
-    protected string $schemaPath;
-    protected string $dataPath;
-    protected string $lockFile;
+    protected Connection    $connection;
+    protected Query         $query;
+    protected string        $schemaPath;
+    protected string        $dataPath;
+    protected string        $lockFile;
+
+    /**
+     * Holds detailed state of installation checks
+     */
+    protected array $installerState = [];
 
     public function __construct(Connection $connection, ?string $schemaPath = null) {
         $this->connection = $connection;
@@ -30,120 +38,201 @@ class Installer {
         }
     }
 
-    /*  Scan schema directory for required table names, matches files like "001_users.sql" → "users". */
-    protected function requiredTables(): array {
-        $tables = [];
-
-        try {
-            foreach (new DirectoryIterator($this->schemaPath) as $file) {
-                if (!$file->isFile()) {
-                    continue;
-                }
-
-                if (preg_match('/^\d+_([^.]+)\.sql$/i', $file->getFilename(), $matches)) {
-                    $tables[] = $matches[1];
-                }
-            }
-        } catch (\Throwable $t) {
-            throw $t;
+    /**
+     * Collect lock file and directory context.
+     */
+    protected function getFileData(): array {
+        $lock = [];
+        if (file_exists($this->lockFile)) {
+            $lock = json_decode(file_get_contents($this->lockFile), true) ?: [];
         }
 
-        return array_unique($tables);
+        $schemaFiles = glob($this->schemaPath . '/*.sql') ?: [];
+        $dataFiles   = glob($this->dataPath . '/*.sql') ?: [];
+
+        return [
+            'lock'   => $lock,
+            'schema' => array_map('basename', $schemaFiles),
+            'data'   => array_map('basename', $dataFiles),
+        ];
     }
 
-    /*  Execute all SQL scripts in a given directory. */
-    protected function runScripts(string $path): array {
-        $executed = [];
-
-        if (!is_dir($path)) {
-            return $executed;
-        }
-
-        $files = [];
+    /**
+     * Check required tables against DB and lock file.
+     */
+    protected function checkTables(array $fileData): bool {
         try {
-            foreach (new DirectoryIterator($path) as $file) {
-                if ($file->isFile() && preg_match('/^\d+_.*\.sql$/i', $file->getFilename())) {
-                    $files[] = $file->getPathname();
+            $existingTables = $this->query
+                ->run('SHOW TABLES')
+                ->fetchAll(\PDO::FETCH_COLUMN);
+
+            $lockedSchemas = $fileData['lock']['schema_files'] ?? [];
+            $lockedFiles   = array_column($lockedSchemas, 'file');
+            $schemaFiles   = $fileData['schema'] ?? [];
+
+            $missingTables = [];
+            foreach ($lockedSchemas as $schema) {
+                $tableName = $this->extractTableName($schema['file']);
+                if (!in_array($tableName, $existingTables, true)) {
+                    $missingTables[] = $tableName;
                 }
             }
+
+            // NEW: detect schema files not yet in lock, but only if their table is missing
+            $newFiles = [];
+            foreach ($schemaFiles as $file) {
+                if (!in_array($file, $lockedFiles, true)) {
+                    $tableName = $this->extractTableName($file);
+                    if (!in_array($tableName, $existingTables, true)) {
+                        $newFiles[] = $file;
+                    }
+                }
+            }
+
+            $this->installerState['tables'] = [
+                'existing' => $existingTables,
+                'missing'  => $missingTables,
+                'newFiles' => $newFiles,
+            ];
+
+            return empty($missingTables) && empty($newFiles);
         } catch (\Throwable $t) {
-            throw $t;
-            return $executed;
+            $this->installerState['errors'][] = $t->getMessage();
+            return false;
+        }
+    }
+
+    /**
+     * Check data files against lock file.
+     * For now: only compares lock entries with directory presence.
+     * Later: can query DB for actual seed rows.
+     */
+    protected function checkData(array $fileData): bool {
+        $lockedData = $fileData['lock']['data_files'] ?? [];
+        $dataFiles  = $fileData['data'] ?? [];
+
+        $missing = [];
+        foreach ($lockedData as $data) {
+            if (!in_array($data['file'], $dataFiles, true)) {
+                $missing[] = $data['file'];
+            }
         }
 
-        sort($files, SORT_NATURAL | SORT_FLAG_CASE);
+        $this->installerState['data'] = [
+            'expected' => array_column($lockedData, 'file'),
+            'present'  => $dataFiles,
+            'missing'  => $missing,
+        ];
 
-        foreach ($files as $filePath) {
-            try {
-                $sql = file_get_contents($filePath);
-                if ($sql === false) {
-                    continue;
-                }
+        return empty($missing);
+    }
 
+    /**
+     * Extract table name from schema filename.
+     * Example: "01_users.sql" -> "users"
+     */
+    protected function extractTableName(string $filename): string {
+        return preg_replace('/^\d+_/', '', pathinfo($filename, PATHINFO_FILENAME));
+    }
+
+    /**
+     * Find schame file for table.
+     */
+    protected function findSchemaFileForTable(string $table): ?string {
+        $files = glob($this->schemaPath . '/*.sql') ?: [];
+        foreach ($files as $file) {
+            if ($this->extractTableName(basename($file)) === $table) {
+                return $file;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Install specific schema files (by filename).
+     */
+    protected function installTables(array $files): void {
+        $manifest = file_exists($this->lockFile)
+            ? json_decode(file_get_contents($this->lockFile), true) ?: []
+            : [];
+
+        foreach ($files as $file) {
+            $path = $this->schemaPath . '/' . $file;
+            if (is_file($path)) {
+                $sql = file_get_contents($path);
                 $this->query->run($sql);
 
-                $executed[] = [
-                    'file' => basename($filePath),
-                    'path' => $filePath,
-                    'size' => filesize($filePath),
+                $manifest['schema_files'][] = [
+                    'file' => basename($path),
+                    'path' => $path,
+                    'size' => filesize($path),
                 ];
-            } catch (\Throwable $t) {
-                throw $t;
             }
         }
 
-        return $executed;
+        $manifest['installed_at'] = date('c');
+        file_put_contents($this->lockFile, json_encode($manifest, JSON_PRETTY_PRINT));
     }
 
-    /*  Perform installation of schema and optional seed data. */
-    public function install(bool $withData = false): void {
-        try {
-            $manifest = [];
+    /**
+     * Install specific data files (by filename).
+     */
+    protected function installData(array $files): void {
+        $manifest = file_exists($this->lockFile)
+            ? json_decode(file_get_contents($this->lockFile), true) ?: []
+            : [];
 
-            if ($this->isInstalled() && !$withData) {
-                return;
-            } 
+        foreach ($files as $file) {
+            $path = $this->dataPath . '/' . $file;
+            if (is_file($path)) {
+                $sql = file_get_contents($path);
+                $this->query->run($sql);
 
-            if (!$this->isInstalled()) {
-                $executedSchema = $this->runScripts($this->schemaPath);
-                $manifest['installed_at'] = date('c');
-                $manifest['schema_files'] = $executedSchema;
+                $manifest['data_files'][] = [
+                    'file' => basename($path),
+                    'path' => $path,
+                    'size' => filesize($path),
+                ];
             }
-
-            if ($withData) {
-                $executedData = $this->runScripts($this->dataPath);
-                $manifest['data_files'] = $executedData;
-            }
-
-            try {
-                file_put_contents($this->lockFile, json_encode($manifest, JSON_PRETTY_PRINT));
-            } catch (\Throwable $t) {
-                throw $t;
-            }
-        } catch (\Throwable $t) {
-            throw $t;
         }
+
+        file_put_contents($this->lockFile, json_encode($manifest, JSON_PRETTY_PRINT));
     }
 
-    /*  Check if the system is already installed. */
+    /**
+     * High-level check: is the system installed?
+     */
     public function isInstalled(): bool {
-        if (!file_exists($this->lockFile)) {
-            return false;
+        $fileData = $this->getFileData();
+
+        $tablesOk = $this->checkTables($fileData);
+        $dataOk   = $this->checkData($fileData);
+
+        return $tablesOk && $dataOk;
+    }
+
+    /**
+     * Expose detailed installer state for debugging or targeted installs.
+     */
+    public function getInstallerState(): array {
+        return $this->installerState;
+    }
+
+    /**
+     * Perform installation of schema and optional seed data.
+     */  
+    public function install(bool $withData = false): void {
+        $state = $this->getInstallerState();
+
+        if (!empty($state['tables']['missing']) || !empty($state['tables']['newFiles'])) {
+            $this->installTables(array_merge(
+                $state['tables']['missing'],
+                $state['tables']['newFiles']
+            ));
         }
 
-        try {
-            $existing = $this->query->run('SHOW TABLES')->fetchAll(\PDO::FETCH_COLUMN);
-
-            foreach ($this->requiredTables() as $required) {
-                if (!in_array($required, $existing, false)) {
-                    return false;
-                }
-            }
-        } catch (Throwable $t) {
-            throw $t;
-            return false;
+        if ($withData && !empty($state['data']['missing'])) {
+            $this->installData($state['data']['missing']);
         }
-
-        return true;
     }
 }
