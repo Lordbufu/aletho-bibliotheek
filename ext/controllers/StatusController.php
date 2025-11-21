@@ -93,14 +93,11 @@ class StatusController {
         $bookId     = $clean['book_id'];
         $statusId   = $clean['status_id'];
 
-        dd($_POST);
-
-        $result = $this->books->changeBookStatus(
-            $bookId,
-            $statusId,
-            $clean['loaner_name'],
-            $clean['loaner_email']
-        );
+        if (isset($statusId) && $statusId === 1) {
+            $result = $this->status->setBookStatus($bookId, $statusId);
+        } else {
+            $result = $this->books->changeBookStatus($bookId, $statusId, $clean['loaner_name'], $clean['loaner_email'] );
+        }
 
         if (!$result) {
             setFlash('global', 'failure', 'Book data kon niet verwerkt worden!');
