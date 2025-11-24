@@ -1,7 +1,6 @@
 -- Database Schema for Mail Template Management
 CREATE TABLE `mail_templates` (
     `id` INT(11) UNSIGNED AUTO_INCREMENT,
-    `event_type` VARCHAR(50) NOT NULL,
     `subject` VARCHAR(255) NOT NULL,
     `from_mail` VARCHAR(50) NOT NULL,
     `from_name` VARCHAR(50) NOT NULL,

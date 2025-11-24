@@ -109,8 +109,10 @@ class Installer {
      */
     protected function checkData(array $fileData): bool {
         $lockedData = $fileData['lock']['data_files'] ?? [];
-        $dataFiles  = $fileData['data'] ?? [];
+        $lockedFiles = array_column($lockedData, 'file');
+        $dataFiles   = $fileData['data'] ?? [];
 
+        // Check for locked data files missing in filesystem
         $missing = [];
         foreach ($lockedData as $data) {
             if (!in_array($data['file'], $dataFiles, true)) {
@@ -118,13 +120,22 @@ class Installer {
             }
         }
 
+        // NEW: detect data files present in filesystem but not yet in lock
+        $newFiles = [];
+        foreach ($dataFiles as $file) {
+            if (!in_array($file, $lockedFiles, true)) {
+                $newFiles[] = $file;
+            }
+        }
+
         $this->installerState['data'] = [
-            'expected' => array_column($lockedData, 'file'),
+            'expected' => $lockedFiles,
             'present'  => $dataFiles,
             'missing'  => $missing,
+            'newFiles' => $newFiles,
         ];
 
-        return empty($missing);
+        return empty($missing) && empty($newFiles);
     }
 
     /**
@@ -231,8 +242,15 @@ class Installer {
             ));
         }
 
-        if ($withData && !empty($state['data']['missing'])) {
-            $this->installData($state['data']['missing']);
+        if ($withData) {
+            $toInstall = array_merge(
+                $state['data']['missing'] ?? [],
+                $state['data']['newFiles'] ?? []
+            );
+
+            if (!empty($toInstall)) {
+                $this->installData($toInstall);    
+            }
         }
     }
 }
