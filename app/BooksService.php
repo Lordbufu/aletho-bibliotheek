@@ -10,7 +10,6 @@ class BooksService {
     protected \App\Libs\BookRepo    $books;
     protected \App\Libs\GenreRepo   $genres;
     protected \App\Libs\WriterRepo  $writers;
-    protected \App\Libs\OfficeRepo  $offices;
     protected \App\Database         $db;
 
     /*  Construct all associated library classes, and logs it. */
@@ -21,7 +20,6 @@ class BooksService {
             $this->books   = new \App\Libs\BookRepo();
             $this->genres  = new \App\Libs\GenreRepo();
             $this->writers = new \App\Libs\WriterRepo();
-            $this->offices = new \App\Libs\OfficeRepo();
             $this->db      = App::getService('database');
         } catch (\Throwable $t) {
             throw $t;
@@ -58,8 +56,8 @@ class BooksService {
                 'title'  => $book['title'],
                 'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
                 'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
-                'office' => $this->offices->getOfficeNameByOfficeId((int)$book['home_office']),
-                'curOffice' => $this->offices->getOfficeNameByOfficeId((int)$book['cur_office']),
+                'office' => App::getService('offices')->getOfficeNameByOfficeId((int)$book['home_office']),
+                'curOffice' => App::getService('offices')->getOfficeNameByOfficeId((int)$book['cur_office']),
                 'status' => $this->status->getBookStatus((int)$book['id']),
                 'dueDate' => $this->status->getBookDueDate((int)$book['id']),
                 'curLoaner' => $this->formatLoanersForDisplay($curLoanerRaw, 'Geen huidige lener'),
@@ -85,8 +83,8 @@ class BooksService {
             'title'  => $book['title'],
             'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
             'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
-            'office' => $this->offices->getOfficeNameByOfficeId((int)$book['home_office']),
-            'curOffice' => $this->offices->getOfficeNameByOfficeId((int)$book['cur_office']),
+            'office' => App::getService('offices')->getOfficeNameByOfficeId((int)$book['home_office']),
+            'curOffice' => App::getService('offices')->getOfficeNameByOfficeId((int)$book['cur_office']),
             'status' => $this->status->getBookStatus((int)$book['id']),
             'dueDate' => $this->status->getBookDueDate((int)$book['id']),
         ];
@@ -130,9 +128,10 @@ class BooksService {
         return $out;
     }
 
+    // TODO: find these function calls and extract this to the offices service ?
     /*  Get all office names, for frontend autocomplete JQuery. */
     public function getOfficesForDisplay(): array {
-        $temp = $this->offices->getAllOffices();
+        $temp = App::getService('offices')->getAllOffices();
         $out = [];
 
         foreach ($temp as $office) {
@@ -172,7 +171,7 @@ class BooksService {
             }
         }
 
-        $officeId = $this->offices->getOfficeIdByName($officeName);
+        $officeId = App::getService('offices')->getOfficeIdByName($officeName);
 
         try {
             if (!$this->db->startTransaction()) {

@@ -16,6 +16,10 @@ class OfficeRepo {
     protected \App\Database $db;
 
     public function __construct() {
+        if ($this->offices === null) {
+            $this->getAllOffices();
+        }
+
         $this->db = App::getService('database');
     }
 
@@ -80,6 +84,24 @@ class OfficeRepo {
             [$bookId]
         );
         return implode(', ', array_column($rows, 'name'));
+    }
+
+    /** Get office names for view and JSON purposes */
+    public function getOfficesForDisplay(): array {
+        $out = [];
+
+        foreach ($this->offices as $office) {
+            if (!$office['active']) {
+                continue;
+            }
+
+            $out[] = [
+                'id' => $office['id'],
+                'name' => $office['name']
+            ];
+        }
+
+        return $out;
     }
 
     /** Get office IDs linked to a book. */

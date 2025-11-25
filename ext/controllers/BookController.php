@@ -1,8 +1,4 @@
 <?php
-/** TODO List:
-
- */
-
 namespace Ext\Controllers;
 
 use App\App;
@@ -10,13 +6,15 @@ use App\App;
 /*  Handles books related user logic. */
 class BookController {
     protected \App\BooksService         $bookS;
+    protected \App\OfficesService       $offices;
     protected \App\ValidationService    $valS;
 
     /*  Construct App services as default local service. */
     public function __construct() {
         try {
-            $this->bookS = App::getService('books');
-            $this->valS  = App::getService('val');
+            $this->bookS    = App::getService('books');
+            $this->offices  = App::getService('offices');
+            $this->valS     = App::getService('val');
         } catch(\Throwable $t) {
             throw $t;
         }
@@ -33,7 +31,7 @@ class BookController {
         } elseif ($type === 'genres') {
             echo json_encode($this->bookS->getGenresForDisplay());
         } elseif ($type === 'offices') {
-            echo json_encode($this->bookS->getOfficesForDisplay());
+            echo json_encode($this->offices->getOfficesForDisplay());
         } else {
             echo json_encode([]);
         }

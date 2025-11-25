@@ -6,6 +6,7 @@ use App\App;
 class LoanerController {
     protected \App\BooksService         $bookS;
     protected \App\LoanersService       $loaners;
+    protected \App\OfficesService       $offices;
     protected \App\ValidationService    $valS;
 
     /*  Construct App services as default local service. */
@@ -13,6 +14,7 @@ class LoanerController {
         try {
             $this->bookS    = App::getService('books');
             $this->loaners  = App::getService('loaners');
+            $this->offices  = App::getService('offices');
             $this->valS     = App::getService('val');
         } catch (\Throwable $t) {
             throw $t;
@@ -31,7 +33,7 @@ class LoanerController {
 
         $loaners = $this->loaners->findByName($query);
 
-        $offices = $this->bookS->getOfficesForDisplay();
+        $offices = $this->offices->getOfficesForDisplay();
         $officeMap = [];
         foreach ($offices as $office) {
             $officeMap[$office['id']] = $office['name'];
@@ -66,7 +68,7 @@ class LoanerController {
         $officeName = '';
 
         if (!empty($loaner['office_id'])) {
-            $offices = $this->bookS->getOfficesForDisplay();
+            $offices = $this->offices->getOfficesForDisplay();
             foreach ($offices as $office) {
                 if ($office['id'] == $loaner['office_id']) {
                     $officeName = $office['name'];
