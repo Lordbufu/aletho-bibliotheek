@@ -16,11 +16,11 @@ class OfficeRepo {
     protected \App\Database $db;
 
     public function __construct() {
+        $this->db = App::getService('database');
+        
         if ($this->offices === null) {
             $this->getAllOffices();
         }
-
-        $this->db = App::getService('database');
     }
 
     /** Resolve office names/IDs into valid office IDs, creating if needed. */
