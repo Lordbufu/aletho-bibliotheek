@@ -1,7 +1,7 @@
 -- book loaner link table, to seperate concerns and declutter php logic
 CREATE TABLE book_loaners (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    book_id INT(11) UNSIGNED NOT NULL UNIQUE,
+    id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    book_id INT(11) UNSIGNED NOT NULL,
     loaner_id INT(11) UNSIGNED NOT NULL,
     status_id INT(11) UNSIGNED,
     start_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
