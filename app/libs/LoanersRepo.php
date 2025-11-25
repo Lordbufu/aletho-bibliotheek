@@ -62,7 +62,7 @@ class LoanersRepo {
         return $row ? $this->formatLoaner($row) : null;
     }
 
-    public function findOrCreatByEmail(string $name, string $email, int $office): ?array {
+    public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
         $loaner = $this->findByEmail($email);
         return $loaner ?: $this->createLoaner($name, $email, $office);
     }
@@ -105,10 +105,10 @@ class LoanersRepo {
     public function getCurrentLoanerByBookId(int $bookId): ?array {
         $row = $this->db->query()->fetchOne(
             "SELECT l.*
-            FROM book_status bs
-            JOIN loaners l ON l.id = bs.loaner_id
-            WHERE bs.book_id = ? AND (bs.active = 1 OR bs.active IS NULL)
-            ORDER BY bs.start_date DESC
+            FROM book_loaners bl
+            JOIN loaners l ON l.id = bl.loaner_id
+            WHERE bl.book_id = ? AND bl.active = 1
+            ORDER BY bl.start_date DESC
             LIMIT 1",
             [$bookId]
         );
@@ -118,13 +118,13 @@ class LoanersRepo {
 
     public function getPreviousLoanersByBookId(int $bookId): array {
         $rows = $this->db->query()->fetchAll(
-            "SELECT l.*, bs.start_date
-            FROM book_status bs
-            JOIN loaners l ON l.id = bs.loaner_id
-            WHERE bs.book_id = ?
-            AND bs.active = 0
+            "SELECT l.*, bl.start_date
+            FROM book_loaners bl
+            JOIN loaners l ON l.id = bl.loaner_id
+            WHERE bl.book_id = ?
+            AND bl.active = 0
             AND l.name IS NOT NULL
-            ORDER BY bs.start_date DESC
+            ORDER BY bl.start_date DESC
             LIMIT 5",
             [$bookId]
         );
