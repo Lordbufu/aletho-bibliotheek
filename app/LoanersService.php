@@ -22,8 +22,8 @@ class LoanersService {
         return $this->loaners->findByEmail($email);
     }
 
-    public function findOrCreatByEmail(string $name, string $email, int $office): ?array {
-        return $this->loaner->findOrCreatByEmail($name, $email, $office);
+    public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
+        return $this->loaner->findOrCreateByEmail($name, $email, $office);
     }
 
     public function deactivate(int $id): bool {
