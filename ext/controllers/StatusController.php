@@ -77,11 +77,15 @@ class StatusController {
 
     /*  Change the status of a book. */
     public function changeStatus()/*: Response */{
+        /* Authenticate the user rights */
         if (!App::getService('auth')->can('manageBooks')) {
             setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
             return App::redirect('/');
         }
 
+        // dd($_POST);
+
+        /* Sanitize and validate the form data */
         if (!$this->valS->validateStatusChangeForm($_POST)) {
             setFlash('js', 'book_id', $_POST['book_id']);
             setFlash('single', 'book_id', $_POST['book_id']);
@@ -89,23 +93,35 @@ class StatusController {
             return App::redirect('/#change-book-status-popin');
         }
 
-        $clean      = $this->valS->cleanData();
-        $bookId     = $clean['book_id'];
-        $statusId   = $clean['status_id'];
+        /* Store the cleaned data */
+        $clean = $this->valS->cleanData();
 
-        if (isset($statusId) && $statusId === 1) {
-            $result = $this->status->setBookStatus($bookId, $statusId);
-        } else {
-            $result = $this->books->changeBookStatus($bookId, $statusId, $clean['loaner_name'], $clean['loaner_email'] );
+        /* Build loaner data before sending it off */
+        if (isset($clean['loaner_name'])) {
+            $cLoaner = [
+                'loaner_name'       => $clean['loaner_name'],
+                'loaner_email'      => $clean['loaner_email'],
+                'loaner_location'   => App::getService('offices')->getOfficeIdByName($clean['loaner_location'])
+            ];
         }
+
+        /* Send of data to the correct function. */
+        if (isset($statusId) && $statusId === 1) {
+            $result = $this->status->setBookStatus($clean['book_id'], $clean['status_id']);
+        } else {
+            $result = $this->bookS->changeBookStatus($clean['book_id'], $clean['status_id'], $cLoaner);
+        }
+
+
+        dd("Result is: " . $result);
 
         if (!$result) {
             setFlash('global', 'failure', 'Book data kon niet verwerkt worden!');
-            setFlash('single', 'book_id', $bookId);
+            setFlash('single', 'book_id', $clean['book_id']);
             return App::redirect('/');
         }
 
-        setFlash('single', 'book_id', $bookId);
+        setFlash('single', 'book_id', $clean['book_id']);
         setFlash('global', 'success', 'Boekgegevens zijn bijgewerkt.');
         return App::redirect('/');
     }
