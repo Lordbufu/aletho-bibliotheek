@@ -44,8 +44,6 @@ class Response {
     public function json($data, int $statusCode = 200): self {
         $json = json_encode($data, JSON_UNESCAPED_UNICODE);
 
-        // dd($json);
-
         if ($json === false) {
             // Encoding failed — return a safe generic payload.
             $this->setStatusCode(500)
