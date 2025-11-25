@@ -7,7 +7,7 @@ CREATE TABLE `book_status` (
     `action_token` VARCHAR(255) DEFAULT NULL,
     `token_expires` TIMESTAMP DEFAULT NULL,
     `token_used` BOOLEAN NOT NULL DEFAULT FALSE,
-    `finished` BOOLEAN NOT NULL DEFAULT TRUE,
+    `finished` BOOLEAN NOT NULL DEFAULT FALSE,
     `active` TINYINT(1) NOT NULL DEFAULT TRUE,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
