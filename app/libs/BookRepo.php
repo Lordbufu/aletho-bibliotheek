@@ -37,8 +37,8 @@ class BookRepo {
      */
     public function addBook(string $title, int $office) {
         $this->db->query()->run(
-                "INSERT INTO `books` (`title`, `office_id`, `active`) VALUES (?, ?, 1)",
-                [$title, $office]
+                "INSERT INTO `books` (`title`, `home_office`, `cur_office`, `active`) VALUES (?, ?, ?, 1)",
+                [$title, $office, $office]
         );
         
         return $this->db->query()->lastInsertId();
@@ -75,7 +75,7 @@ class BookRepo {
      */
     public function updateBookOffice(int $bookId, int $officeId): bool {
         $result = $this->db->query()->run(
-            "UPDATE books SET office_id = ? WHERE id = ?",
+            "UPDATE books SET home_office = ? WHERE id = ?",
             [$officeId, $bookId]
         );
 
