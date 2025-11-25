@@ -11,6 +11,7 @@ return [
     'books' => [ 'class' => \App\BooksService::class ],
     'status' => [ 'class' => \App\StatusService::class ],
     'loaners' => [ 'class' => \App\LoanersService::class ],
+    'offices' => [ 'class' => \App\OfficesService::class ],
     'mail' => [ 'class' => \App\MailTemplateService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ],
     'notification' => [ 'class' => \App\NotificationService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ]
 ];
