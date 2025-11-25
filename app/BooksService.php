@@ -11,6 +11,7 @@ class BooksService {
     protected \App\Libs\GenreRepo   $genres;
     protected \App\Libs\WriterRepo  $writers;
     protected \App\Libs\OfficeRepo  $offices;
+    protected \App\Database         $db;
 
     /*  Construct all associated library classes, and logs it. */
     public function __construct() {
@@ -21,6 +22,7 @@ class BooksService {
             $this->genres  = new \App\Libs\GenreRepo();
             $this->writers = new \App\Libs\WriterRepo();
             $this->offices = new \App\Libs\OfficeRepo();
+            $this->db      = App::getService('database');
         } catch (\Throwable $t) {
             throw $t;
         }
@@ -56,14 +58,17 @@ class BooksService {
                 'title'  => $book['title'],
                 'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
                 'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
-                'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
+                'office' => $this->offices->getOfficeNameByOfficeId((int)$book['home_office']),
+                'curOffice' => $this->offices->getOfficeNameByOfficeId((int)$book['cur_office']),
                 'status' => $this->status->getBookStatus((int)$book['id']),
                 'dueDate' => $this->status->getBookDueDate((int)$book['id']),
                 'curLoaner' => $this->formatLoanersForDisplay($curLoanerRaw, 'Geen huidige lener'),
                 'prevLoaners' => $this->formatLoanersForDisplay($prevLoanersRaw, 'Geen vorige leners'),
-                'canEditOffice' => App::getService('auth')->canManageOffice($book['office_id'])
+                'canEditOffice' => App::getService('auth')->canManageOffice($book['home_office'])
             ];
         }
+
+        dd($out);
 
         return $out;
     }
@@ -80,7 +85,8 @@ class BooksService {
             'title'  => $book['title'],
             'writers' => $this->writers->getWriterNamesByBookId((int)$book['id']),
             'genres' => $this->genres->getGenreNamesByBookId((int)$book['id']),
-            'office' => $this->offices->getOfficeNameByOfficeId((int)$book['office_id']),
+            'office' => $this->offices->getOfficeNameByOfficeId((int)$book['home_office']),
+            'curOffice' => $this->offices->getOfficeNameByOfficeId((int)$book['cur_office']),
             'status' => $this->status->getBookStatus((int)$book['id']),
             'dueDate' => $this->status->getBookDueDate((int)$book['id']),
         ];
@@ -244,38 +250,47 @@ class BooksService {
     }
 
     /* */
-    public function changeBookStatus($bookId, $statusId, $loanerName, $loanerEmail, $loanerLoc): bool {
-        $book   = App::getService('books')->getBookById($bookId);                                               // Fetch the book in question
-        $this->db->startTransaction();                                                                          // Start DB Transaction
+    public function changeBookStatus($bookId, $statusId, $loaner): bool {
+        $statusContext  = [];
+        $book           = $this->getBookById($bookId);
+        $this->db->startTransaction();
 
         try {
-            $loaner = $this->loaners->findOrCreateByEmail($loanerName, $loanerEmail);                           // Deal with the loaner
-            $result = $this->status->setBookStatus($bookId, $statusId, null, $loaner['id'], null, false);       // Deal with the actual status
+            $result = $this->status->setBookStatus($bookId, $statusId, $loaner, $statusContext);
 
-            if (!$result) {                                                                                     // Throw exception on fail
-                throw new \RuntimeException('Status kon niet worden bijgewerkt');
-            }
+        if (!$result) {
+            error_log(sprintf(
+                "[BooksService] Failed to update status for book_id=%d, status_id=%d, loaner_id=%s at %s",
+                $bookId,
+                $statusId,
+                $loaner['id'] ?? 'null',
+                (new \DateTimeImmutable())->format('Y-m-d H:i:s')
+            ));
+
+            return false;
+        }
 
             $this->db->finishTransaction();
-        } catch (\Throwable $t) {                                                                               // Throw general uncaught exception if failed
+        } catch (\Throwable $t) {
             $this->db->cancelTransaction();
             throw $t;
         }
 
-        $context = [
-            ':book_name'    => $book['title'],
-            ':user_name'    => $loaner['name'],
-            ':user_mail'    => $loaner['email'],
-            ':user_office'  => $loaner['office_id'],
-            ':due_date'     => $book['dueDate'],
-            ':book_office'  => $book['office'],
-            // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
-            // ':action_link'  => 'https://biblioapp.nl/',
-            // ':action_label' => 'Boek Verlengen'
-        ];
+        dd('status set, now its notification time !!');
+        // $eventContext = [
+        //     ':book_name'    => $book['title'],
+        //     ':user_name'    => $loaner['name'],
+        //     ':user_mail'    => $loaner['email'],
+        //     ':user_office'  => $loaner['office_id'],
+        //     ':due_date'     => $book['dueDate'],
+        //     ':book_office'  => $book['office'],
+        //     // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
+        //     // ':action_link'  => 'https://biblioapp.nl/',
+        //     // ':action_label' => 'Boek Verlengen'
+        // ];
 
-        // Trigger notifications after commit (or via an async job)
-        $this->dispatchStatusEvents($statusId, $book, $loaner);
+        // // Trigger notifications after commit (or via an async job)
+        // $this->dispatchStatusEvents($statusId, $book, $loaner, $eventContext);
 
         return true;
     }
