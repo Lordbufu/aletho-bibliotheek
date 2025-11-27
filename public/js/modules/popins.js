@@ -54,7 +54,7 @@ const Popins = (() => {
         // Prefill status select for status-period-popin
         if (selector === '#status-period-popin') {
             Utility.request({
-                url: '/requestStatus',
+                url: '/requestPopinStatus',
                 success: function (statuses) {
                     const $select = $('#status-type');
                     $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
