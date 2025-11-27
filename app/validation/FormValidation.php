@@ -188,30 +188,33 @@ class FormValidation {
 			$this->cleanData['status_id'] = $statusId;
 		}
 
-		$email = filter_var(trim($data['loaner_email'] ?? ''), FILTER_VALIDATE_EMAIL);
-		if (!$email) {
-			$this->errors['loaner_email'] = 'Geen geldig e-mailadres!';
-		} else {
-			$this->cleanData['loaner_email'] = $email;
-		}
+		if ((int)$data['status_type'] !== 1 && (int)$data['status_type'] !== 3) {
+			$email = filter_var(trim($data['loaner_email'] ?? ''), FILTER_VALIDATE_EMAIL);
+			if (!$email) {
+				$this->errors['loaner_email'] = 'Geen geldig e-mailadres!';
+			} else {
+				$this->cleanData['loaner_email'] = $email;
+			}
 
-		$name = trim(strip_tags($data['loaner_name'] ?? ''));
-		if ($name === '') {
-			$this->errors['loaner_name'] = 'Naam mag niet leeg zijn!';
-		} else {
-			$this->cleanData['loaner_name'] = $name;
-		}
+			$name = trim(strip_tags($data['loaner_name'] ?? ''));
+			if ($name === '') {
+				$this->errors['loaner_name'] = 'Naam mag niet leeg zijn!';
+			} else {
+				$this->cleanData['loaner_name'] = $name;
+			}
 
-		$location = trim(strip_tags($data['loaner_location'] ?? ''));
-		if ($location === '') {
-			$this->errors['loaner_location'] = 'Locatie mag niet leeg zijn!';
-		} else {
-			$this->cleanData['loaner_location'] = $location;
+			$location = trim(strip_tags($data['loaner_location'] ?? ''));
+			if ($location === '') {
+				$this->errors['loaner_location'] = 'Locatie mag niet leeg zijn!';
+			} else {
+				$this->cleanData['loaner_location'] = $location;
+			}
 		}
 
 		return empty($this->errors);
 	}
 
+	/** Validate the status period form data */
 	public function validateStatusPeriod(array $data): bool {
 		$this->errors = [];
 		$this->cleanData = [];
