@@ -1,11 +1,10 @@
 <?php
 namespace App;
 
-use App\Exceptions\BootException;
-
 /*  Core application bootstrapper and service accessor. */
 class App {
-    protected static Services $container;
+    protected static Services   $container;
+    protected static Libraries  $libraries;
 
     /*  Boot the application by loading and initializing all services. */
     public static function boot(): bool {
@@ -52,6 +51,8 @@ class App {
                 }
             }
 
+            self::$libraries = new Libraries(self::$container->get('database'));
+
             return true;
         } catch (\Throwable $t) {
             throw new \RuntimeException("Service '{$name}' failed", 0, $t);
@@ -59,12 +60,21 @@ class App {
         }
     }
 
-    /*  Retrieve a service from the container. */
+    /** Retrieve a service from the container */
     public static function getService(string $name): mixed {
         return self::$container->get($name);
     }
 
-    /*  Render a view file with optional data. */
+    /** Retrieve a libraries from the container */
+    public static function getLibraries() {
+        if (self::$libraries === null) {
+            throw new \RuntimeException('Libraries not booted');
+        }
+
+        return self::$libraries;
+    }
+
+    /** Render a view file with optional data */
     public static function view(string $template, array $data = []): void {
         $baseDir = __DIR__ . '/../ext/views/';
         $file = $baseDir . $template . '.view.php';
@@ -80,7 +90,7 @@ class App {
         require $file;
     }
 
-    /*  Redirect to a given URL. */
+    /** Redirect to a given URL */
     public static function redirect(string $url): void {
         header("Location: {$url}");
         exit;
