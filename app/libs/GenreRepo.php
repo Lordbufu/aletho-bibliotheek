@@ -4,27 +4,16 @@ namespace App\Libs;
 
 use App\App;
 
-/** Repository for managing genres and their many-to-many relation with books.
- *  Design notes:
- *      - Caches genres in memory for efficiency.
- *      - Does NOT cache book_genre links globally (queries per book instead).
- *      - Provides both additive (`addBookGenres`) and replace (`updateBookGenres`) flows.
- */
+/** Repository for managing genres and their many-to-many relation with books */
 class GenreRepo {
     protected ?array        $genres = null;
     protected \App\Database $db;
 
-    public function __construct() {
-        $this->db = App::getService('database');
+    public function __construct(\App\Database $db) {
+        $this->db = $db;
     }
 
-    /** Resolve an array of genre names or IDs into valid genre IDs.
-     *      - If a name exists but is inactive, it is reactivated.
-     *      - If a name does not exist, a new genre row is inserted.
-     *      - Numeric values are treated as IDs directly.
-     *      @param array<int,string|int> $names
-     *      @return array<int,int>
-     */
+    /** Resolve an array of genre names or IDs into valid genre IDs */
     private function _getOrCreateGenreIds(array $names): array {
         if (empty($names)) return [];
 
@@ -60,21 +49,48 @@ class GenreRepo {
         return $genreIds;
     }
 
-    /** Get all genres from the `genres` table, results are cached in memory for the lifetime of this object.
-     *      @return array<int, array<string,mixed>>
-     */
+    /** Helper: Set global genres */
+    protected function setGenres(): array {
+        $query = "SELECT * FROM genres";
+        $this->genres = $this->db->query()->fetchAll($query);
+    }
+
+    protected function formatGenreForDisplay($genre): array {
+        return [
+            'id' => $genre['id'],
+            'name' => $genre['name']
+        ];
+    }
+
+    /** Get all genres from the `genres` table, results are cached in memory for the lifetime of this object */
     public function getAllGenres(): array {
         if ($this->genres === null) {
-            $this->genres = $this->db->query()->fetchAll("SELECT * FROM genres");
+            $this->setGenres();
         }
 
         return $this->genres;
     }
 
-    /** Get all genre names for a given book ID, uses a direct JOIN query for efficiency (avoids scanning all links).
-     *      @param int $bookId
-     *      @return string Comma-separated genre names.
-     */
+    /** Get genres for display */
+    public function getGenresForDisplay(): array {
+        $out = [];
+
+        if ($this->genres === null) {
+            $this->setGenres();
+        }
+
+        foreach ($this->genres as $genre) {
+            if (!$genre['active']) {
+                continue;
+            }
+
+            $out[] = $this->formatGenreForDisplay($genre);
+        }
+
+        return $out;
+    }
+
+    /** Get all genre names for a given book ID, uses a direct JOIN query for efficiency (avoids scanning all links) */
     public function getLinksByBookId(int $bookId) {
         return $this->db->query()->fetchAll(
             "SELECT genre_id FROM book_genre WHERE book_id = ?",
@@ -82,12 +98,8 @@ class GenreRepo {
         );
     }
 
-    /** Get all genre names for a given book ID.
-     *      @param int $bookId
-     *      @return string Comma-separated genre names
-     */
+    /** Get all genre names for a given book ID */
     public function getGenreNamesByBookId(int $bookId): string {
-        // More efficient: join instead of scanning all links
         $rows = $this->db->query()->fetchAll(
             "SELECT g.name 
              FROM genres g 
@@ -99,10 +111,7 @@ class GenreRepo {
         return implode(', ', array_column($rows, 'name'));
     }
 
-    /** Get genre by name to support input elements instead of select elements.
-     *      @param string $name
-     *      @return array The row associated with the name.
-     */
+    /** Get genre by name to support input elements instead of select elements */
     public function getGenreByName(string $name): ?array {
         return $this->db->query()->fetchOne(
             "SELECT * FROM `genres` WHERE `name` = ?",
@@ -110,10 +119,7 @@ class GenreRepo {
         );
     }
 
-    /** Add genres to a book without removing existing ones, only inserts missing links; does not delete.
-     *      @param array $names -> The sanitized $_POST['book_genres'] data.
-     *      @param int $bookId  -> The index value of the newly added book in the `BookRepo`.
-     */
+    /** Add genres to a book without removing existing ones, only inserts missing links; does not delete */
     public function addBookGenres(array $names, int $bookId): void {
         if (empty($names)) return;
 
@@ -135,10 +141,7 @@ class GenreRepo {
         }
     }
 
-    /** Replace the set of genres for a book with a new set, uses diffing to minimize DB churn (only deletes/insert changes)
-     *      @param int $bookId      -> The book id that needs updating.
-     *      @param array $genres    -> Array of genre names or id's.
-     */
+    /** Replace the set of genres for a book with a new set, uses diffing to minimize DB churn (only deletes/insert changes) */
     public function updateBookGenres(int $bookId, array $genres): void {
         $genreIds = $this->_getOrCreateGenreIds($genres);
         $currentIds = array_column($this->getLinksByBookId($bookId), 'genre_id');

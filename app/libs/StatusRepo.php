@@ -8,30 +8,58 @@ class StatusRepo {
     protected ?array        $statuses = null;
     protected \App\Database $db;
 
-    public function __construct() {
-        $this->db = App::getService('database');
-
-        if ($this->statuses === null) {
-            $this->getAllstatuses();
-        }
+    public function __construct(\App\Database $db) {
+        $this->db = $db;
     }
 
-    /*  Helper: calculate due date for setting the correct end_date (might get removed later) */
-    private function calculateDueDate(string $startDate, int $days): string {
+    /** Helper: calculate due date for setting the correct end_date (might get removed later) */
+    protected function calculateDueDate(string $startDate, int $days): string {
         $dt = new \DateTimeImmutable($startDate);
         return $dt->add(new \DateInterval("P{$days}D"))->format('Y-m-d');
     }
 
-    /*  Cache all statuses */
-    public function getAllStatuses(): array {
+    /** Helper: Populate global $statuses */
+    protected function setStatuses(): array {
+        $query = "SELECT * FROM status";
+        $this->statuses = $this->db->query()->fetchAll($query);
+    }
+
+    /** Helper: Insert new book_status record */
+    protected function insertBookStatus(int $bookId, int $statusId): ?int {
+        $query  = "INSERT INTO book_status (book_id, status_id, active) VALUES (?, ?, 1)";
+        $params = [$bookId, $statusId];
+
+        $stmt = $this->db->query()->run($query, $params);
+
+        if ($stmt->rowCount() === 0) {
+            return null;
+        }
+
+        return (int)$this->db->connection()->pdo()->lastInsertId();
+    }
+
+    /** Cache all statuses */
+    public function getAllStatuses($tag = null): array {
         if ($this->statuses === null) {
-            $this->statuses = $this->db->query()->fetchAll("SELECT * FROM status");
+            $this->setStatuses();
+        }
+
+        /* Filter only id & type for filling in <select> inputs */
+        if ($tag === 'idType') {
+            $filtered = array_map(function ($status) {
+                return [
+                    'id'   => $status['id'],
+                    'type' => $status['type'],
+                ];
+            }, $this->statuses);
+
+            return $filtered;
         }
 
         return $this->statuses;
     }
 
-    /*  Get a book status type for a specific book */
+    /** Get a book status type for a specific book */
     public function getBookStatus(int $bookId): ?string {
         $row = $this->db->query()->fetchOne(
             "SELECT s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1",
@@ -41,7 +69,7 @@ class StatusRepo {
         return $row['type'] ?? null;
     }
 
-    /*  Get the books status expire date */
+    /** Get the books status expire date */
     public function getBookDueDate(int $bookId): ?string {
         $row = $this->db->query()->fetchOne(
             "SELECT end_date, status_id FROM book_loaners WHERE book_id = ? AND active = 1 LIMIT 1",
@@ -74,37 +102,75 @@ class StatusRepo {
         return (new \DateTimeImmutable($row['end_date']))->format('Y-m-d');
     }
 
-    /*  Update status period settings */
+    /** Swap state on status objects */
+    public function swapStatusActiveState(int $statusId): bool {
+        $query  = "UPDATE status SET active = CASE WHEN active = 1 THEN 0 ELSE 1 END WHERE id = ?";
+        $stmt = $this->db->query()->run($query, [$statusId]);
+        return ($stmt->rowCount() > 0);
+    }
+
+    /** Disable books_status record */
+    public function disableBookStatus(int $bookId): bool {
+        $query = "UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1";
+        $stmt = $this->db->query()->run($query, [$bookId]);
+        return ($stmt->rowCount() > 0);
+    }
+
+    /** Update status period settings */
     public function updateStatusPeriod(int $statusId, ?int $periode_length, ?int $reminder_day, ?int $overdue_day): bool {
         $sql = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
         return $this->db->query()->run($sql, [$periode_length, $reminder_day, $overdue_day, $statusId]) !== false;
     }
 
-    /*  To set a book status we need (for now): */
+    /** To set a book status we need (for now): */
     public function setBookStatus(int $bookId, int $statusId, array $loaner = [], array $context = []): bool {
-        // Attempt to populate the loaner, if that data was set.
-        if (!empty($loaner)) {
-            $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE name = ?", [$loaner['loaner_name']]);
-            $status = $this->db->query()->fetchOne("SELECT periode_length FROM status WHERE id = ?",[$statusId]);
-            $startDate = (new \DateTimeImmutable())->format('Y-m-d');
-            $endDate   = $this->calculateDueDate($startDate, (int)($status['periode_length'] ?? 0));
+        dd('testing error loops');
+        /** Attempt to deactivate current status, return to caller if failed */
+        $disabled = $this->disableBookStatus($bookId);
 
+        if (!$disabled) return false;
+
+        $newStatus = $this->insertBookStatus($bookId, $statusId);
+
+        if (!$newStatus) return false;
+
+
+        // Handle loaner logic
+        if (!empty($loaner)) {
+            // Try to resolve loaner by email
+            $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
+
+            if (!$cLoaner) {
+                // Insert new loaner
+                $this->db->query()->run(
+                    "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)",
+                    [$loaner['loaner_name'], $loaner['loaner_email'], $loaner['loaner_location']]
+                );
+                $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
+            }
+
+            // Get status metadata
+            $status = $this->db->query()->fetchOne("SELECT periode_length FROM status WHERE id = ?", [$statusId]);
+            $startDate = (new \DateTimeImmutable())->format('Y-m-d');
+            $endDate = $this->calculateDueDate($startDate, (int)($status['periode_length'] ?? 0));
+
+            // Insert loaner record
             $this->db->query()->run(
                 "INSERT INTO book_loaners (book_id, loaner_id, status_id, start_date, end_date, active)
                 VALUES (?, ?, ?, ?, ?, 1)",
                 [$bookId, $cLoaner['id'], $statusId, $startDate, $endDate]
             );
+        } else {
+            // If status is 'Aanwezig', deactivate any active loaner rows
+            $statusType = $this->db->query()->fetchOne("SELECT type FROM status WHERE id = ?", [$statusId]);
+            if ($statusType['type'] === 'Aanwezig') {
+                $this->db->query()->run(
+                    "UPDATE book_loaners SET active = 0 WHERE book_id = ? AND active = 1",
+                    [$bookId]
+                );
+            }
         }
 
-        // Id need to evaluate this, but for now im setting old status info for the same id to inactive.
-        $this->db->query()->run("UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1", [$bookId]);
-
-        // If no context is provided, that the easy update route.
-        if (empty($context)) {
-            $sqlInsert = "INSERT INTO book_status (book_id, status_id, active) VALUES (?, ?, 1)";
-            $result = $this->db->query()->run($sqlInsert, [$bookId, $statusId]);
-        }
-
-        return (bool)$result;
+        return true;
     }
 }

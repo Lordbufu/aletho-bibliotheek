@@ -5,22 +5,13 @@ namespace App\Libs;
 use App\App;
 
 
-/** Repository for managing offices and their relations to books and users.
- *  Design notes:
- *      - Caches offices in memory for efficiency.
- *      - Does NOT cache book_office or user_office links globally (queries per entity instead).
- *      - Provides both additive (`addBookOffices`) and replace (`updateBookOffices`) flows.
- */
+/** Repository for managing offices and their relations to books and users */
 class OfficeRepo {
     protected ?array        $offices = null;
     protected \App\Database $db;
 
-    public function __construct() {
-        $this->db = App::getService('database');
-        
-        if ($this->offices === null) {
-            $this->getAllOffices();
-        }
+    public function __construct(\App\Database $db) {
+        $this->db = $db;
     }
 
     /** Resolve office names/IDs into valid office IDs, creating if needed. */

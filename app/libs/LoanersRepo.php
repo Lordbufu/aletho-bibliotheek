@@ -1,21 +1,13 @@
 <?php
-/*  All default loaners table data:
- *      - [id]          = default index
- *      - [name]        = loaner name (not user name)
- *      - [email]       = loaners private email
- *      - [office_id]   = loaners office index
- *      - [active]      = loaner still active yes/no
- */
-
 namespace App\Libs;
 
 use App\App;
 
 class LoanersRepo {
-    protected \App\Database $db;
+    protected \App\Database         $db;
 
-    public function __construct() {
-        $this->db = App::getService('database');
+    public function __construct(\App\Database $db) {
+        $this->db = $db;
     }
 
     private function formatLoaner(array $row): array {
@@ -51,6 +43,17 @@ class LoanersRepo {
         );
         
         return $row ? $this->formatLoaner($row) : null;
+    }
+
+    public function findByName(string $name): ?array {
+        $search = "%$name%";
+
+        $rows = $this->db->query()->fetchAll(
+            "SELECT * FROM loaners WHERE name LIKE ? AND active = 1",
+            [$search]
+        );
+
+        return $rows ? array_map(fn($row) => $this->formatLoaner($row), $rows) : null;
     }
 
     public function findByEmail(string $email): ?array {

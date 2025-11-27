@@ -4,28 +4,17 @@ namespace App\Libs;
 
 use App\App;
 
-/** Repository for managing writers and their many-to-many relation with books.
- *  Design notes:
- *      - Caches writers in memory for efficiency.
- *      - Does NOT cache book_writers links globally (queries per book instead).
- *      - Provides both additive (`addBookWriters`) and replace (`updateBookWriters`) flows.
- */
+/** Repository for managing writers and their many-to-many relation with books */
 class WriterRepo {
     protected ?array        $writers = null;
     protected \App\Database $db;
 
-    public function __construct() {
-        $this->db = App::getService('database');
+    public function __construct(\App\Database $db) {
+        $this->db = $db;
     }
 
-    /** Helper: resolve writer names/IDs into valid writer IDs. 
-     *      - If a name exists but is inactive, it is reactivated.
-     *      - If a name does not exist, a new writer row is inserted.
-     *      - Numeric values are treated as IDs directly.
-     *      @param array<int,string|int> $names
-     *      @return array<int,int>
-     */
-    private function _getOrCreateWriterIds(array $names): array {
+    /** Helper: resolve writer names/IDs into valid writer IDs */
+    protected function _getOrCreateWriterIds(array $names): array {
         if (empty($names)) return [];
 
         $this->getAllWriters(); // ensure cache loaded
@@ -60,20 +49,49 @@ class WriterRepo {
         return $writerIds;
     }
 
-    /** Get all writers from the `writers` table, results are cached in memory for the lifetime of this object.
-     *      @return array<int, array<string,mixed>>
-     */
+    /** Helper: Set global $writers */
+    protected function setWriters() {
+        $query = "SELECT * FROM writers";
+        $this->writers = $this->db->query()->fetchAll($query);
+    }
+
+    /** Format writers for display */
+    protected function formatWriterForDisplay($writer): array {
+        return [
+            'id' => $writer['id'],
+            'name' => $writer['name']
+        ];
+    }
+
+    /** Get all writers data from the 'writers' table */
     public function getAllWriters(): array {
         if ($this->writers === null) {
-            $this->writers = $this->db->query()->fetchAll("SELECT * FROM writers");
+            $this->setWriters();
         }
+
         return $this->writers;
     }
 
-    /** Get all writer names for a given book ID, uses a direct JOIN query for efficiency.
-     *      @param int $bookId
-     *      @return string Comma-separated writer names
-     */
+    /** Get all writer names */
+    public function getWritersForDisplay(): array {
+        $out = [];
+
+        if ($this->writers === null) {
+            $this->setWriters();
+        }
+
+        foreach ($this->writers as $writer) {
+            if (!$writer['active']) {
+                continue;
+            }
+
+            $out[] = $this->formatWriterForDisplay($writer);
+        }
+
+        return $out;
+    }
+
+    /** Get all writer names for a given book ID, uses a direct JOIN query for efficiency */
     public function getWriterNamesByBookId(int $bookId): string {
         $rows = $this->db->query()->fetchAll(
             "SELECT w.name
@@ -85,10 +103,7 @@ class WriterRepo {
         return implode(', ', array_column($rows, 'name'));
     }
 
-    /** Get writer link rows for a given book.
-     *      @param int $bookId
-     *      @return array<int, array{writer_id:int}>
-     */
+    /** Get writer link rows for a given book */
     public function getLinksByBookId(int $bookId): array {
         return $this->db->query()->fetchAll(
             "SELECT writer_id FROM book_writers WHERE book_id = ?",
@@ -96,10 +111,7 @@ class WriterRepo {
         );
     }
 
-    /** Add writers to a book without removing existing ones, only inserts missing links; does not delete.
-     *      @param array<int,string|int> $names
-     *      @param int $bookId
-     */
+    /** Add writers to a book without removing existing ones, only inserts missing links; does not delete */
     public function addBookWriters(array $names, int $bookId): void {
         if (empty($names)) return;
 
@@ -121,10 +133,7 @@ class WriterRepo {
         }
     }
 
-    /** Replace the set of writers for a book with a new set, uses diffing to minimize DB churn (only deletes/inserts changes).
-     *      @param int $bookId
-     *      @param array<int,string|int> $writers
-     */
+    /** Replace the set of writers for a book with a new set, uses diffing to minimize DB churn (only deletes/inserts changes) */
     public function updateBookWriters(int $bookId, array $writers): void {
         $writerIds = $this->_getOrCreateWriterIds($writers);
         $currentIds = array_column($this->getLinksByBookId($bookId), 'writer_id');
