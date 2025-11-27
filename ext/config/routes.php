@@ -17,6 +17,7 @@ return [
     ['PATCH',  '/setStatusPeriod',      'StatusController@setStatusPeriod'],
     ['PATCH',  '/changeStatus',         'StatusController@changeStatus'],
     ['GET',    '/requestStatus',        'StatusController@requestStatus'],
+    ['GET',    '/requestPopinStatus',   'StatusController@requestPopStatus'],
     ['GET',    '/requestBookStatus',    'StatusController@requestBookStatus'],
     /*  App loaner related routes */
     ['GET',    '/requestLoaners',       'LoanerController@requestLoaners'],
