@@ -3,13 +3,13 @@ namespace Ext\Controllers;
 
 use App\App;
 
-/*  Handles books related user logic. */
+/** Handles books related user logic */
 class BookController {
-    protected \App\BooksService         $bookS;
-    protected \App\OfficesService       $offices;
-    protected \App\ValidationService    $valS;
+    protected \App\Service\BooksService         $bookS;
+    protected \App\Service\OfficesService       $offices;
+    protected \App\Service\ValidationService    $valS;
 
-    /*  Construct App services as default local service. */
+    /** Construct App services as default local service */
     public function __construct() {
         try {
             $this->bookS    = App::getService('books');
@@ -20,7 +20,7 @@ class BookController {
         }
     }
 
-    /*  Get and return all potentialy known book writers/genres/offices, for form autocomplete features. */
+    /** Get and return all potentialy known book writers/genres/offices, for form autocomplete features */
     public function bookdata() {
         $type = $_GET['data'] ?? '';
 
@@ -39,7 +39,7 @@ class BookController {
         exit;
     }
 
-    /*  Filter and process book add form data, and call the add functions in the BooksService. */
+    /** Filter and process book add form data, and call the add functions in the BooksService */
     public function add() {
         $hasError   = false;
         $newData    = [];
@@ -85,7 +85,7 @@ class BookController {
         return App::redirect('/#add-book-popin');
     }
 
-    /*  Filter and process book edit form data, and call the update function in the BooksService. */
+    /** Filter and process book edit form data, and call the update function in the BooksService */
     public function edit() {
         $hasError   = false;
         $newData    = [];
@@ -137,7 +137,7 @@ class BookController {
         return App::redirect('/');
     }
 
-    /* Authenticate and filter data, then set book to inactive. */
+    /** Authenticate and filter data, then set book to inactive */
     public function delete() {
         if (!App::getService('auth')->can('manageBooks')) {
             setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
@@ -150,7 +150,7 @@ class BookController {
         }
 
         $bookId = (int) $_POST['book_id'];
-        $result = $this->bookS->disableBook($bookId);
+        $result = $this->bookS->swapActiveState($bookId);
 
         if (!$result) {
             setFlash('global', 'failure', 'Boek kon niet worden verwijderd!');

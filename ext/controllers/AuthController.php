@@ -3,22 +3,22 @@ namespace Ext\Controllers;
 
 use App\App;
 
-/*  Handles authentication-related HTTP requests. */
+/** Handles authentication-related HTTP requests. */
 class AuthController {
-    protected \App\Auth                         $auth;
-    protected \App\Validation\FormValidation    $validator;
+    protected \App\Auth                 $auth;
+    protected \App\ValidationService    $validator;
 
-    /*  Construct Auth as default local service. */
+    /** Construct Auth as default local service. */
     public function __construct() {
         try {
-            $this->auth         = new \App\Auth();
-            $this->validator    = App::getService('val')->formVal();
+            $this->auth         = App::getService('auth');
+            $this->validator    = App::getService('val');
         } catch(\Throwable $t) {
             throw $t;
         }
     }
 
-    /*  Show the login form. */
+    /** Show the login form. */
     public function showForm() {
         /*  Basically a session timeout protection, going back to the landingpage route. */
         if (!isset($_SESSION['user'])) {
@@ -28,7 +28,7 @@ class AuthController {
         return App::view('main');
     }
 
-    /*  Handle login submission. */
+    /** Handle login submission. */
     public function authenticate() {
         if (!$this->validator->validateUserLogin($_POST)) {
             setFlash('inline', 'credentials', 'Vul zowel gebruikersnaam als wachtwoord in.');
@@ -47,7 +47,7 @@ class AuthController {
         return App::redirect('/');
     }
 
-    /*  Handle logout. */
+    /** Handle logout. */
     public function logout() {
         $this->auth->logout();
 
@@ -58,7 +58,7 @@ class AuthController {
         return App::redirect('/');
     }
 
-    /*  Handle all password resets. */
+    /** Handle all password resets. */
     public function resetPassword() {
         $isGlobal = ($_SESSION['user']['role'] ?? '') === 'Gadmin';
 

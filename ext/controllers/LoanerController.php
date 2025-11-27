@@ -4,12 +4,12 @@ namespace Ext\Controllers;
 use App\App;
 
 class LoanerController {
-    protected \App\BooksService         $bookS;
-    protected \App\LoanersService       $loaners;
-    protected \App\OfficesService       $offices;
-    protected \App\ValidationService    $valS;
+    protected \App\Service\BooksService         $bookS;
+    protected \App\Service\LoanersService       $loaners;
+    protected \App\Service\OfficesService       $offices;
+    protected \App\Service\ValidationService    $valS;
 
-    /*  Construct App services as default local service. */
+    /** Construct App services as default local service. */
     public function __construct() {
         try {
             $this->bookS    = App::getService('books');
@@ -21,7 +21,7 @@ class LoanerController {
         }
     }
 
-    /*  Handle AJAX request for loaners matching query. */
+    /** Handle AJAX request for loaners matching query. */
     public function requestLoaners() {
         $query = trim($_GET['query'] ?? '');
         header('Content-Type: application/json; charset=utf-8');
@@ -53,7 +53,7 @@ class LoanerController {
         exit;
     }
 
-    /*  Handle AJAX request for loaner of a specific book. */
+    /** Handle AJAX request for loaner of a specific book. */
     public function requestLoanerForBook() {
         $bookId = isset($_GET['book_id']) ? (int)$_GET['book_id'] : 0;
         $loaner = $this->loaners->getCurrentLoanerByBookId($bookId);

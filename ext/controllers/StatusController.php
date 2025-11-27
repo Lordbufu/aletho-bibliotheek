@@ -4,9 +4,9 @@ namespace Ext\Controllers;
 use App\App;
 
 class StatusController {
-    protected \App\BooksService         $bookS;
-    protected \App\StatusService        $status;
-    protected \App\ValidationService    $valS;
+    protected \App\Service\BooksService         $bookS;
+    protected \App\Service\StatusService        $status;
+    protected \App\Service\ValidationService    $valS;
 
     /*  Construct App services as default local service. */
     public function __construct() {
@@ -21,6 +21,12 @@ class StatusController {
 
     /*  Return all book statuses as JSON. */
     public function requestStatus() {
+        $statuses = $this->status->getAllStatuses('idType');
+        header('Content-Type: application/json');
+        echo json_encode($statuses);
+    }
+
+    public function requestPopStatus() {
         $statuses = $this->status->getAllStatuses();
         header('Content-Type: application/json');
         echo json_encode($statuses);
@@ -83,8 +89,6 @@ class StatusController {
             return App::redirect('/');
         }
 
-        // dd($_POST);
-
         /* Sanitize and validate the form data */
         if (!$this->valS->validateStatusChangeForm($_POST)) {
             setFlash('js', 'book_id', $_POST['book_id']);
@@ -96,8 +100,9 @@ class StatusController {
         /* Store the cleaned data */
         $clean = $this->valS->cleanData();
 
-        /* Build loaner data before sending it off */
-        if (isset($clean['loaner_name'])) {
+        /* Build potential loaner data before attemptin a status change */
+        $cLoaner = [];
+        if (!empty($clean['loaner_name'])) {
             $cLoaner = [
                 'loaner_name'       => $clean['loaner_name'],
                 'loaner_email'      => $clean['loaner_email'],
@@ -105,19 +110,15 @@ class StatusController {
             ];
         }
 
-        /* Send of data to the correct function. */
-        if (isset($statusId) && $statusId === 1) {
-            $result = $this->status->setBookStatus($clean['book_id'], $clean['status_id']);
-        } else {
-            $result = $this->bookS->changeBookStatus($clean['book_id'], $clean['status_id'], $cLoaner);
-        }
-
+        /* Attempt the status change */
+        $result = $this->bookS->changeBookStatus($clean['book_id'], $clean['status_id'], $cLoaner);
 
         dd("Result is: " . $result);
 
+        /* Evaluate the result, and act acordingly */
         if (!$result) {
-            setFlash('global', 'failure', 'Book data kon niet verwerkt worden!');
             setFlash('single', 'book_id', $clean['book_id']);
+            setFlash('global', 'failure', 'Book data kon niet verwerkt worden!');
             return App::redirect('/');
         }
 
