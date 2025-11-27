@@ -6,12 +6,12 @@ return [
     'database' => [ 'class'  => \App\Database::class, 'config' => BASE_PATH . '/ext/config/database.php' ],
     'logger' => [ 'class'  => \App\Logger::class ],
     'auth' => [ 'class'  => \App\Auth::class ],
-    'val' => [ 'class'  => \App\ValidationService::class ],
-    // Library specific services
-    'books' => [ 'class' => \App\BooksService::class ],
-    'status' => [ 'class' => \App\StatusService::class ],
-    'loaners' => [ 'class' => \App\LoanersService::class ],
-    'offices' => [ 'class' => \App\OfficesService::class ],
-    'mail' => [ 'class' => \App\MailTemplateService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ],
-    'notification' => [ 'class' => \App\NotificationService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ]
+    // View & Flow Specific Services
+    'books' => [ 'class' => \App\Service\BooksService::class ],
+    'loaners' => [ 'class' => \App\Service\LoanersService::class ],
+    'mail' => [ 'class' => \App\Service\MailTemplateService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ],
+    'notification' => [ 'class' => \App\Service\NotificationService::class, 'config' => BASE_PATH . '/ext/config/mail.php' ],
+    'offices' => [ 'class' => \App\Service\OfficesService::class ],
+    'status' => [ 'class' => \App\Service\StatusService::class ],
+    'val' => [ 'class'  => \App\Service\ValidationService::class ],
 ];
