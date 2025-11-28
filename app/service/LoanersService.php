@@ -4,13 +4,13 @@ namespace App\Service;
 use App\App;
 
 class LoanersService {
-    protected \App\Libraries    $libs;
-    protected \App\Database     $db;
+    protected \App\Libs\LoanerRepo  $loaners;
+    protected \App\Database         $db;
 
     public function __construct() {
         try {
-            $this->libs = App::getLibraries();
-            $this->db   = App::getService('database');
+            $this->loaners  = App::getLibrary('loaner');
+            $this->db       = App::getService('database');
         } catch (\Throwable $t) {
             throw $t;
         }
@@ -20,16 +20,16 @@ class LoanersService {
         return $this->loaners->findById($id);
     }
 
-    public function findByName(string $name): ?array {
-        return $this->loaners->findByName($name);
+    public function getLoanersForDisplay(): ?array {
+        return $this->loaners->getLoanersForDisplay();
     }
 
-    public function findByEmail(string $email): ?array {
-        return $this->loaners->findByEmail($email);
+    public function getLoanersForLogic(?int $loanerId = null): array {
+        return $this->loaners->getLoanersForLogic($loanerId);
     }
 
     public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
-        return $this->loaner->findOrCreateByEmail($name, $email, $office);
+        return $this->loaners->findOrCreateByEmail($name, $email, $office);
     }
 
     public function deactivate(int $id): bool {
@@ -44,11 +44,15 @@ class LoanersService {
         return $this->loaners->allActive();
     }
 
-    public function getCurrentLoanerByBookId(int $bookId): ?array {
-        return $this->loaners->getCurrentLoanerByBookId($bookId);
+    public function getCurrentLoanerNames(int $bookId): array {
+        return $this->loaners->getLoanersByBookId($bookId, 'current', 'Geen huidige lener', 1, true);
     }
 
-    public function getPreviousLoanersByBookId(int $bookId): array {
-        return $this->loaners->getPreviousLoanersByBookId($bookId);
+    public function getPreviousLoanerNames(int $bookId): array {
+        return $this->loaners->getLoanersByBookId($bookId, 'previous', 'Geen vorige leners', 5, true);
+    }
+
+    public function getFullLoanerHistory(int $bookId): array {
+        return $this->loaners->getLoanersByBookId($bookId, 'all', '', null, false);
     }
 }

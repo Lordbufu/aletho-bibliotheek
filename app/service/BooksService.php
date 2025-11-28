@@ -18,9 +18,6 @@ class BooksService {
 
     /** Helper: Format book data for display */
     protected function formatBookForDisplay(array $book): array {
-        $curLoanerRaw  = $this->libs->loaners()->getCurrentLoanerByBookId((int)$book['id']);
-        $prevLoanersRaw = $this->libs->loaners()->getPreviousLoanersByBookId((int)$book['id']);
-
         $out = [
             'id'            => $book['id'],
             'title'         => $book['title'],
@@ -30,23 +27,12 @@ class BooksService {
             'curOffice'     => $this->libs->offices()->getOfficeNameByOfficeId((int)$book['cur_office']),
             'status'        => $this->libs->statuses()->getBookStatus((int)$book['id']),
             'dueDate'       => $this->libs->statuses()->getBookDueDate((int)$book['id']),
-            'curLoaner'     => $this->formatLoanersForDisplay($curLoanerRaw, 'Geen huidige lener'),
-            'prevLoaners'   => $this->formatLoanersForDisplay($prevLoanersRaw, 'Geen vorige leners'),
+            'curLoaner'     => $this->libs->loaners()->getLoanersByBookId((int)$book['id'], 'current', 'Geen huidige lener', 1, true),
+            'prevLoaners'   => $this->libs->loaners()->getLoanersByBookId((int)$book['id'], 'previous', 'Geen vorige leners', 5, true),
             'canEditOffice' => App::getService('auth')->canManageOffice($book['home_office']),
         ];
 
         return $out;
-    }
-
-    /** Helper: Format loaner data for display */
-    protected function formatLoanersForDisplay(?array $loanersRaw, string $fallback = 'Geen leners'): array {
-        if (empty($loanersRaw)) {
-            return [$fallback];
-        }
-
-        $loaners = isset($loanersRaw[0]) ? $loanersRaw : [$loanersRaw];
-
-        return array_map(fn($loaner) => $loaner['name'], $loaners);
     }
 
     /** Get all books as an array, processed and formatted for views */
