@@ -18,13 +18,13 @@ class StatusRepo {
         return $dt->add(new \DateInterval("P{$days}D"))->format('Y-m-d');
     }
 
-    /** Helper: Populate global $statuses */
+    /** Helper: Cache global $statuses */
     protected function setStatuses(): array {
         $query = "SELECT * FROM status";
         $this->statuses = $this->db->query()->fetchAll($query);
     }
 
-    /** Helper: Insert new book_status record */
+    /** Helper: Insert new `book_status` record */
     protected function insertBookStatus(int $bookId, int $statusId): ?int {
         $query  = "INSERT INTO book_status (book_id, status_id, active) VALUES (?, ?, 1)";
         $params = [$bookId, $statusId];
@@ -38,7 +38,7 @@ class StatusRepo {
         return (int)$this->db->connection()->pdo()->lastInsertId();
     }
 
-    /** Cache all statuses */
+    /** Reqeuest cached $statuses, formated with only id and type. */
     public function getAllStatuses($tag = null): array {
         if ($this->statuses === null) {
             $this->setStatuses();
@@ -61,11 +61,8 @@ class StatusRepo {
 
     /** Get a book status type for a specific book */
     public function getBookStatus(int $bookId): ?string {
-        $row = $this->db->query()->fetchOne(
-            "SELECT s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1",
-            [$bookId]
-        );
-
+        $query = "SELECT s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1";
+        $row = $this->db->query()->fetchOne($query,[$bookId]);
         return $row['type'] ?? null;
     }
 
@@ -118,8 +115,9 @@ class StatusRepo {
 
     /** Update status period settings */
     public function updateStatusPeriod(int $statusId, ?int $periode_length, ?int $reminder_day, ?int $overdue_day): bool {
-        $sql = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
-        return $this->db->query()->run($sql, [$periode_length, $reminder_day, $overdue_day, $statusId]) !== false;
+        $query  = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
+        $params = [$periode_length, $reminder_day, $overdue_day, $statusId];
+        return $this->db->query()->run($query, $params) !== false;
     }
 
     /** To set a book status we need (for now): */
@@ -130,6 +128,7 @@ class StatusRepo {
 
         if (!$disabled) return false;
 
+        /** Attempt to insert the new `book_status` record, return to caller if failed */
         $newStatus = $this->insertBookStatus($bookId, $statusId);
 
         if (!$newStatus) return false;
@@ -137,17 +136,12 @@ class StatusRepo {
 
         // Handle loaner logic
         if (!empty($loaner)) {
-            // Try to resolve loaner by email
-            $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
-
-            if (!$cLoaner) {
-                // Insert new loaner
-                $this->db->query()->run(
-                    "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)",
-                    [$loaner['loaner_name'], $loaner['loaner_email'], $loaner['loaner_location']]
-                );
-                $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
-            }
+            // Resolve or create loaner based on e-mail
+            $cLoaner = $this->loanerRepo->findOrCreateByEmail(
+                $loaner['loaner_name'],
+                $loaner['loaner_email'],
+                (int)$loaner['loaner_location']
+            );
 
             // Get status metadata
             $status = $this->db->query()->fetchOne("SELECT periode_length FROM status WHERE id = ?", [$statusId]);
@@ -174,3 +168,17 @@ class StatusRepo {
         return true;
     }
 }
+
+            // // Try to resolve loaner by email
+            // $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
+
+
+            // if (!$cLoaner) {
+            //     // Insert new loaner
+            //     $this->db->query()->run(
+            //         "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)",
+            //         [$loaner['loaner_name'], $loaner['loaner_email'], $loaner['loaner_location']]
+            //     );
+
+            //     $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
+            // }

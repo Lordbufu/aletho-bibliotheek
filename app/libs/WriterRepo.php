@@ -93,22 +93,16 @@ class WriterRepo {
 
     /** Get all writer names for a given book ID, uses a direct JOIN query for efficiency */
     public function getWriterNamesByBookId(int $bookId): string {
-        $rows = $this->db->query()->fetchAll(
-            "SELECT w.name
-             FROM writers w
-             JOIN book_writers bw ON w.id = bw.writer_id
-             WHERE bw.book_id = ?",
-            [$bookId]
-        );
+        $query = "SELECT w.name FROM writers w JOIN book_writers bw ON w.id = bw.writer_id WHERE bw.book_id = ?";
+        $rows  = $this->db->query()->fetchAll($query, [$bookId]);
         return implode(', ', array_column($rows, 'name'));
     }
 
     /** Get writer link rows for a given book */
     public function getLinksByBookId(int $bookId): array {
-        return $this->db->query()->fetchAll(
-            "SELECT writer_id FROM book_writers WHERE book_id = ?",
-            [$bookId]
-        );
+        $query  = "SELECT writer_id FROM book_writers WHERE book_id = ?";
+        $result = $this->db->query()->fetchAll($query,[$bookId]);
+        return $result;
     }
 
     /** Add writers to a book without removing existing ones, only inserts missing links; does not delete */
