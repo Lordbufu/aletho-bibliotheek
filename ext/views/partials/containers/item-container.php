@@ -191,7 +191,7 @@
 
             <?php if($canEdit): // Previous loaners section (W.I.P.) ?>
                 <div class="input-group input-group-sm" data-context="details">
-                    <span class="aletho-labels extra-popin-style">Vorige Leners</span>
+                    <span class="aletho-labels extra-popin-style">Huidige / Vorige Leners</span>
                     <div type="button" class="extra-fake-button"></div>
                 </div>
 
