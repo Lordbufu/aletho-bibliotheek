@@ -65,13 +65,22 @@ class App {
         return self::$container->get($name);
     }
 
-    /** Retrieve a libraries from the container */
+    /** Retrieve all libraries from the container */
     public static function getLibraries() {
         if (self::$libraries === null) {
             throw new \RuntimeException('Libraries not booted');
         }
 
         return self::$libraries;
+    }
+
+    /** Retrieve a specific library from the container */
+    public static function getLibrary(string $name): object {
+        if (self::$libraries === null) {
+            throw new \RuntimeException('Libraries not booted');
+        }
+
+        return self::$libraries->get($name);
     }
 
     /** Render a view file with optional data */
