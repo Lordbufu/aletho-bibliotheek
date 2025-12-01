@@ -158,25 +158,61 @@ class BooksService {
         }
     }
 
-    /** Change all book status related data, and notify user/admin when required */
+    /** API: Change all book status related data, and notify user/admin when required */
     public function changeBookStatus(int $bookId, int $statusId, array $loaner = []): bool {
-        $statusContext  = [];
         $this->db->startTransaction();
 
-        // dd("changeBookStatus function rework ongoing!");
         try {
-            $result = $this->libs->statuses()->setBookStatus($bookId, $statusId, $loaner, $statusContext);
-
-            dd($result);
-            if (!$result) {
-                error_log(sprintf(
-                    "[BooksService] Failed to update status for book_id=%d, status_id=%d at %s",
-                    $bookId,
-                    $statusId,
-                    (new \DateTimeImmutable())->format('Y-m-d H:i:s')
-                ));
+            // 1) Update status in `books` table
+            $statusResult = $this->libs->statuses()->setBookStatus($bookId, $statusId);
+            if (!$statusResult) {
+                error_log("[BooksService] Failed to update status for book_id={$bookId}, status_id={$statusId}");
                 $this->db->cancelTransaction();
                 return false;
+            }
+
+            // 2) Loaner flow
+            if (!empty($loaner) && !empty($loaner['loaner_email'])) {
+                $loanerName   = $loaner['loaner_name'] ?? '';
+                $loanerEmail  = $loaner['loaner_email'];
+                $loanerOffice = (int)($loaner['loaner_location'] ?? 0);
+
+                // Resolve or create loaner
+                $cLoaner = $this->libs->loaners()->findOrCreateByEmail($loanerName, $loanerEmail, $loanerOffice);
+                if (!$cLoaner || empty($cLoaner['id'])) {
+                    error_log("[BooksService] Could not resolve/create loaner for email={$loanerEmail}");
+                    $this->db->cancelTransaction();
+                    return false;
+                }
+
+                // Get status metadata (periode_length) from StatusRepo or DB
+                $statusMeta = $this->libs->statuses()->getStatusById($statusId);
+                $periodeLength = (int)($statusMeta['periode_length'] ?? 0);
+
+                $startDate = (new \DateTimeImmutable())->format('Y-m-d');
+                $endDate = calculateDueDate($startDate, $periodeLength);
+
+                // Create book_loaners row
+                $created = $this->libs->loaners()->createBookLoaner($bookId, (int)$cLoaner['id'], $statusId, $startDate, $endDate);
+
+                if (!$created) {
+                    error_log("[BooksService] Failed to create book_loaners for book_id={$bookId} loaner_id={$cLoaner['id']}");
+                    $this->db->cancelTransaction();
+                    return false;
+                }
+            } else {
+                // No loaner provided: if status type is 'Aanwezig', deactivate active book_loaners
+                $statusMeta = $this->libs->statuses()->getStatusById($statusId);
+                $statusType = $statusMeta['type'] ?? null;
+
+                if ($statusType === 'Aanwezig') {
+                    $ok = $this->libs->loaners()->deactivateActiveBookLoaners($bookId);
+                    if ($ok === false) {
+                        error_log("[BooksService] Failed to deactivate book_loaners for book_id={$bookId}");
+                        $this->db->cancelTransaction();
+                        return false;
+                    }
+                }
             }
 
             $this->db->finishTransaction();
@@ -185,7 +221,35 @@ class BooksService {
             throw $t;
         }
 
+        App::getService('notification')->dispatchStatusEvents($statusId, $this->getBookById($bookId), $loaner);
         dd('Status set, now its notification time !!');
+        // $statusContext  = [];
+        // $eventContext = [
+        //     ':book_name'    => $book['title'],
+        //     ':user_name'    => $loaner['name'],
+        //     ':user_mail'    => $loaner['email'],
+        //     ':user_office'  => $loaner['office_id'],
+        //     ':due_date'     => $book['dueDate'],
+        //     ':book_office'  => $book['office'],
+        //     // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
+        //     // ':action_link'  => 'https://biblioapp.nl/',
+        //     // ':action_label' => 'Boek Verlengen'
+        // ];
+
+        // $context = [
+        //     ':book_name'    => $book['title'],
+        //     ':user_name'    => $loaner['name'],
+        //     ':user_mail'    => $loaner['email'],
+        //     ':user_office'  => $loaner['office_id'],
+        //     ':due_date'     => $book['dueDate'],
+        //     ':book_office'  => $book['office'],
+        //     // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
+        //     // ':action_link'  => 'https://biblioapp.nl/',
+        //     // ':action_label' => 'Boek Verlengen'
+        // ];
+
+        // // Trigger notifications after commit (or via an async job)
+        // $this->dispatchStatusEvents($statusId, $book, $loaner, $eventContext);
 
         return true;
     }
@@ -201,23 +265,3 @@ class BooksService {
         return $this->libs->genres()->getGenresForDisplay();
     }
 }
-
-    // $eventContext = [
-    //     ':book_name'    => $book['title'],
-    //     ':user_name'    => $loaner['name'],
-    //     ':user_mail'    => $loaner['email'],
-    //     ':user_office'  => $loaner['office_id'],
-    //     ':due_date'     => $book['dueDate'],
-    //     ':book_office'  => $book['office'],
-    //     // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
-    //     // ':action_link'  => 'https://biblioapp.nl/',
-    //     // ':action_label' => 'Boek Verlengen'
-    // ];
-
-    // // Trigger notifications after commit (or via an async job)
-    // $this->dispatchStatusEvents($statusId, $book, $loaner, $eventContext);
-
-    // /*  Disabled book by id. */
-    // public function disableBook(int $bookId): bool {
-    //     return $this->books->disableBook($bookId);
-    // }
