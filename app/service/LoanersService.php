@@ -20,6 +20,14 @@ class LoanersService {
         return $this->loaners->findById($id);
     }
 
+    public function findByName(string $partial): array {
+        return $this->loaners->findByName($partial);
+    }
+
+    public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
+        return $this->loaners->findOrCreateByEmail($name, $email, $office);
+    }
+
     public function getLoanersForDisplay(): ?array {
         return $this->loaners->getLoanersForDisplay();
     }
@@ -28,12 +36,16 @@ class LoanersService {
         return $this->loaners->getLoanersForLogic($loanerId);
     }
 
-    public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
-        return $this->loaners->findOrCreateByEmail($name, $email, $office);
+    public function createBookLoaner(int $bookId, int $loanerId, int $statusId, string $startDate, ?string $endDate): bool {
+        return $this->loaners->createBookLoaner($bookId, $loanerId, $statusId, $startDate, $endDate);
     }
 
-    public function deactivate(int $id): bool {
-        return $this->loaners->deactivate($id);
+    public function deactivateLoaner(int $id): bool {
+        return $this->loaners->deactivateLoaner($id);
+    }
+
+    public function deactivateActiveBookLoaners(int $bookId): bool {
+        return $this->loaners->deactivateActiveBookLoaners($bookId);
     }
 
     public function update(int $id, array $fields): bool {
