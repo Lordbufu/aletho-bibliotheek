@@ -16,10 +16,6 @@ class OfficesService {
         }
     }
 
-    public function getAllOffices(): array {
-        return $this->libs->offices()->getAllOffices();
-    }
-
     public function getOfficeIdByName(string $name): int {
         return $this->libs->offices()->getOfficeIdByName($name);
     }
