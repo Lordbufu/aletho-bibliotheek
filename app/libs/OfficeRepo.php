@@ -14,11 +14,21 @@ class OfficeRepo {
         $this->db = $db;
     }
 
-    /** Resolve office names/IDs into valid office IDs, creating if needed. */
+    /** Helper: Cache all offices */
+    protected function getAllOffices(): void {
+        $query = "SELECT * FROM offices";
+        $this->offices = $this->db->query()->fetchAll($query);
+        return;
+    }
+
+    /** Helper: Resolve office names/IDs into valid office IDs, creating if needed. */
     private function _getOrCreateOfficeIds(array $names): array {
         if (empty($names)) return [];
 
-        $this->getAllOffices();
+        if ($this->offices === null) {
+            $this->getAllOffices();
+        }
+
         $nameToId = array_column($this->offices, null, 'name');
 
         $ids = [];
@@ -31,7 +41,8 @@ class OfficeRepo {
             if (isset($nameToId[$name])) {
                 $ids[] = (int)$nameToId[$name]['id'];
             } else {
-                $this->db->query()->run("INSERT INTO offices (name) VALUES (?)", [$name]);
+                $query = "INSERT INTO offices (name) VALUES (?)";
+                $this->db->query()->run($query, [$name]);
                 $id = $this->db->query()->lastInsertId();
                 $new = ['id' => $id, 'name' => $name];
                 $this->offices[] = $new;
@@ -40,14 +51,6 @@ class OfficeRepo {
             }
         }
         return $ids;
-    }
-
-    /** Get all offices (cached). */
-    public function getAllOffices(): array {
-        if ($this->offices === null) {
-            $this->offices = $this->db->query()->fetchAll("SELECT * FROM offices");
-        }
-        return $this->offices;
     }
 
     /** Get office ID by name, or 0 if not found. */
@@ -61,7 +64,11 @@ class OfficeRepo {
 
     /** Get office name by ID. */
     public function getOfficeNameByOfficeId(int $officeId): string {
-        $map = array_column($this->getAllOffices(), 'name', 'id');
+        if ($this->offices === null) {
+            $this->getAllOffices();
+        }
+        
+        $map = array_column($this->offices, 'name', 'id');
         return $map[$officeId] ?? 'Unknown';
     }
 
@@ -77,10 +84,13 @@ class OfficeRepo {
         return implode(', ', array_column($rows, 'name'));
     }
 
-    /** Get office names for view and JSON purposes */
+    /** API: Get office names for the frontend */
     public function getOfficesForDisplay(): array {
-        $out = [];
+        if ($this->offices === null) {
+            $this->getAllOffices();
+        }
 
+        $out = [];
         foreach ($this->offices as $office) {
             if (!$office['active']) {
                 continue;
