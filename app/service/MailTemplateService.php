@@ -16,11 +16,11 @@
             'overdue_notice'        => [':user_name', ':book_name', ':due_date', ':overdue_days'],
         ];
  */
-
-//  TODO: Refactor DB templates to include styles inline, since mail clients usually dont respect <style> tags or specific css syntaxes.
-//  TODO: Review required placeholder context, and double check if im actually setting everything required for non CRON related status changes.
-//  TODO: Review if Database flow for status changes, and make sure im stetting and getting the correct data, so the loaner history is also still intact.
-//  TODO: If the above Database flow isnt providing enough option for loaner history, review said flow with the client and suggest adjustments that make it better.
+/** Local TODO-List:
+ *  TODO: Review required placeholder context, and double check if im actually setting everything required for non CRON related status changes.
+ *  TODO: Review if Database flow for status changes, and make sure im stetting and getting the correct data, so the loaner history is also still intact.
+ *  TODO: If the above Database flow isnt providing enough option for loaner history, review said flow with the client and suggest adjustments that make it better.
+ */
 namespace App\Service;
 
 class MailTemplateService {
