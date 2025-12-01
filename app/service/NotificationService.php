@@ -1,4 +1,10 @@
 <?php
+/** Local TODO-List:
+ *      - [x] Re-factor statusEventMap, and off-load to db or config file?
+ *      - [x] Re-factor dispatchStatusEvents, figure out where to get the `$context` data.
+ *      - [ ] Re-factor notifyOffice properly, this was just a psuedo-design.
+ *      - [ ] Evaluate if processCronEvents should be done here, or in a dedicated CronService/Controller.
+ */
 namespace App\Service;
 
 use App\App;
@@ -63,23 +69,16 @@ use PHPMailer\PHPMailer\{PHPMailer, Exception};
  */
 class NotificationService {
     protected array     $config;
+    protected array     $statusEventMap;
     protected PHPMailer $mailer;
 
-    // Status event map.
-    protected array $statusEventMap = [
-        2 => ['user' => 'loan_confirm'],                                    // Afwezig
-        5 => ['user' => 'reserv_confirm'],                                  // Gereserveerd
-        3 => ['office' => 'transport_request'],                             // Transport
-        4 => ['user' => 'pickup_ready_confirm'],                            // Ligt Klaar
-        6 => ['user' => 'overdue_reminder', 'office' => 'overdue_notice'],  // Overdatum
-    ];
-
     public function __construct(array $config) {
-        $this->config = $config;
+        $this->config = $config['mailConfig'] ?? [];
+        $this->statusEventMap = $config['statusEventMap'] ?? [];
         $this->mailer = new PHPMailer(true);
     }
 
-    /*  Internal helper to send mail via PHPMailer. */
+    /** Helper: Internal helper to send mail via PHPMailer. */
     protected function sendMail(string $to, array $email): void {        
         try {
             $this->mailer->isSMTP();
@@ -120,35 +119,42 @@ class NotificationService {
         }
     }
 
-    /* Attemp to generalize status event triggers. */
-    public function dispatchStatusEvents(int $statusId, array $book, array $loaner): void {
-        $context = [
-            ':book_name'    => $book['title'],
-            ':user_name'    => $loaner['name'],
-            ':user_mail'    => $loaner['email'],
-            ':user_office'  => $loaner['office_id'],
-            ':due_date'     => $book['dueDate'],
-            ':book_office'  => $book['office'],
-            // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
-            // ':action_link'  => 'https://biblioapp.nl/',
-            // ':action_label' => 'Boek Verlengen'
-        ];
-
-        foreach ($this->statusEventMap[$statusId] ?? [] as $target => $event) {
-            try {
-                if ($target === 'user') {
-                    $this->notifyUser($event, $context);
-                } elseif ($target === 'office') {
-                    if (!empty($context[':user_office'])) {
-                        $this->notifyOffice($context[':user_office'], $event, $context);
-                    }
-                }
-            } catch (\Throwable $t) {
-                error_log("[BookStatusOrchestrator] Notification failed: " . $t->getMessage());
+    /** Helper: Dispatch a notification event to the appropriate target */
+    protected function dispatchEvent(string $target, string $event, array $context): void {
+        try {
+            if ($target === 'user') {
+                $this->notifyUser($event, $context);
+            } elseif ($target === 'office' && !empty($context[':user_office'])) {
+                $this->notifyOffice((int)$context[':user_office'], $event, $context);
             }
+        } catch (\Throwable $t) {
+            error_log("[NotificationService] Notification failed: " . $t->getMessage());
         }
     }
 
+    /* API: Dispatch and formulate status-related notification events */
+    public function dispatchStatusEvents(int $statusId, array $book, array $loaner, array $eventContext = []): void {
+        // 1) Base context from book/loaner
+        $baseContext = [
+            ':book_name'   => $book['title']     ?? '',
+            ':user_name'   => $loaner['name']    ?? '',
+            ':user_mail'   => $loaner['email']   ?? '',
+            ':user_office' => $loaner['office_id'] ?? '',
+            ':due_date'    => $book['dueDate']   ?? '',
+            ':book_office' => $book['office']    ?? '',
+        ];
+
+        // 2) Merge with caller-provided eventContext (caller wins if keys overlap)
+        $context = array_merge($baseContext, $eventContext);
+
+        dd($this->context);
+        dd($this->statusEventMap);
+
+        // 3) Dispatch events based on statusEventMap
+        foreach ($this->statusEventMap[$statusId] ?? [] as $target => $event) {
+            $this->dispatchEvent($target, $event, $context);
+        }
+    }
 
     /*  Notify a specific user about an event. */
     public function notifyUser(string $event, array $context): void {
@@ -162,6 +168,7 @@ class NotificationService {
         $this->sendMail($context[':user_mail'], $email);
     }
 
+    // TODO: Re-factor properly, this was just a psuedo-design
     /*  Notify a specific office about an event. */
     public function notifyOffice(int $officeId, string $event, array $context): void {
         $office = App::getService('database')->query()->fetchOne(
@@ -186,6 +193,7 @@ class NotificationService {
         $this->sendMail($office['email'], $email);
     }
 
+    // TODO: Evaluate if this should be done here, or in a dedicated CronService/Controller
     /*  Process scheduled events (cron jobs). Example: send overdue notices, reminders, etc. */
     public function processCronEvents(): void {
         $loans = App::getService('database')->query()->fetchAll(
@@ -209,3 +217,20 @@ class NotificationService {
         }
     }
 }
+
+   // Status event map.
+    // protected array $statusEventMap = [
+    //     2 => ['user' => 'loan_confirm'],                                    // Afwezig
+    //     5 => ['user' => 'reserv_confirm'],                                  // Gereserveerd
+    //     3 => ['office' => 'transport_request'],                             // Transport
+    //     4 => ['user' => 'pickup_ready_confirm'],                            // Ligt Klaar
+    //     6 => ['user' => 'overdue_reminder', 'office' => 'overdue_notice'],  // Overdatum
+    // ];
+
+    // // PSEUDO-CODE: Re-factor to properly handle a event like this.
+    // // Inject action block only for return_reminder and non-reserved status
+    // if ($eventType === 'return_reminder' && $statusId !== 5) {
+    //     $context[':action_intro'] = 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.';
+    //     $context[':action_link']  = 'https://biblioapp.nl/';
+    //     $context[':action_label'] = 'Boek Verlengen';
+    // }
