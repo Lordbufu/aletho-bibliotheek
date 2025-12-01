@@ -12,14 +12,8 @@ class StatusRepo {
         $this->db = $db;
     }
 
-    /** Helper: calculate due date for setting the correct end_date (might get removed later) */
-    protected function calculateDueDate(string $startDate, int $days): string {
-        $dt = new \DateTimeImmutable($startDate);
-        return $dt->add(new \DateInterval("P{$days}D"))->format('Y-m-d');
-    }
-
     /** Helper: Cache global $statuses */
-    protected function setStatuses(): array {
+    protected function setStatuses(): void {
         $query = "SELECT * FROM status";
         $this->statuses = $this->db->query()->fetchAll($query);
     }
@@ -38,7 +32,7 @@ class StatusRepo {
         return (int)$this->db->connection()->pdo()->lastInsertId();
     }
 
-    /** Reqeuest cached $statuses, formated with only id and type. */
+    /** API: Reqeuest cached $statuses, either formatted (for display) or fully unformated (for logic) */
     public function getAllStatuses($tag = null): array {
         if ($this->statuses === null) {
             $this->setStatuses();
@@ -59,6 +53,13 @@ class StatusRepo {
         return $this->statuses;
     }
 
+    /** API & Helper: Disable a specific `books_status` record */
+    public function disableBookStatus(int $bookId): bool {
+        $query = "UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1";
+        $stmt = $this->db->query()->run($query, [$bookId]);
+        return ($stmt->rowCount() > 0);
+    }
+
     /** Get a book status type for a specific book */
     public function getBookStatus(int $bookId): ?string {
         $query = "SELECT s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1";
@@ -66,22 +67,25 @@ class StatusRepo {
         return $row['type'] ?? null;
     }
 
+    /** API: Get status by ID */
+    public function getStatusById(int $statusId): ?array {
+        $query = "SELECT * FROM status WHERE id = ? LIMIT 1";
+        $row = $this->db->query()->fetchOne($query, [$statusId]);
+        return $row ?: null;
+    }
+
     /** Get the books status expire date */
     public function getBookDueDate(int $bookId): ?string {
-        $row = $this->db->query()->fetchOne(
-            "SELECT end_date, status_id FROM book_loaners WHERE book_id = ? AND active = 1 LIMIT 1",
-            [$bookId]
-        );
+        $queryBoLo  = "SELECT end_date, status_id FROM book_loaners WHERE book_id = ? AND active = 1 LIMIT 1";
+        $row        = $this->db->query()->fetchOne($queryBoLo, [$bookId]);
 
         if (!$row || $row['end_date'] === null) {
             if ($row && $row['end_date'] === null) {
                 error_log("Missing end_date in getBookDueDate for book_id={$bookId}");
             }
             
-            $bookStatusId = $this->db->query()->value(
-                "SELECT status_id FROM book_status WHERE book_id = ? AND active = 1 LIMIT 1",
-                [$bookId]
-            );
+            $queryBoSt = "SELECT status_id FROM book_status WHERE book_id = ? AND active = 1 LIMIT 1";
+            $bookStatusId = $this->db->query()->value($queryBoSt, [$bookId]);
 
             if ((int)$bookStatusId === 1) {
                 return (new \DateTimeImmutable())->format('Y-m-d');
@@ -106,13 +110,6 @@ class StatusRepo {
         return ($stmt->rowCount() > 0);
     }
 
-    /** Disable books_status record */
-    public function disableBookStatus(int $bookId): bool {
-        $query = "UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1";
-        $stmt = $this->db->query()->run($query, [$bookId]);
-        return ($stmt->rowCount() > 0);
-    }
-
     /** Update status period settings */
     public function updateStatusPeriod(int $statusId, ?int $periode_length, ?int $reminder_day, ?int $overdue_day): bool {
         $query  = "UPDATE status SET periode_length = ?, reminder_day = ?, overdue_day = ? WHERE id = ?";
@@ -120,65 +117,59 @@ class StatusRepo {
         return $this->db->query()->run($query, $params) !== false;
     }
 
-    /** To set a book status we need (for now): */
-    public function setBookStatus(int $bookId, int $statusId, array $loaner = [], array $context = []): bool {
-        dd('testing error loops');
-        /** Attempt to deactivate current status, return to caller if failed */
+    /** API: To set a book status we need (for now): */
+    public function setBookStatus(int $bookId, int $statusId): bool {
         $disabled = $this->disableBookStatus($bookId);
 
         if (!$disabled) return false;
 
-        /** Attempt to insert the new `book_status` record, return to caller if failed */
         $newStatus = $this->insertBookStatus($bookId, $statusId);
 
         if (!$newStatus) return false;
 
-
-        // Handle loaner logic
-        if (!empty($loaner)) {
-            // Resolve or create loaner based on e-mail
-            $cLoaner = $this->loanerRepo->findOrCreateByEmail(
-                $loaner['loaner_name'],
-                $loaner['loaner_email'],
-                (int)$loaner['loaner_location']
-            );
-
-            // Get status metadata
-            $status = $this->db->query()->fetchOne("SELECT periode_length FROM status WHERE id = ?", [$statusId]);
-            $startDate = (new \DateTimeImmutable())->format('Y-m-d');
-            $endDate = $this->calculateDueDate($startDate, (int)($status['periode_length'] ?? 0));
-
-            // Insert loaner record
-            $this->db->query()->run(
-                "INSERT INTO book_loaners (book_id, loaner_id, status_id, start_date, end_date, active)
-                VALUES (?, ?, ?, ?, ?, 1)",
-                [$bookId, $cLoaner['id'], $statusId, $startDate, $endDate]
-            );
-        } else {
-            // If status is 'Aanwezig', deactivate any active loaner rows
-            $statusType = $this->db->query()->fetchOne("SELECT type FROM status WHERE id = ?", [$statusId]);
-            if ($statusType['type'] === 'Aanwezig') {
-                $this->db->query()->run(
-                    "UPDATE book_loaners SET active = 0 WHERE book_id = ? AND active = 1",
-                    [$bookId]
-                );
-            }
-        }
-
         return true;
     }
+
+    /** API: Update contextual fields for an existing book_status record */
+    public function updateBookStatusContext(int $bookStatusId, array $actionContext = [], ?bool $finished = null): bool {
+        $fields = [];
+        $params = [];
+
+        // Handle action context keys dynamically
+        if (isset($actionContext['action_type'])) {
+            $fields[] = "action_type = ?";
+            $params[] = $actionContext['action_type'];
+        }
+
+        if (isset($actionContext['action_token'])) {
+            $fields[] = "action_token = ?";
+            $params[] = $actionContext['action_token'];
+        }
+
+        if (isset($actionContext['token_expires']) && $actionContext['token_expires'] instanceof \DateTimeInterface) {
+            $fields[] = "token_expires = ?";
+            $params[] = $actionContext['token_expires']->format('Y-m-d H:i:s');
+        }
+
+        if (isset($actionContext['token_used'])) {
+            $fields[] = "token_used = ?";
+            $params[] = $actionContext['token_used'] ? 1 : 0;
+        }
+
+        // Handle finished flag separately
+        if ($finished !== null) {
+            $fields[] = "finished = ?";
+            $params[] = $finished ? 1 : 0;
+        }
+
+        if (empty($fields)) {
+            return false; // nothing to update
+        }
+
+        $params[] = $bookStatusId;
+        $query = "UPDATE book_status SET " . implode(", ", $fields) . " WHERE id = ?";
+
+        $stmt = $this->db->query()->run($query, $params);
+        return ($stmt->rowCount() > 0);
+    }
 }
-
-            // // Try to resolve loaner by email
-            // $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
-
-
-            // if (!$cLoaner) {
-            //     // Insert new loaner
-            //     $this->db->query()->run(
-            //         "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)",
-            //         [$loaner['loaner_name'], $loaner['loaner_email'], $loaner['loaner_location']]
-            //     );
-
-            //     $cLoaner = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE email = ?", [$loaner['loaner_email']]);
-            // }
