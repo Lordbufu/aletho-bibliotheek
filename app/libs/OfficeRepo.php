@@ -2,9 +2,6 @@
 
 namespace App\Libs;
 
-use App\App;
-
-
 /** Repository for managing offices and their relations to books and users */
 class OfficeRepo {
     protected ?array        $offices = null;
@@ -103,6 +100,19 @@ class OfficeRepo {
         }
 
         return $out;
+    }
+
+    /** API: Match admins based on office location */
+    public function getAdminsForOffices(int $officeId): array {
+        $query = "
+            SELECT u.id, u.name, u.email, uo.office_id
+            FROM users u
+            INNER JOIN user_office uo ON u.id = uo.user_id
+            WHERE u.is_office_admin  = 1
+            AND uo.office_id = ?
+        ";
+
+        return $this->db->query()->fetchAll($query, [$officeId]);
     }
 
     /** Get office IDs linked to a book. */
