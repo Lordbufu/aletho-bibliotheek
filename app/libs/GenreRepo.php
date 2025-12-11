@@ -2,8 +2,6 @@
 
 namespace App\Libs;
 
-use App\App;
-
 /** Repository for managing genres and their many-to-many relation with books */
 class GenreRepo {
     protected ?array        $genres = null;
