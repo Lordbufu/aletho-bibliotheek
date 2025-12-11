@@ -32,6 +32,52 @@ class StatusRepo {
         return (int)$this->db->connection()->pdo()->lastInsertId();
     }
 
+    /** Helper: Resolve final status the book should have based on transport criteria */
+    protected function resolveFinalStatus(int $requestedStatusId, bool $transport): int {
+        return $transport ? 3 : $requestedStatusId;
+    }
+
+    /** Helper: Resolve if event should be linked ? */
+    protected function shouldLinkEvent(int $requestedStatusId): bool {
+        return $requestedStatusId !== 1;
+    }
+
+    /** Helper: Find the correct event key, in the pre-defined statusMap */
+    protected function findEventKey(array $eventStatusMap, int $finalStatusId, ?int $oldStatus = null, ?string $currentTrigger = null): ?string {
+        foreach ($eventStatusMap as $eventKey => $config) {
+            $statuses = $config['status'];
+
+            if (count($statuses) === 1) {
+                if ($statuses[0] === $finalStatusId) {
+                    return $eventKey;
+                }
+            }
+
+            if (count($statuses) === 2) {
+                if ($statuses[0] === $oldStatus && $statuses[1] === $finalStatusId) {
+                    return $eventKey;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Helper: Resolve the event key from the `eventStatusMap` */
+    protected function resolveEventKey(int $finalStatusId, int $oldStatus, string $trigger): ?string {
+        $eventStatusMap = App::getService('status')->getEventStatusMap();
+        return $this->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $trigger);
+    }
+
+    /** Helper: Resolve the correct notification id */
+    protected function resolveEventKeyId(?string $eventKey): ?int {
+        if (!$eventKey) {
+            return null;
+        }
+
+        return App::getLibrary('notification')->getNotiIdByType($eventKey);
+    }
+
     /** API: Reqeuest cached $statuses, either formatted (for display) or fully unformated (for logic) */
     public function getAllStatuses($tag = null): array {
         if ($this->statuses === null) {
@@ -53,25 +99,43 @@ class StatusRepo {
         return $this->statuses;
     }
 
+    /** API: Get status by Id */
+    public function getStatusById(int $statusId): ?array {
+        $query = "SELECT * FROM status WHERE id = ? LIMIT 1";
+        $row = $this->db->query()->fetchOne($query, [$statusId]);
+        return $row ?: null;
+    }
+
+    /** API: Get a book status type for a specific book */
+    public function getBookStatus(int $bookId, string $flag = "type"): ?string {
+        $query = "SELECT s.id, s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1";
+        $row = $this->db->query()->fetchOne($query,[$bookId]);
+
+        if ($flag !== "type") {
+            return (int)$row['id'] ?? null;
+        }
+
+        return $row['type'] ?? null;
+    }
+
+    /** API: Request status_noti links, based on `book_status`.`id` and `status`.`id` */
+    public function getStatusLinks(int $bookStatusId, int $statusId): array {
+        $query  = "
+            SELECT sn.notification_id, n.type
+            AS event FROM status_noti sn
+            JOIN notifications n ON sn.notification_id = n.id
+            WHERE sn.bk_st_id = ? AND sn.status_id = ?
+        ";
+        $params = [$bookStatusId, $statusId];
+        $stmt   = $this->db->query()->fetchAll($query, $params);
+        return $stmt ?? null;
+    }
+
     /** API & Helper: Disable a specific `books_status` record */
     public function disableBookStatus(int $bookId): bool {
         $query = "UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1";
         $stmt = $this->db->query()->run($query, [$bookId]);
         return ($stmt->rowCount() > 0);
-    }
-
-    /** Get a book status type for a specific book */
-    public function getBookStatus(int $bookId): ?string {
-        $query = "SELECT s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1";
-        $row = $this->db->query()->fetchOne($query,[$bookId]);
-        return $row['type'] ?? null;
-    }
-
-    /** API: Get status by ID */
-    public function getStatusById(int $statusId): ?array {
-        $query = "SELECT * FROM status WHERE id = ? LIMIT 1";
-        $row = $this->db->query()->fetchOne($query, [$statusId]);
-        return $row ?: null;
     }
 
     /** Get the books status expire date */
@@ -80,9 +144,10 @@ class StatusRepo {
         $row        = $this->db->query()->fetchOne($queryBoLo, [$bookId]);
 
         if (!$row || $row['end_date'] === null) {
-            if ($row && $row['end_date'] === null) {
-                error_log("Missing end_date in getBookDueDate for book_id={$bookId}");
-            }
+            // Temp debug line
+            // if ($row && $row['end_date'] === null) {
+            //     error_log("Missing end_date in getBookDueDate for book_id={$bookId}");
+            // }
             
             $queryBoSt = "SELECT status_id FROM book_status WHERE book_id = ? AND active = 1 LIMIT 1";
             $bookStatusId = $this->db->query()->value($queryBoSt, [$bookId]);
@@ -117,20 +182,92 @@ class StatusRepo {
         return $this->db->query()->run($query, $params) !== false;
     }
 
-    /** API: To set a book status we need (for now): */
-    public function setBookStatus(int $bookId, int $statusId): bool {
+    /** API: Update status_noti links, based on `book_status`.`id` and `notification`.`id` */
+    public function updateStatusLinks(int $bookStatusId, int $notifId): ?int {
+        $query  = "UPDATE status_noti SET mail_send = 1, sent_at = NOW() WHERE bk_st_id = ? AND notification_id = ?";
+        $params = [$bookStatusId, $notifId];
+        $stmt   = $this->db->query()->run($query, $params);
+        return ($stmt->rowCount() > 0);
+    }
+
+    /** API: To set a empty `book_status` */
+    public function setBookStatus(int $bookId, int $statusId): ?int {
         $disabled = $this->disableBookStatus($bookId);
 
-        if (!$disabled) return false;
+        if (!$disabled) return null;
 
         $newStatus = $this->insertBookStatus($bookId, $statusId);
 
-        if (!$newStatus) return false;
+        if (!$newStatus) return null;
 
-        return true;
+        return $newStatus;
     }
 
-    /** API: Update contextual fields for an existing book_status record */
+    /** API: Evaluate the required status, and update `book_status` using `setBookStatus` */
+    public function updateBookStatus(int $bookId, int $requestedStatusId, bool $transport): array {
+        $finalStatusId  = $this->resolveFinalStatus($requestedStatusId, $transport);
+        $statusRecordId = $this->setBookStatus($bookId, $finalStatusId);
+
+        return [
+            'record_id'      => $statusRecordId,
+            'final_status_id'=> $finalStatusId
+        ];
+    }
+
+    /** API: Set `status_noti` to link notifications to a `book_status` if needed */
+    public function linkEventIfNeeded(array $statusUpdate, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
+        if (!$this->shouldLinkEvent($requestedStatusId)) {
+            return null;
+        }
+
+        $statusResult   = $statusUpdate['record_id'];
+        $finalStatusId  = $statusUpdate['final_status_id'];
+
+        $eventKey = $this->resolveEventKey($finalStatusId, $oldStatus, $trigger);
+        $eventKeyId = $this->resolveEventKeyId($eventKey);
+
+        if ($eventKeyId && !empty($requestStatus)) {
+            $this->setStatusEvent($statusResult, $finalStatusId, $eventKeyId);
+        }
+
+        return $eventKeyId;
+    }
+
+    /** API: Set `status_noti` to link notifications to a `book_status` */
+    public function setStatusEvent(int $bookStatusId, int $statusId, int $notificationId): bool {
+        $sql    = "INSERT INTO status_noti (bk_st_id, status_id, notification_id, mail_send, sent_at) VALUES (?, ?, ?, 0, NULL)";
+        $params = [$bookStatusId, $statusId, $notificationId];
+        $stmt   = $this->db->query()->run($sql, $params);
+
+        if ($stmt->rowCount() === 0) {
+            error_log("[StatusRepo] Failed to insert status_noti for bk_st_id={$bookStatusId}, status_id={$statusId}, notification_id={$notificationId}");
+        }
+
+        return ($stmt->rowCount() > 0);
+    }
+
+    /** API: Get all notifications configured for a given status */
+    public function getNotificationsForStatus(int $statusId): array {
+        $sql = "SELECT n.id AS notification_id,
+                    n.type AS event,
+                    mt.id AS template_id,
+                    mt.subject,
+                    mt.from_mail,
+                    mt.from_name
+                FROM notifications n
+                JOIN mail_templates mt ON n.template_id = mt.id
+                WHERE n.active = 1
+                AND EXISTS (
+                    SELECT 1
+                    FROM status_noti sn
+                    WHERE sn.status_id = ?
+                        AND sn.notification_id = n.id
+                )";
+
+        return $this->db->query()->fetchAll($sql, [$statusId]);
+    }
+
+    /** API: Update contextual fields for an existing book_status record (W.I.P.) */
     public function updateBookStatusContext(int $bookStatusId, array $actionContext = [], ?bool $finished = null): bool {
         $fields = [];
         $params = [];
