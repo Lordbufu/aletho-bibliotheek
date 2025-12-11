@@ -1,15 +1,4 @@
 <?php
-/** Local TODO-List:
- *      - [x] Re-factor statusEventMap, and off-load to db or config file?
- *      - [x] Re-factor dispatchStatusEvents, figure out where to get the `$context` data.
- *      - [ ] Re-factor notifyOffice properly, this was just a psuedo-design.
- *      - [ ] Evaluate if processCronEvents should be done here, or in a dedicated CronService/Controller.
- */
-namespace App\Service;
-
-use App\App;
-use PHPMailer\PHPMailer\{PHPMailer, Exception};
-
 /** NotificationService
  *
  * This service coordinates sending event-based notifications (loan confirmations,
@@ -67,19 +56,41 @@ use PHPMailer\PHPMailer\{PHPMailer, Exception};
  *   - Errors are logged via error_log() but do not interrupt runtime.
  *   - Cron-driven batch processing (e.g. overdue reminders) can be added via processCronEvents().
  */
+
+/** Event relations details:
+ *   user notifications:
+ *      loan_confirm            -> (id=2) Afwezig 
+ *      pickup_ready_confirm    -> (id=4) Ligt Klaar
+ *      pickup_confirm          -> (id=4 => id=2) Ligt Klaar => Afwezig
+ *      return_reminder         -> (id=2) Afwezig (CRON detecting near due date)
+ *      reserv_confirm          -> (id=5) Gereserveerd
+ *      overdue_reminder        -> (id=2 => id=6) Afwezig => Overdatum (CRON detecting past due date)
+ *
+ *   admin notifications:
+ *      transport_request       -> (id=3) Transport
+ *      overdue_notice          -> (id=2 => id=6) Afwezig => Overdatum (CRON detecting past due date)
+ */
+
+/** Local TODO-List:
+ *      - [ ] Evaluate if processCronEvents should be done here, or in a dedicated CronService/Controller.
+ */
+
+namespace App\Service;
+
+use App\App;
+use PHPMailer\PHPMailer\{PHPMailer, Exception};
+
 class NotificationService {
-    protected array     $config;
-    protected array     $statusEventMap;
-    protected PHPMailer $mailer;
+    protected array       $config;
+    protected PHPMailer   $mailer;
 
     public function __construct(array $config) {
-        $this->config = $config['mailConfig'] ?? [];
-        $this->statusEventMap = $config['statusEventMap'] ?? [];
+        $this->config = $config;
         $this->mailer = new PHPMailer(true);
     }
 
     /** Helper: Internal helper to send mail via PHPMailer. */
-    protected function sendMail(string $to, array $email): void {        
+    protected function sendMail(string $to, array $email): bool {        
         try {
             $this->mailer->isSMTP();
             $this->mailer->Host       = $this->config['host'];
@@ -91,13 +102,13 @@ class NotificationService {
 
             if (!PHPMailer::validateAddress($to)) {
                 error_log("[NotificationService] Invalid recipient address: $to");
-                return;
+                return false;
             }
 
             if (!PHPMailer::validateAddress($email['from_mail'])) {
                 $adress = $email['from_mail'];
                 error_log("[NotificationService] Invalid from address: $adress");
-                return;
+                return false;
             }
 
             $this->mailer->setFrom($email['from_mail'], $email['from_name']);
@@ -113,112 +124,76 @@ class NotificationService {
 
             if (!$this->mailer->send()) {
                 error_log("[NotificationService] Mail send failed: " . $this->mailer->ErrorInfo);
+                return false;
             }
+
+            return true;
         } catch (Exception $e) {
             error_log("[NotificationService] Mail error: " . $e->getMessage());
+            return false;
         }
     }
 
-    /** Helper: Dispatch a notification event to the appropriate target */
-    protected function dispatchEvent(string $target, string $event, array $context): void {
-        try {
-            if ($target === 'user') {
-                $this->notifyUser($event, $context);
-            } elseif ($target === 'office' && !empty($context[':user_office'])) {
-                $this->notifyOffice((int)$context[':user_office'], $event, $context);
+    /** Helper: Dispatch a notification event */
+    protected function dispatchNotif(int $statusId, array $context): bool {
+        $event = $context['event'];                                                         // Set event context for logging
+        $email = App::getService('mail')->render($statusId, $context);                      // Attempt to get the full mail template
+
+        if (!$email) {
+            error_log("[NotificationService] No template found for event: $event");
+            return false;
+        }
+
+        return $this->sendMail($context[':user_mail'], $email);
+    }
+
+    /** API: Dispatch and formulate status-related notification events */
+    public function dispatchStatusEvents(int $statusId, int $previousStatus, array $context = []): bool {
+        $allOk = true;
+
+        // 1) Fetch all notification rows for this book_status
+        $notiLinks = App::getService('status')->getStatusLinks($context['book_status_id'], $statusId);
+
+        foreach ($notiLinks as $row) {
+            $event = $row['event'];
+            $context['event'] = $event;
+
+            // 2) Render and send mail
+            if (!empty($context['noti_id'])) {
+                $email = App::getService('mail')->render($row['notification_id'], $context);
             }
-        } catch (\Throwable $t) {
-            error_log("[NotificationService] Notification failed: " . $t->getMessage());
-        }
-    }
 
-    /* API: Dispatch and formulate status-related notification events */
-    public function dispatchStatusEvents(int $statusId, array $book, array $loaner, array $eventContext = []): void {
-        // 1) Base context from book/loaner
-        $baseContext = [
-            ':book_name'   => $book['title']     ?? '',
-            ':user_name'   => $loaner['name']    ?? '',
-            ':user_mail'   => $loaner['email']   ?? '',
-            ':user_office' => $loaner['office_id'] ?? '',
-            ':due_date'    => $book['dueDate']   ?? '',
-            ':book_office' => $book['office']    ?? '',
-        ];
+            if (!$email) {
+                error_log("[NotificationService] No template found for event={$event}, status_id={$statusId}");
+                continue;
+            }
 
-        // 2) Merge with caller-provided eventContext (caller wins if keys overlap)
-        $context = array_merge($baseContext, $eventContext);
+            $success = $this->sendMail($context[':user_mail'], $email);
 
-        dd($this->context);
-        dd($this->statusEventMap);
-
-        // 3) Dispatch events based on statusEventMap
-        foreach ($this->statusEventMap[$statusId] ?? [] as $target => $event) {
-            $this->dispatchEvent($target, $event, $context);
-        }
-    }
-
-    /*  Notify a specific user about an event. */
-    public function notifyUser(string $event, array $context): void {
-        $email = App::getService('mail')->render($event, $context);
-
-        if (!$email) {
-            error_log("[NotificationService] No template found for event: $event");
-            return;
+            // 3) Update status_noti row if mail sent
+            if ($success && !empty($context['book_status_id'])) {
+                $ok = App::getService('status')->updateStatusLinks((int)$context['book_status_id'], (int)$row['notification_id']);
+                if (!$ok) {
+                    $allOk = false;
+                }
+            }
         }
 
-        $this->sendMail($context[':user_mail'], $email);
-    }
-
-    // TODO: Re-factor properly, this was just a psuedo-design
-    /*  Notify a specific office about an event. */
-    public function notifyOffice(int $officeId, string $event, array $context): void {
-        $office = App::getService('database')->query()->fetchOne(
-            "SELECT email, name FROM offices WHERE id = :id",
-            ['id' => $officeId]
-        );
-
-        if (!$office) {
-            error_log("[NotificationService] Office not found: $officeId");
-            return;
-        }
-
-        $context[':office'] = $office['name'];
-
-        $email = App::getService('mail')->render($event, $context);
-
-        if (!$email) {
-            error_log("[NotificationService] No template found for event: $event");
-            return;
-        }
-
-        $this->sendMail($office['email'], $email);
+        return $allOk;
     }
 
     // TODO: Evaluate if this should be done here, or in a dedicated CronService/Controller
-    /*  Process scheduled events (cron jobs). Example: send overdue notices, reminders, etc. */
+    /** API: Process scheduled events (cron jobs). Example: send overdue notices, reminders, etc. */
     public function processCronEvents(): void {
-        $loans = App::getService('database')->query()->fetchAll(
-            "SELECT id, user_id, book_name, due_date
-             FROM loans
-             WHERE due_date < NOW() AND notified_overdue = 0"
-        );
-
-        foreach ($loans as $loan) {
-            $context = [
-                ':book_name' => $loan['book_name'],
-                ':due_date'  => $loan['due_date'],
-            ];
-
-            $this->notifyUser((int)$loan['user_id'], 'overdue_notice', $context);
-
-            App::getService('database')->query()->run(
-                "UPDATE loans SET notified_overdue = 1 WHERE id = :id",
-                ['id' => $loan['id']]
-            );
-        }
+        // PSEUDO-CODE:
+        // 1) Query DB for loans that are overdue, or due soon
+        // 2) For each loan, determine if a notification should be sent (e.g. overdue notice, return reminder)
+        // 3) Formulate context and call dispatchStatusEvents() or dispatchNotif() accordingly
     }
 }
 
-   // Status event map.
+/** Old code that has been removed, leaving it untill the re-factor is finished and working */
+    // Status event map.
     // protected array $statusEventMap = [
     //     2 => ['user' => 'loan_confirm'],                                    // Afwezig
     //     5 => ['user' => 'reserv_confirm'],                                  // Gereserveerd
@@ -233,4 +208,54 @@ class NotificationService {
     //     $context[':action_intro'] = 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.';
     //     $context[':action_link']  = 'https://biblioapp.nl/';
     //     $context[':action_label'] = 'Boek Verlengen';
+    // }
+
+    // /** Helper: Dispatch a notification event to the appropriate target */
+    // protected function dispatchEvent(string $target, string $event, array $context): void {
+    //     try {
+    //         $this->sendNotif($event, $context);
+    //     } catch (\Throwable $t) {
+    //         error_log("[NotificationService] Notification failed: " . $t->getMessage());
+    //     }
+    // }
+
+    // /*  Notify a specific office about an event. */
+    // public function notifyOffice(string $event, array $context): void {
+    //     $email = App::getService('mail')->render($event, $context);
+
+    //     if (!$email) {
+    //         error_log("[NotificationService] No template found for event: $event");
+    //         return;
+    //     }
+
+    //     $this->sendMail($context[':user_mail'], $email);
+    // }
+
+    // foreach ($this->statusEventMap[$statusId] ?? [] as $entry) {
+    //     $trigger = $entry['trigger'] ?? 'instant';
+
+    //     // skip cron-only entries here
+    //     if ($trigger === 'cron') {
+    //         continue;
+    //     }
+
+    //     // if transition-based, require previousStatus match
+    //     if ($trigger === 'transition') {
+    //         $rel = $entry['relation'] ?? null;
+    //         if (!$previousStatus || !$rel || ($rel['from'] ?? null) !== $previousStatus) {
+    //             continue;
+    //         }
+    //     }
+
+    //     foreach ($entry['targets'] as $target) {
+    //         $context['event'] = $entry['event'];
+    //         if ($target === 'user') {
+    //             $mailSend = $this->dispatchNotif($statusId, $context);
+    //         }
+
+    //         if ($target === 'admin') {
+    //             $baseContext['admin_email'] = "bibliotheek@aletho.nl";
+    //             $mailSend = $this->dispatchNotif($statusId, $context);
+    //         }
+    //     }
     // }
