@@ -9,7 +9,7 @@ class AuthenticationService {
     protected PasswordValidation $passwordValidator;
 
     public function __construct(PasswordValidation $passwordValidator = null) {
-        $this->permissionsMap = include BASE_PATH . '/ext/config/permissions.php';
+        $this->permissionsMap = include BASE_PATH . '/ext/config/permissionsConfig.php';
         $this->passwordValidator = $passwordValidator ?? new PasswordValidation();
     }
 

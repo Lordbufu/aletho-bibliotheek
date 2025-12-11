@@ -9,7 +9,7 @@ class App {
     /*  Boot the application by loading and initializing all services. */
     public static function boot(): bool {
         try {
-            $configPath = BASE_PATH . '/ext/config/services.php';
+            $configPath = BASE_PATH . '/ext/config/servicesConfig.php';
             $serviceDefinitions = require $configPath;
 
             foreach ($serviceDefinitions as $name => &$definition) {
