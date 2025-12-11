@@ -2,29 +2,25 @@
 namespace App;
 
 use App\Database;
-use App\Libs\{BookRepo, GenreRepo, LoanerRepo, OfficeRepo, StatusRepo, WriterRepo};
+use App\Libs\{BookRepo, GenreRepo, LoanerRepo, OfficeRepo, StatusRepo, WriterRepo, UserRepo, NotificationRepo};
 
 class Libraries {
     protected array         $instances  = [];
     protected array         $factories  = [];
     protected Database      $db;
-    protected ?BookRepo     $books      = null;
-    protected ?GenreRepo    $genres     = null;
-    protected ?WriterRepo   $writers    = null;
-    protected ?OfficeRepo   $offices    = null;
-    protected ?StatusRepo   $statuses   = null;
-    protected ?LoanerRepo  $loaners    = null;
 
     public function __construct(Database $db) {
         $this->db = $db;
 
         // register factories
-        $this->factories['books'] = fn() => new BookRepo($this->db, fn($n) => $this->resolveLibrary($n));
-        $this->factories['genre'] = fn() => new GenreRepo($this->db, fn($n) => $this->resolveLibrary($n));
-        $this->factories['writer'] = fn() => new WriterRepo($this->db, fn($n) => $this->resolveLibrary($n));
-        $this->factories['office'] = fn() => new OfficeRepo($this->db, fn($n) => $this->resolveLibrary($n));
-        $this->factories['status'] = fn() => new StatusRepo($this->db, fn($n) => $this->resolveLibrary($n));
-        $this->factories['loaner'] = fn() => new LoanerRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['books']           = fn() => new BookRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['genre']           = fn() => new GenreRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['writer']          = fn() => new WriterRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['office']          = fn() => new OfficeRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['status']          = fn() => new StatusRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['loaner']          = fn() => new LoanerRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['user']            = fn() => new UserRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['notification']    = fn() => new NotificationRepo($this->db, fn($n) => $this->resolveLibrary($n));
     }
 
     /** Helper: Generic Library resolver */
@@ -67,5 +63,13 @@ class Libraries {
 
     public function loaners(): LoanerRepo {
         return $this->resolveLibrary('loaner');
+    }
+
+    public function users(): UserRepo {
+        return $this->resolveLibrary('user');
+    }
+
+    public function notifications(): NotificationRepo {
+        return $this->resolveLibrary('notification');
     }
 }
