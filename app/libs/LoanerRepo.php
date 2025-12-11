@@ -1,8 +1,6 @@
 <?php
 namespace App\Libs;
 
-use App\App;
-
 class LoanerRepo {
     protected ?array        $loaners = null;
     protected \App\Database $db;
@@ -39,7 +37,6 @@ class LoanerRepo {
         $query  = "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)";
         $params =  [$name, $email, $office];
         $this->db->query()->run($query, $params);
-
         return (int)$this->db->query()->lastInsertId();
     }
 
@@ -47,6 +44,22 @@ class LoanerRepo {
     protected function createLoaner(string $name, string $email, int $office): array {
         $id = $this->insertLoaner($name, $email, $office);
         return $this->findById($id);
+    }
+
+    /** Helper: Create a book_loaners row and return rowCount (bool) */
+    protected function assignLoanerToBook(int $bookId, int $loanerId, int $statusId, ?string $endDate): bool {
+        $query = "INSERT INTO book_loaners (book_id, loaner_id, status_id, end_date, active)
+                VALUES (?, ?, ?, ?, 1)";
+        $params = [$bookId, $loanerId, $statusId, $endDate];
+        $result = $this->db->query()->run($query, $params);
+        return $result?->rowCount() > 0;
+    }
+
+    /** Helper: Deactivate active book_loaners rows for a book */
+    protected function deactivateActiveBookLoaners(int $bookId): bool {
+        $query = "UPDATE book_loaners SET active = 0 WHERE book_id = ? AND active = 1";
+        $result = $this->db->query()->run($query, [$bookId]);
+        return $result?->rowCount() >= 0;
     }
 
     /** Helper: Get/Set all active `loaners` to global */
@@ -59,15 +72,23 @@ class LoanerRepo {
     protected function findByEmail(string $email): ?array {
         $query  = "SELECT * FROM loaners WHERE email = ? AND active = 1";
         $row    = $this->db->query()->fetchOne($query, [$email]);
-
         return $row ? $this->formatLoaner($row) : null;
+    }
+
+    /** Helper: Evaluate assignment state for status changes */
+    protected function shouldAssignLoaner(int $statusId): bool {
+        return !in_array($statusId, [1, 3], true);
+    }
+
+    /** Helper: Evaluate if loaners should be deactivated */
+    protected function shouldDeactivateLoaners(?string $statusType): bool {
+        return $statusType === 'Aanwezig';
     }
 
     /** API & Helper: get/find loaner by $id, returning full `loaners` object */
     public function findById(int $id): ?array {
         $query  = "SELECT * FROM loaners WHERE id = ? AND active = 1";
         $row    = $this->db->query()->fetchOne($query, [$id]);
-
         return $row ? $this->formatLoaner($row) : null;
     }
 
@@ -78,18 +99,15 @@ class LoanerRepo {
         return $result ?: [];
     }
 
-    /** API: get/find or create by $email */
+    /** API: get or create by $email */
     public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
-        return $this->findByEmail($email) ?? $this->createLoaner($name, $email, $office);
-    }
+        $loaner = $this->findByEmail($email);
+        if ($loaner) {
+            return $loaner;
+        }
 
-    /** API: Create a book_loaners row and return boolean */
-    public function createBookLoaner(int $bookId, int $loanerId, int $statusId, string $startDate, ?string $endDate): bool {
-        $query = "INSERT INTO book_loaners (book_id, loaner_id, status_id, start_date, end_date, active)
-                VALUES (?, ?, ?, ?, ?, 1)";
-        $params = [$bookId, $loanerId, $statusId, $startDate, $endDate];
-        $result = $this->db->query()->run($query, $params);
-        return $result?->rowCount() > 0;
+        $created = $this->createLoaner($name, $email, $office);
+        return (!empty($created['id'])) ? $created : null;
     }
 
     /** API: Get all currently active `loaners` for the frontend */
@@ -134,11 +152,29 @@ class LoanerRepo {
         return $result?->rowCount() > 0;
     }
 
-    /** Deactivate active book_loaners rows for a book */
-    public function deactivateActiveBookLoaners(int $bookId): bool {
-        $query = "UPDATE book_loaners SET active = 0 WHERE book_id = ? AND active = 1";
-        $result = $this->db->query()->run($query, [$bookId]);
-        return $result?->rowCount() >= 0;
+    /** API: Assign loaner if required */
+    public function assignBookLoanerIfNeeded(int $bookId, ?array $loaner, int $statusId, array $requestStatus): bool {
+        if (!$loaner || !$this->shouldAssignLoaner($statusId)) {
+            return true;
+        }
+
+        $periodeLength = (int)($requestStatus['periode_length'] ?? 0);
+        $dueDate = calculateDueDate(null, $periodeLength);
+
+        return $this->assignLoanerToBook($bookId, $loaner['id'], $statusId, $dueDate);
+    }
+
+    /** API: Deactivate `book_loaner` is needed */
+    public function deactivateBookLoanersIfNeeded(int $bookId, array $requestStatus): bool {
+        $statusType = $requestStatus['type'] ?? null;
+
+        if (!$this->shouldDeactivateLoaners($statusType)) {
+            return true;
+        }
+
+        $result = $this->deactivateActiveBookLoaners($bookId);
+
+        return $result !== false;
     }
 
     /** API: Update `loaners` record */
@@ -191,8 +227,6 @@ class LoanerRepo {
             return [$fallback];
         }
 
-        return $namesOnly
-            ? array_map(fn($row) => $row['name'], $rows)
-            : array_map(fn($row) => $this->formatLoaner($row), $rows);
+        return $namesOnly ? array_map(fn($row) => $row['name'], $rows) : array_map(fn($row) => $this->formatLoaner($row), $rows);
     }
 }
