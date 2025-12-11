@@ -1,8 +1,6 @@
 <?php
 namespace App\Libs;
 
-use App\App;
-
 /** Your basic books library, dealing with all books table data & relations . */
 class BookRepo {
     protected array         $books = [];
@@ -13,22 +11,18 @@ class BookRepo {
         $this->db = $db;
     }
 
-    /** Simple get all book table data to caller. */
-    public function findAll(): array {
+    /** API: Get all books data */
+    public function findAllBooks(): array {
         $query = "SELECT * FROM books";
-
         $this->books = $this->db->query()->fetchAll($query);
-
         return $this->books;
     }
 
-    /** Simple get single book table data to caller. */
-    public function findOne(int $id): array {
+    /** API: Get one books object by ID */
+    public function findOneBook(int $id): array {
         $query  = "SELECT * FROM books WHERE id = ?";
         $params = [$id];
-
         $this->book = $this->db->query()->fetchOne($query, $params);
-
         return $this->book;
     }
 
@@ -67,5 +61,29 @@ class BookRepo {
         $result = $this->db->query()->run($query, $params);
 
         return $result !== false;
+    }
+
+    /** Helper & API: Figure out where a book should goto next */
+    public function resolveReturnTarget(array $book, int $loanerOffice, string $statusType): int {
+        if ($statusType === 'Afwezig') {
+            if (!empty($loanerOffice)) {
+                return $loanerOffice;
+            }
+
+            return (int)$book['home_office'];
+        }
+
+        return (int)$book['cur_office'];
+    }
+
+    /** Helper & API: Resolve a book its transport state */
+    public function resolveTransport(array $book, ?int $loanerOffice, ?string $statusType): bool {
+        if (empty($loanerOffice)) {
+            return false;
+        }
+
+        $targetOffice = $this->resolveReturnTarget($book, $loanerOffice, $statusType);
+
+        return $book['cur_office'] !== $targetOffice;
     }
 }
