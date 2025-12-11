@@ -104,16 +104,14 @@ class StatusController {
         $cLoaner = [];
         if (!empty($clean['loaner_name'])) {
             $cLoaner = [
-                'loaner_name'       => $clean['loaner_name'],
-                'loaner_email'      => $clean['loaner_email'],
-                'loaner_location'   => App::getService('offices')->getOfficeIdByName($clean['loaner_location'])
+                'name'      => $clean['loaner_name'],
+                'email'     => $clean['loaner_email'],
+                'office'    => App::getService('offices')->getOfficeIdByName($clean['loaner_location'])
             ];
         }
 
         /* Attempt the status change */
-        $result = $this->bookS->changeBookStatus($clean['book_id'], $clean['status_id'], $cLoaner);
-
-        dd("Result is: " . $result);
+        $result = $this->bookS->changeBookStatus($clean['book_id'], $clean['status_id'], 'user_action', $cLoaner);
 
         /* Evaluate the result, and act acordingly */
         if (!$result) {
