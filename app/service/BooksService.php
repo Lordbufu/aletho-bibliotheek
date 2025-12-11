@@ -35,9 +35,15 @@ class BooksService {
         return $out;
     }
 
-    /** Get all books as an array, processed and formatted for views */
+    /** Helper: Cancel current DB transaction and return false  */
+    protected function failTransaction(): bool {
+        $this->db->cancelTransaction();
+        return false;
+    }
+
+    /** API: Get all books as an array for views */
     public function getAllForDisplay(): array {
-        $books = $this->libs->books()->findAll();
+        $books = $this->libs->books()->findAllBooks();
         $out = [];
 
         foreach ($books as $book) {
@@ -51,9 +57,9 @@ class BooksService {
         return $out;
     }
 
-    /** Get a specific book */
+    /** API: Get a specific book for views */
     public function getBookById(int $bookId): ?array {
-        $book = $this->libs->books()->findOne($bookId);
+        $book = $this->libs->books()->findOneBook($bookId);
         if (!$book || !$book['active']) {
             return null;
         }
@@ -74,7 +80,7 @@ class BooksService {
             ? $data['book_offices'][0]
             : null;
         
-        foreach($this->libs->books()->findAll() as $book) {
+        foreach($this->libs->books()->findAllBooks() as $book) {
             if ($book['title'] === $data['book_name']) {
                 if ($book['active']) {
                     return "Deze naam staat al in de database, en is nu weer actief.";
@@ -158,99 +164,99 @@ class BooksService {
         }
     }
 
+    /** Helper & API: Figure out where a book should goto next */
+    public function resolveReturnTarget(array $book, int $loanerOffice, string $statusType): int {
+        return $this->libs->books()->resolveReturnTarget($book, $loanerOffice, $statusType);
+    }
+
+    /** API: Resolve the books transport state */
+    public function resolveTransport(array $book, ?int $loanerOffice, ?string $statusType): bool {
+        return $this->libs->books()->resolveTransport($book, $loanerOffice, $statusType);
+    }
+
     /** API: Change all book status related data, and notify user/admin when required */
-    public function changeBookStatus(int $bookId, int $statusId, array $loaner = []): bool {
+    // Mental note: @param $currentTrigger -> can be used to seperate user actions and cron jobs
+    // TODO-LIST:
+        // - Review potential database polution, and make sure old data is cleaned up properly
+    public function changeBookStatus(int $bookId, int $requestedStatusId, string $currentTrigger, array $loaner = []): bool {
+        $oldStatus      = $this->libs->statuses()->getBookStatus($bookId, 'id');
+        $requestStatus  = $this->libs->statuses()->getStatusById($requestedStatusId) ?? [];
+        $book           = $this->libs->books()->findOneBook($bookId);
+        $newLoaner      = null;
+        $eventKeyId     = null;
+        $transport      = false;
+
         $this->db->startTransaction();
 
         try {
-            // 1) Update status in `books` table
-            $statusResult = $this->libs->statuses()->setBookStatus($bookId, $statusId);
-            if (!$statusResult) {
-                error_log("[BooksService] Failed to update status for book_id={$bookId}, status_id={$statusId}");
-                $this->db->cancelTransaction();
-                return false;
-            }
+            /** LOANER HANDLING */
+            if (!empty($loaner)) {
+                $transport = $this->resolveTransport($book, $loaner['office'] ?? null, $requestStatus['type'] ?? null);
+                $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
 
-            // 2) Loaner flow
-            if (!empty($loaner) && !empty($loaner['loaner_email'])) {
-                $loanerName   = $loaner['loaner_name'] ?? '';
-                $loanerEmail  = $loaner['loaner_email'];
-                $loanerOffice = (int)($loaner['loaner_location'] ?? 0);
-
-                // Resolve or create loaner
-                $cLoaner = $this->libs->loaners()->findOrCreateByEmail($loanerName, $loanerEmail, $loanerOffice);
-                if (!$cLoaner || empty($cLoaner['id'])) {
-                    error_log("[BooksService] Could not resolve/create loaner for email={$loanerEmail}");
-                    $this->db->cancelTransaction();
-                    return false;
+                if (!$newLoaner) {
+                    return $this->failTransaction();
                 }
 
-                // Get status metadata (periode_length) from StatusRepo or DB
-                $statusMeta = $this->libs->statuses()->getStatusById($statusId);
-                $periodeLength = (int)($statusMeta['periode_length'] ?? 0);
-
-                $startDate = (new \DateTimeImmutable())->format('Y-m-d');
-                $endDate = calculateDueDate($startDate, $periodeLength);
-
-                // Create book_loaners row
-                $created = $this->libs->loaners()->createBookLoaner($bookId, (int)$cLoaner['id'], $statusId, $startDate, $endDate);
-
-                if (!$created) {
-                    error_log("[BooksService] Failed to create book_loaners for book_id={$bookId} loaner_id={$cLoaner['id']}");
-                    $this->db->cancelTransaction();
-                    return false;
+                if (!$this->libs->loaners()->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestedStatusId, $requestStatus)) {
+                    return $this->failTransaction();
                 }
             } else {
-                // No loaner provided: if status type is 'Aanwezig', deactivate active book_loaners
-                $statusMeta = $this->libs->statuses()->getStatusById($statusId);
-                $statusType = $statusMeta['type'] ?? null;
-
-                if ($statusType === 'Aanwezig') {
-                    $ok = $this->libs->loaners()->deactivateActiveBookLoaners($bookId);
-                    if ($ok === false) {
-                        error_log("[BooksService] Failed to deactivate book_loaners for book_id={$bookId}");
-                        $this->db->cancelTransaction();
-                        return false;
-                    }
+                if (!$this->libs->loaners()->deactivateBookLoanersIfNeeded($bookId, $requestStatus)) {
+                    return $this->failTransaction();
                 }
             }
 
+            /** STATUS UPDATE */
+            $statusUpdate = $this->libs->statuses()->updateBookStatus($bookId, $requestedStatusId, $transport);
+
+            if (!$statusUpdate['record_id']) {
+                return $this->failTransaction();
+            }
+
+            /** STATUS → EVENT LINKING */
+            $eventKeyId = $this->libs->statuses()->linkEventIfNeeded($statusUpdate, $requestedStatusId, $oldStatus, $currentTrigger, $requestStatus);
+
+            /** NOTIFICATIONS */
+            if ($transport) {
+                $admins = $this->libs->offices()->getAdminsForOffices($book['cur_office']);
+                foreach ($admins as $admin) {
+                    App::getService('notification')->dispatchStatusEvents(
+                        $statusUpdate['final_status_id'],
+                        $oldStatus,
+                        [
+                            ':book_name'        => $book['title']   ?? '',
+                            ':user_name'        => $admin['name']   ?? '',
+                            ':user_mail'        => $admin['email']  ?? '',
+                            ':office'           => $this->libs->offices()->getOfficeNameByOfficeId($admin['office_id']),
+                            ':due_date'         => $this->libs->statuses()->getBookDueDate((int)$book['id']),
+                            'book_status_id'    => $statusUpdate['record_id'],
+                            'noti_id'           => $eventKeyId,
+                            'event'             => 'transport_request'
+                        ]
+                    );
+                }
+            } elseif ($newLoaner !== null) {
+                App::getService('notification')->dispatchStatusEvents(
+                    $statusUpdate['final_status_id'],
+                    $oldStatus,
+                    [
+                        ':book_name'        => $book['title']   ?? '',
+                        ':user_name'        => $loaner['name']  ?? '',
+                        ':user_mail'        => $loaner['email'] ?? '',
+                        ':office'           => $this->libs->offices()->getOfficeNameByOfficeId($book['cur_office']),
+                        ':due_date'         => $this->libs->statuses()->getBookDueDate((int)$book['id']),
+                        'book_status_id'    => $statusUpdate['record_id'],
+                        'noti_id'           => $eventKeyId,
+                        'event'             => 'transport_request'
+                    ]
+                );
+            }
             $this->db->finishTransaction();
-        } catch (\Throwable $t) {
+        } catch(\Throwable $t) {
             $this->db->cancelTransaction();
             throw $t;
         }
-
-        App::getService('notification')->dispatchStatusEvents($statusId, $this->getBookById($bookId), $loaner);
-        dd('Status set, now its notification time !!');
-        // $statusContext  = [];
-        // $eventContext = [
-        //     ':book_name'    => $book['title'],
-        //     ':user_name'    => $loaner['name'],
-        //     ':user_mail'    => $loaner['email'],
-        //     ':user_office'  => $loaner['office_id'],
-        //     ':due_date'     => $book['dueDate'],
-        //     ':book_office'  => $book['office'],
-        //     // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
-        //     // ':action_link'  => 'https://biblioapp.nl/',
-        //     // ':action_label' => 'Boek Verlengen'
-        // ];
-
-        // $context = [
-        //     ':book_name'    => $book['title'],
-        //     ':user_name'    => $loaner['name'],
-        //     ':user_mail'    => $loaner['email'],
-        //     ':user_office'  => $loaner['office_id'],
-        //     ':due_date'     => $book['dueDate'],
-        //     ':book_office'  => $book['office'],
-        //     // ':action_intro' => 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.',
-        //     // ':action_link'  => 'https://biblioapp.nl/',
-        //     // ':action_label' => 'Boek Verlengen'
-        // ];
-
-        // // Trigger notifications after commit (or via an async job)
-        // $this->dispatchStatusEvents($statusId, $book, $loaner, $eventContext);
-
         return true;
     }
 
@@ -265,3 +271,57 @@ class BooksService {
         return $this->libs->genres()->getGenresForDisplay();
     }
 }
+
+        /** Code i Compacted\Extracted:
+            // if (!empty($loaner['office'])) {
+            //     $targetOffice = $this->libs->books()->resolveReturnTarget($book, $loaner['office'], $requestStatus['type'] );
+
+            //     if ($book['cur_office'] !== $targetOffice) {
+            //         $transport = true;
+            //     }
+            // }
+
+            // if (!empty($loaner['email'])) {
+            //     $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
+
+            //     if (!$newLoaner || empty($newLoaner['id'])) {
+            //         $this->db->cancelTransaction();
+            //         return false;
+            //     }
+            // }
+
+            // if ($newLoaner && !in_array($requestedStatusId, [1, 3], true)) {
+            //     $newDueDate = calculateDueDate(null, (int)($requestStatus['periode_length'] ?? 0));
+            //     $result = $this->libs->loaners()->assignLoanerToBook($bookId, $newLoaner['id'], $requestedStatusId, $newDueDate);
+
+            //     if (!$result) {
+            //         return $this->db->cancelTransaction();
+            //     }
+            // }
+
+            // if (($requestStatus['type'] ?? null) === 'Aanwezig') {
+            //     $result = $this->libs->loaners()->deactivateActiveBookLoaners($bookId);
+            //     if ($result === false) {
+            //         $this->db->cancelTransaction();
+            //         return false;
+            //     }
+            // }
+
+            // $finalStatusId = $transport ? 3 : $requestedStatusId;
+
+            // $statusResult = $this->libs->statuses()->setBookStatus($bookId, $finalStatusId);
+            // if (!$statusResult) {
+            //     $this->db->cancelTransaction();
+            //     return false;
+            // }
+
+            // if ($requestedStatusId !== 1) {
+            //     $eventStatusMap = App::getService('status')->getEventStatusMap();
+            //     $eventKey       = $this->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $currentTrigger);
+            //     $eventKeyId     = $this->libs->notifications()->getNotiIdByType($eventKey);
+
+            //     if ($requestStatus) {
+            //         $this->libs->statuses()->setStatusEvent($statusResult, $finalStatusId, $eventKeyId);
+            //     }
+            // }
+        */
