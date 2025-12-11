@@ -23,16 +23,18 @@
  */
 namespace App\Service;
 
+use App\App;
+
 class MailTemplateService {
-    protected array     $config;
-    protected string    $frameDir;
+    protected array         $config;
+    protected string        $frameDir;
 
     public function __construct(array $config) {
         $this->config   = $config;
-        $this->frameDir = realpath(__DIR__ . '/../ext/mailFrames');
+        $this->frameDir = realpath(__DIR__ . '/../../ext/mailFrames');
     }
 
-    /*  Get file contents of pre-defined frame/template files */
+    /** Helper: Get file contents of pre-defined frame/template files */
     protected function getFrame(string $name = 'frame.html'): string {
         $path = $this->frameDir . '/' . $name;
         $frame = @file_get_contents($path);
@@ -44,25 +46,26 @@ class MailTemplateService {
         return $frame;
     }
 
-    /*  Simple token replacement */
+    /** Helper: Simple token replacement */
     protected function replaceTokens(string $content, array $tokens): string {
         if (!$content) return '';
         return str_replace(array_keys($tokens), array_values($tokens), $content);
     }
 
-    /*  Fetch a template by event_type from DB */
-    protected function getTemplate(string $eventType): ?array {
-        $sql = "SELECT event_type, subject, body_html, body_text, active 
-                FROM mail_templates 
-                WHERE event_type = :event_type AND active = 1 
+    /** Helper: Fetch template by status ID */
+    protected function getTemplateByNotiId(int $notificationId): ?array {
+        $sql = "SELECT mt.subject, mt.body_html, mt.body_text, mt.from_mail, mt.from_name
+                FROM notifications n
+                JOIN mail_templates mt ON n.template_id = mt.id
+                WHERE n.id = :notification_id AND mt.active = 1
                 LIMIT 1";
 
         return App::getService('database')->query()->fetchOne($sql, [
-            'event_type' => $eventType
+            'notification_id' => $notificationId
         ]);
     }
 
-    /* Create action block with token confirmation, for extending book loans (HTML based). */
+    /** Helper: Create optional action block with token confirmation, for extending book loans (HTML based) */
     protected function createActionBlock(array $tokens): string {
         if (empty($tokens[':action_link'])) {
             return ''; // optional, nothing to render
@@ -84,7 +87,7 @@ class MailTemplateService {
         return str_replace(':action_button', $button, $fragment);
     }
 
-    /* Create action block with token confirmation, for extending book loans (text based). */
+    /** Helper: Create optional action block with token confirmation, for extending book loans (text based) */
     protected function createActionBlockText(array $tokens): string {
         if (empty($tokens[':action_link'])) {
             return ''; // optional, nothing to render
@@ -94,13 +97,10 @@ class MailTemplateService {
         return $intro . "\n" . $tokens[':action_link'];
     }
 
-    /*  Render a template with given tokens */
-    public function render(string $eventType, array $tokens): ?array {
-        $tpl = $this->getTemplate($eventType);
-        
-        if (!$tpl) {
-            return null;
-        }
+    /** API: Render a template with given tokens (context) */
+    public function render(string $notificationId, array $tokens): ?array {
+        $tpl = $this->getTemplateByNotiId($notificationId);
+        if (!$tpl) return null;
 
         $subject   = $this->replaceTokens($tpl['subject'], $tokens);
         $bodyHtml  = $this->replaceTokens($tpl['body_html'], $tokens);
@@ -108,17 +108,14 @@ class MailTemplateService {
 
         // Only process action blocks if template contains :action_block
         if (strpos($tpl['body_html'], ':action_block') !== false) {
-            $actionBlockHtml = $this->createActionBlock($tokens);
-            $bodyHtml = str_replace(':action_block', $actionBlockHtml, $bodyHtml);
+            $bodyHtml = str_replace(':action_block', $this->createActionBlock($tokens), $bodyHtml);
         }
 
         if (strpos($tpl['body_text'], ':action_block') !== false) {
-            $actionBlockText = $this->createActionBlockText($tokens);
-            $bodyText = str_replace(':action_block', $actionBlockText, $bodyText);
+            $bodyText = str_replace(':action_block', $this->createActionBlockText($tokens), $bodyText);
         }
 
-        $frame = $this->getFrame();
-        $finalHtml = str_replace(':body', $bodyHtml, $frame);
+        $finalHtml = str_replace(':body', $bodyHtml, $this->getFrame());
 
         return [
             'subject'   => $subject,
