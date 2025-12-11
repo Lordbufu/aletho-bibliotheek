@@ -56,7 +56,7 @@ class LoanerController {
     /** Handle AJAX request for loaner of a specific book. */
     public function requestLoanerForBook() {
         $bookId = isset($_GET['book_id']) ? (int)$_GET['book_id'] : 0;
-        $loaner = $this->loaners->getCurrentLoanerNames($bookId);
+        $loaner = $this->loaners->getCurrentLoaner($bookId)[0];
 
         header('Content-Type: application/json; charset=utf-8');
         
@@ -78,9 +78,9 @@ class LoanerController {
         }
 
         echo json_encode([
-            'name' => $loaner['name'] ?? '',
-            'email' => $loaner['email'] ?? '',
-            'location' => $officeName
+            'name'      => $loaner['name'] ?? '',
+            'email'     => $loaner['email'] ?? '',
+            'location'  => $officeName
         ]);
 
         exit;
