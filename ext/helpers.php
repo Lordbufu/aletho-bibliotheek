@@ -64,8 +64,8 @@ if (!function_exists('setFlash')) {
 
 /** Calculate due date for setting the correct end_date (might get removed later) */
 if(!function_exists('calculateDueDate')) {
-    function calculateDueDate(string $startDate, int $days): string {
-        $dt = new \DateTimeImmutable($startDate);
+    function calculateDueDate(?string $startDate, int $days): string {
+        $dt = $startDate ? new \DateTimeImmutable($startDate) : new \DateTimeImmutable('now');
         return $dt->add(new \DateInterval("P{$days}D"))->format('Y-m-d');
     }
 }
