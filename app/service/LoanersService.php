@@ -36,16 +36,8 @@ class LoanersService {
         return $this->loaners->getLoanersForLogic($loanerId);
     }
 
-    public function createBookLoaner(int $bookId, int $loanerId, int $statusId, string $startDate, ?string $endDate): bool {
-        return $this->loaners->createBookLoaner($bookId, $loanerId, $statusId, $startDate, $endDate);
-    }
-
     public function deactivateLoaner(int $id): bool {
         return $this->loaners->deactivateLoaner($id);
-    }
-
-    public function deactivateActiveBookLoaners(int $bookId): bool {
-        return $this->loaners->deactivateActiveBookLoaners($bookId);
     }
 
     public function update(int $id, array $fields): bool {
@@ -54,6 +46,19 @@ class LoanersService {
 
     public function allActive(): array {
         return $this->loaners->allActive();
+    }
+
+    public function assignBookLoanerIfNeeded(int $bookId, ?array $loaner, int $statusId, array $requestStatus): bool{
+        return $this->loaners->assignBookLoanerIfNeeded($bookId, $loaner, $statusId, $requestStatus);
+    }
+
+    public function deactivateBookLoanersIfNeeded(int $bookId, array $requestStatus): bool {
+        return $this->loaners->deactivateBookLoanersIfNeeded($bookId, $requestStatus);
+    }
+
+    /** API: Functions sharing the same `Repo` function, offering different functionality */
+    public function getCurrentloaner(int $bookId): array {
+        return $this->loaners->getLoanersByBookId($bookId, 'current', 'Geen huidige lener', 1, false);
     }
 
     public function getCurrentLoanerNames(int $bookId): array {
