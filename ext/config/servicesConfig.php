@@ -8,7 +8,7 @@ return [
     ],
     'database' => [
         'class'  => \App\Database::class,
-        'config' => BASE_PATH . '/ext/config/database.php'
+        'config' => BASE_PATH . '/ext/config/databaseConfig.php'
     ],
     'logger' => [
         'class'  => \App\Logger::class
@@ -25,20 +25,18 @@ return [
     ],
     'mail' => [
         'class' => \App\Service\MailTemplateService::class,
-        'config' => BASE_PATH . '/ext/config/mail.php'
+        'config' => BASE_PATH . '/ext/config/mailTemplateConfig.php'
     ],
     'notification' => [
         'class' => \App\Service\NotificationService::class,
-        'config' => array_merge(
-                ['mailConfig' => require BASE_PATH . '/ext/config/mail.php'],
-                ['statusEventMap' => require BASE_PATH . '/ext/config/notification.php']
-            )
+        'config' => BASE_PATH . '/ext/config/notificationConfig.php'
     ],
     'offices' => [
         'class' => \App\Service\OfficesService::class
     ],
     'status' => [
-        'class' => \App\Service\StatusService::class
+        'class' => \App\Service\StatusService::class,
+        'config' => BASE_PATH . '/ext/config/statusConfig.php'
     ],
     'val' => [
         'class'  => \App\Service\ValidationService::class
