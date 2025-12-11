@@ -43,8 +43,8 @@ INSERT INTO `book_status` (`book_id`, `status_id`, `active`) VALUES
 
 -- Test loaners
 INSERT INTO `loaners` (`name`, `email`, `office_id`, `active`) VALUES
-    ('test loaner 001', 'test.loaner001@mail.com', '1', '1'),
-    ('test loaner 002', 'test.loaner002@mail.com', '2', '1');
+    ('test loaner 001', 'assen.bibliotheek@aletho.nl', '1', '1'),
+    ('test loaner 002', 'groningen.bibliotheek@aletho.nl', '2', '1');
 
 -- Test book_loaners
 INSERT INTO `book_loaners` (`book_id`, `loaner_id`, `status_id`) VALUES

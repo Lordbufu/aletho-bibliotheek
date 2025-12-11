@@ -1,6 +1,7 @@
 INSERT INTO `mail_templates`
     (`subject`, `from_mail`, `from_name`, `body_html`, `body_text`, `active`)
 VALUES
+-- loan_confirm
 (   'Leen bevestiging voor: :book_name',
     ':from_mail',
     ':from_name',
@@ -48,7 +49,8 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
-(   'Het boek: :book_naam is klaar voor ophalen',
+-- pickup_ready_confirm
+(   'Het boek: :book_name is klaar voor ophalen',
     ':from_mail',
     ':from_name',
     '<tr>
@@ -94,6 +96,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+-- pickup_confirm
 (   'Lening eind datum voor: :book_name',
     ':from_mail',
     ':from_name',
@@ -138,6 +141,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+-- return_reminder
 (   'Verloop reminder voor: :book_name',
     ':from_mail',
     ':from_name',
@@ -180,6 +184,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+-- transport_request
 (   'Transport verzoek voor: :book_name',
     ':from_mail',
     ':from_name',
@@ -191,7 +196,7 @@ VALUES
     <tr>
         <td style="padding:20px; font-family:\"Quicksand"\, Arial, sans-serif; color:#333; text-align:center;">
             <p style="margin:0;">
-                Er is een transportverzoek voor: <strong>:book_name</strong>.<br>
+                Er is een transport verzoek voor: <strong>:book_name</strong>.<br>
                 Zou je het boek mee willen nemen naar: <strong>:office</strong>.
             </p>
             :action_block
@@ -219,6 +224,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+-- reserv_confirm
 (   'Reservering bevestiging voor: :book_name',
     ':from_mail',
     ':from_name',
@@ -265,6 +271,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+-- overdue_reminder
 (   'Verstreken lening voor: :book_name',
     ':from_mail',
     ':from_name',

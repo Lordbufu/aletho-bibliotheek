@@ -6,4 +6,4 @@ INSERT INTO `notifications` (`type`, `active`, `template_id`) VALUES
     ('return_reminder', '1', '4'),
     ('transport_request', '1', '5'),
     ('reserv_confirm', '1', '6'),
-    ('overdue_notice', '1', '7');
+    ('overdue_reminder', '1', '7');
