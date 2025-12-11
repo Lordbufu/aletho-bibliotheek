@@ -2,8 +2,6 @@
 
 namespace App\Libs;
 
-use App\App;
-
 /** Repository for managing writers and their many-to-many relation with books */
 class WriterRepo {
     protected ?array        $writers = null;
