@@ -32,6 +32,10 @@ class OfficesService {
         return $this->libs->offices()->getOfficesForDisplay();
     }
 
+    public function getAdminsForOffices(int $officeId): array {
+        return $this->libs->offices()->getAdminsForOffices($officeId);
+    }
+
     public function getLinksByBookId(int $bookId): array {
         return $this->libs->offices()->getLinksByBookId($bookId);
     }
