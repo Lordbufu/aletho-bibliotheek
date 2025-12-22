@@ -106,7 +106,7 @@
                     <input  type="text"
                             class="aletho-inputs extra-input-style office-input"
                             id="book-office-<?= $book['id'] ?>"
-                            value="<?=htmlspecialchars($book['office']) ?>"
+                            value="<?=htmlspecialchars($book['curOffice']) ?>"
                             placeholder="Type een locatie en druk op Enter"
                             data-book-id="<?= $book['id'] ?>"
                             data-context="details"
@@ -125,7 +125,7 @@
                     <div class="aletho-alert-inline"><?= htmlspecialchars($errors['book_offices']) ?></div>
                 <?php endif; ?>
             <?php else: ?>
-                <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['office']) ?>" disabled>
+                <input type="text" class="aletho-inputs extra-input-style" value="<?=htmlspecialchars($book['curOffice']) ?>" disabled>
             <?php endif; ?>
 
             <?php if ($canEdit): // Huidige status section ?>
