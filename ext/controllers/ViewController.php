@@ -2,39 +2,69 @@
 namespace Ext\Controllers;
 
 use App\App;
+use Ext\Controllers\Formatting\BookFormatter;
+use Ext\Controllers\Middleware\AuthMiddleware;
 
-/*  Handles general view rendering and redirects. */
 class ViewController {
-    /*  Initial landing view, redirecting guests to the login view. */
+
     public function landing() {
+        // Evaluate user-agent, exit if null
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+        if (!$userAgent) exit;
 
-        if (!$userAgent) {
+        // Evaluate user role, login if not set
+        if (!isset($_SESSION['user']['role'])) {
+            $_SESSION['user']['role'] = 'Guest';
             return App::redirect('/login');
         }
 
-        if (empty($_SESSION['user']) || !isset($_SESSION['user']['role'])) {
-            $_SESSION['user'] = ['role' => 'Guest'];
-        }
-
-        if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'Guest') === 'Guest') {
-            return App::redirect('/login');
-        }
-
-        return $this->home();
+        // Go home to evaluate the user role
+        return App::redirect('/home');
     }
 
-    /*  Home/dashboard view for authenticated users. */
     public function home() {
-        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
-            return App::redirect('/');
-        }
+        $auth = new AuthMiddleware();
+        $auth->requireLogin();
 
-        // dd(App::getService('books')->getAllForDisplay());
+        $books = App::getService('books')->findAllActiveBooks();
+        $formatter = new BookFormatter();
 
         return App::view('main', [
-            'books' => App::getService('books')->getAllForDisplay() ?? null,
+            'books' => $formatter->formatMany($books),
             'canEdit' => App::getService('auth')->can('manageBooks')
         ]);
     }
+
+    // public function landing() {
+    //     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+    //     if (!$userAgent) {
+    //         return App::redirect('/login');
+    //     }
+
+    //     if (empty($_SESSION['user']) || !isset($_SESSION['user']['role'])) {
+    //         $_SESSION['user'] = ['role' => 'Guest'];
+    //     }
+
+    //     if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'Guest') === 'Guest') {
+    //         return App::redirect('/login');
+    //     }
+
+    //     return $this->home();
+    // }
+
+    // public function home() {
+    //     $bookFormatter = new \Ext\Controllers\Formatting\BookFormatter();
+    //     if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
+    //         return App::redirect('/');
+    //     }
+
+    //     $books      = App::getService('books')->findAllActiveBooks();
+    //     $formatted  = $bookFormatter->formatMany($books);
+
+    //     return App::view('main', [
+    //         'books' => $formatted ?? null,
+    //         'canEdit' => App::getService('auth')->can('manageBooks')
+    //     ]);
+    // }
 }
