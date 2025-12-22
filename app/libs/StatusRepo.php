@@ -23,11 +23,7 @@ class StatusRepo {
         $query  = "INSERT INTO book_status (book_id, status_id, active) VALUES (?, ?, 1)";
         $params = [$bookId, $statusId];
 
-        $stmt = $this->db->query()->run($query, $params);
-
-        if ($stmt->rowCount() === 0) {
-            return null;
-        }
+        $this->db->query()->run($query, $params);
 
         return (int)$this->db->connection()->pdo()->lastInsertId();
     }
@@ -37,45 +33,65 @@ class StatusRepo {
         return $transport ? 3 : $requestedStatusId;
     }
 
-    /** Helper: Resolve if event should be linked ? */
-    protected function shouldLinkEvent(int $requestedStatusId): bool {
-        return $requestedStatusId !== 1;
-    }
-
     /** Helper: Find the correct event key, in the pre-defined statusMap */
+    //  TODO: Review AI's work here, seems good so far though.
     protected function findEventKey(array $eventStatusMap, int $finalStatusId, ?int $oldStatus = null, ?string $currentTrigger = null): ?string {
+        $matchedEvents = [];
+
         foreach ($eventStatusMap as $eventKey => $config) {
+            // 1. Trigger check
+            if (!empty($config['trigger']) && $config['trigger'] !== $currentTrigger) {
+                error_log("[EventMatch] Trigger mismatch for {$eventKey}: expected={$config['trigger']}, got={$currentTrigger}");
+                continue;
+            }
+
+            $strict = $config['strict'] ?? false;
             $statuses = $config['status'];
+            $from = $config['from'] ?? null;
 
-            if (count($statuses) === 1) {
-                if ($statuses[0] === $finalStatusId) {
-                    return $eventKey;
+            // 2. Strict mode: require exact from → to
+            if ($strict) {
+                if ($from === null) {
+                    error_log("[EventMatch] Strict rule {$eventKey} missing 'from' definition");
+                    continue;
                 }
+
+                if (!in_array($oldStatus, $from, true) || !in_array($finalStatusId, $statuses, true)) {
+                    error_log("[EventMatch] Strict mismatch for {$eventKey}: from={$oldStatus}, to={$finalStatusId}");
+                    continue;
+                }
+
+                $matchedEvents[] = $eventKey;
+                continue;
             }
 
-            if (count($statuses) === 2) {
-                if ($statuses[0] === $oldStatus && $statuses[1] === $finalStatusId) {
-                    return $eventKey;
-                }
+            // 3. Non-strict mode: only match final status
+            if (in_array($finalStatusId, $statuses, true)) {
+                error_log("[EventMatch] Non-strict match for {$eventKey}: to={$finalStatusId}");
+                $matchedEvents[] = $eventKey;
+                continue;
             }
+
+            // 4. No match
+            error_log("[EventMatch] No match for {$eventKey}: to={$finalStatusId}");
         }
 
-        return null;
-    }
-
-    /** Helper: Resolve the event key from the `eventStatusMap` */
-    protected function resolveEventKey(int $finalStatusId, int $oldStatus, string $trigger): ?string {
-        $eventStatusMap = App::getService('status')->getEventStatusMap();
-        return $this->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $trigger);
-    }
-
-    /** Helper: Resolve the correct notification id */
-    protected function resolveEventKeyId(?string $eventKey): ?int {
-        if (!$eventKey) {
+        // 5. Ambiguous matches
+        if (count($matchedEvents) > 1) {
+            error_log("[EventMatch] Ambiguous event match: " . implode(', ', $matchedEvents));
             return null;
         }
 
-        return App::getLibrary('notification')->getNotiIdByType($eventKey);
+        // 6. No matches
+        if (count($matchedEvents) === 0) {
+            error_log("[EventMatch] No event matched for transition {$oldStatus} → {$finalStatusId} (trigger={$currentTrigger})");
+            return null;
+        }
+
+        // 7. Single match
+        $eventKey = $matchedEvents[0];
+        error_log("[EventMatch] Event matched: {$eventKey} for transition {$oldStatus} → {$finalStatusId}");
+        return $eventKey;
     }
 
     /** API: Reqeuest cached $statuses, either formatted (for display) or fully unformated (for logic) */
@@ -132,10 +148,9 @@ class StatusRepo {
     }
 
     /** API & Helper: Disable a specific `books_status` record */
-    public function disableBookStatus(int $bookId): bool {
+    public function disableBookStatus(int $bookId): void {
         $query = "UPDATE book_status SET active = 0 WHERE book_id = ? AND active = 1";
-        $stmt = $this->db->query()->run($query, [$bookId]);
-        return ($stmt->rowCount() > 0);
+        $this->db->query()->run($query, [$bookId]);
     }
 
     /** Get the books status expire date */
@@ -169,10 +184,9 @@ class StatusRepo {
     }
 
     /** Swap state on status objects */
-    public function swapStatusActiveState(int $statusId): bool {
+    public function swapStatusActiveState(int $statusId): void {
         $query  = "UPDATE status SET active = CASE WHEN active = 1 THEN 0 ELSE 1 END WHERE id = ?";
-        $stmt = $this->db->query()->run($query, [$statusId]);
-        return ($stmt->rowCount() > 0);
+        $this->db->query()->run($query, [$statusId]);
     }
 
     /** Update status period settings */
@@ -183,48 +197,45 @@ class StatusRepo {
     }
 
     /** API: Update status_noti links, based on `book_status`.`id` and `notification`.`id` */
-    public function updateStatusLinks(int $bookStatusId, int $notifId): ?int {
+    public function updateStatusLinks(int $bookStatusId, int $notifId): int {
         $query  = "UPDATE status_noti SET mail_send = 1, sent_at = NOW() WHERE bk_st_id = ? AND notification_id = ?";
         $params = [$bookStatusId, $notifId];
-        $stmt   = $this->db->query()->run($query, $params);
-        return ($stmt->rowCount() > 0);
+        $result = $this->db->query()->run($query, $params);
+        return $result->rowCount();
     }
 
     /** API: To set a empty `book_status` */
-    public function setBookStatus(int $bookId, int $statusId): ?int {
-        $disabled = $this->disableBookStatus($bookId);
-
-        if (!$disabled) return null;
-
-        $newStatus = $this->insertBookStatus($bookId, $statusId);
-
-        if (!$newStatus) return null;
-
-        return $newStatus;
+    public function setBookStatus(int $bookId, int $statusId, string $trigger = ''): ?int {
+        if (!($statusId === 5 && $trigger === 'user_action')) {
+            $this->disableBookStatus($bookId);
+        }
+        return $this->insertBookStatus($bookId, $statusId);
     }
 
     /** API: Evaluate the required status, and update `book_status` using `setBookStatus` */
-    public function updateBookStatus(int $bookId, int $requestedStatusId, bool $transport): array {
+    public function updateBookStatus(int $bookId, int $requestedStatusId, bool $transport, string $trigger): array {
         $finalStatusId  = $this->resolveFinalStatus($requestedStatusId, $transport);
-        $statusRecordId = $this->setBookStatus($bookId, $finalStatusId);
+        $statusRecordId = $this->setBookStatus($bookId, $finalStatusId, $trigger);
 
         return [
-            'record_id'      => $statusRecordId,
-            'final_status_id'=> $finalStatusId
+            'record_id'     => $statusRecordId,
+            'finalStatusId' => $finalStatusId
         ];
     }
 
     /** API: Set `status_noti` to link notifications to a `book_status` if needed */
     public function linkEventIfNeeded(array $statusUpdate, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
-        if (!$this->shouldLinkEvent($requestedStatusId)) {
+        if ($statusUpdate['finalStatusId'] === 1) {
             return null;
         }
 
         $statusResult   = $statusUpdate['record_id'];
-        $finalStatusId  = $statusUpdate['final_status_id'];
+        $finalStatusId  = $statusUpdate['finalStatusId'];
 
-        $eventKey = $this->resolveEventKey($finalStatusId, $oldStatus, $trigger);
-        $eventKeyId = $this->resolveEventKeyId($eventKey);
+        // Resolve eventKey + eventKeyId inline
+        $eventStatusMap = App::getService('status')->getEventStatusMap();
+        $eventKey = $this->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $trigger);
+        $eventKeyId = $eventKey ? App::getLibrary('notification')->getNotiIdByType($eventKey) : null;
 
         if ($eventKeyId && !empty($requestStatus)) {
             $this->setStatusEvent($statusResult, $finalStatusId, $eventKeyId);

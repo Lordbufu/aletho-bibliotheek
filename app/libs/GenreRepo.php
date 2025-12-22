@@ -4,21 +4,21 @@ namespace App\Libs;
 
 /** Repository for managing genres and their many-to-many relation with books */
 class GenreRepo {
-    protected ?array        $genres = null;
     protected \App\Database $db;
 
     public function __construct(\App\Database $db) {
         $this->db = $db;
     }
 
-    /** Resolve an array of genre names or IDs into valid genre IDs */
-    private function _getOrCreateGenreIds(array $names): array {
+    // New re-factored Helper functions
+    /** Helper: Resolve an array of genre names or IDs into valid genre IDs */
+    protected function _getOrCreateGenreIds(array $names): array {
         if (empty($names)) return [];
 
-        $this->getAllGenres();
-        $nameToId = array_column($this->genres, null, 'name');
+        $genres     = $this->getAllGenres(); 
+        $nameToId   = array_column($genres, null, 'name');
+        $genreIds   = [];
 
-        $genreIds = [];
         foreach ($names as $name) {
             if (is_numeric($name)) {
                 $genreIds[] = (int)$name;
@@ -26,33 +26,26 @@ class GenreRepo {
             }
 
             if (isset($nameToId[$name])) {
-                $genre = $nameToId[$name];
-                $genreId = (int)$genre['id'];
+                $genre      = $nameToId[$name];
+                $genreId    = (int)$genre['id'];
 
-                if ((int)($genre['active'] ?? 1) === 0) {
-                    $this->db->query()->run("UPDATE genres SET active = 1 WHERE id = ?", [$genreId]);
-                    $this->genres[array_search($genreId, array_column($this->genres, 'id'))]['active'] = 1;
+                if ((int)$genre['active'] === 0) {
+                    $query  = "UPDATE genres SET active = 1 WHERE id = ?";
+                    $this->db->query()->run($query, [$genreId]);
                 }
             } else {
-                $this->db->query()->run("INSERT INTO genres (name, active) VALUES (?, 1)", [$name]);
-                $genreId = $this->db->query()->lastInsertId();
-                $newGenre = ['id' => $genreId, 'name' => $name, 'active' => 1];
-                $this->genres[] = $newGenre;
-                $nameToId[$name] = $newGenre;
+                $query      = "INSERT INTO genres (name, active) VALUES (?, 1)";
+                $this->db->query()->run($query, [$name]);
+                $genreId    = $this->db->query()->lastInsertId();
             }
 
-            $genreIds[] = $genreId;
+            $genreIds[]     = $genreId;
         }
 
         return $genreIds;
     }
 
-    /** Helper: Set global genres */
-    protected function setGenres(): array {
-        $query = "SELECT * FROM genres";
-        $this->genres = $this->db->query()->fetchAll($query);
-    }
-
+    /** Helper: Strip irrelevant data for frontend presentation */
     protected function formatGenreForDisplay($genre): array {
         return [
             'id' => $genre['id'],
@@ -60,24 +53,19 @@ class GenreRepo {
         ];
     }
 
-    /** Get all genres from the `genres` table, results are cached in memory for the lifetime of this object */
+    /** API & Helper: Get all genres from the `genres` table */
     public function getAllGenres(): array {
-        if ($this->genres === null) {
-            $this->setGenres();
-        }
-
-        return $this->genres;
+        $query = "SELECT * FROM genres";
+        return $this->db->query()->fetchAll($query);
     }
 
     /** Get genres for display */
     public function getGenresForDisplay(): array {
         $out = [];
 
-        if ($this->genres === null) {
-            $this->setGenres();
-        }
+        $genres = $this->getAllGenres();
 
-        foreach ($this->genres as $genre) {
+        foreach ($genres as $genre) {
             if (!$genre['active']) {
                 continue;
             }
@@ -117,8 +105,39 @@ class GenreRepo {
         );
     }
 
-    /** Add genres to a book without removing existing ones, only inserts missing links; does not delete */
-    public function addBookGenres(array $names, int $bookId): void {
+    // New re-factored API functions
+    /** API: Ensure all `genre` & `book_genre` data is correct, and the table isnt getting polluted over time */
+    public function syncBookGenres(int $bookId, array $names): void {
+        $newIds         = $this->_getOrCreateGenreIds($names);
+        $currentIds     = array_column($this->getLinksByBookId($bookId), 'genre_id');
+        $toDelete       = array_diff($currentIds, $newIds);
+        $toAdd          = array_diff($newIds, $currentIds);
+
+
+        if (!empty($toDelete)) {
+            $placeholders   = implode(',', array_fill(0, count($toDelete), '?'));
+            $query          = "DELETE FROM book_genre WHERE book_id = ? AND genre_id IN ($placeholders)";
+            $params         = array_merge([$bookId], $toDelete);
+
+            $this->db->query()->run($query, $params);
+        }
+
+        if (!empty($toAdd)) {
+            $placeholders   = implode(', ', array_fill(0, count($toAdd), '(?, ?)'));
+            $values         = [];
+            foreach ($toAdd as $gid) {
+                $values[]   = $bookId;
+                $values[]   = $gid;
+            }
+
+            $query          =  "INSERT INTO book_genre (book_id, genre_id) VALUES $placeholders";
+            $this->db->query()->run($query, $values);
+        }
+    }
+}
+
+/** Old Obsolete functions, that have be replaced with better versions
+    public function addBookGenres(int $bookId, array $names): void {
         if (empty($names)) return;
 
         $genreIds = $this->_getOrCreateGenreIds($names);
@@ -139,7 +158,6 @@ class GenreRepo {
         }
     }
 
-    /** Replace the set of genres for a book with a new set, uses diffing to minimize DB churn (only deletes/insert changes) */
     public function updateBookGenres(int $bookId, array $genres): void {
         $genreIds = $this->_getOrCreateGenreIds($genres);
         $currentIds = array_column($this->getLinksByBookId($bookId), 'genre_id');
@@ -168,4 +186,4 @@ class GenreRepo {
             );
         }
     }
-}
+ */
