@@ -283,6 +283,14 @@ $(function() {
     $('.status-dot').on('click', testLights);
 });
 
+$(document).ajaxSuccess(function (event, xhr, settings, data) {
+    console.log('AJAX SUCCESS:', settings.url, data);
+});
+
+$(document).ajaxError(function (event, xhr, settings, error) {
+    console.error('AJAX ERROR:', settings.url, xhr.responseText);
+});
+
 // W.I.P. helper, to review the basic status light colors via a simple click to change/rotate.
 function testLights(e) {
     let $el = $(e.target);
