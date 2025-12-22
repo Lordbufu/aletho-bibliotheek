@@ -14,7 +14,7 @@ return [
         'class'  => \App\Logger::class
     ],
     'auth' => [
-        'class'  => \App\Auth::class
+        'class'  => \App\Service\AuthenticationService::class
     ],
     // View & Flow Specific Services
     'books' => [
