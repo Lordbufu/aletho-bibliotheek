@@ -5,8 +5,8 @@ use App\App;
 
 /** Handles authentication-related HTTP requests. */
 class AuthController {
-    protected \App\Auth                         $auth;
-    protected \App\Service\ValidationService    $validator;
+    protected \App\Service\AuthenticationService    $auth;
+    protected \App\Service\ValidationService        $validator;
 
     /** Construct Auth as default local service. */
     public function __construct() {
@@ -75,7 +75,8 @@ class AuthController {
         if ($isGlobal) {
             $result = $this->auth->resetUserPassword(
                 $data['user_name'],
-                $data['new_password']
+                $data['new_password'],
+                $data['confirm_password']
             );
         } else {
             $result = $this->auth->resetOwnPassword(

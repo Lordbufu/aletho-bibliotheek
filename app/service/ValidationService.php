@@ -67,11 +67,11 @@ class ValidationService {
     // PasswordValidation functions
     /** Check if password is valid. */
     public function isValid(string $password): bool {
-        return $this->passwordValidator->isValud($password);
+        return $this->passwordValidator->isValid($password);
     }
 
     /** Get password requirments for display. */
     public function getRequirements(): array {
-        return $this->passwordValidato->getRequirements();
+        return $this->passwordValidator->getRequirements();
     }
 }

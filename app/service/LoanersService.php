@@ -44,10 +44,6 @@ class LoanersService {
         return $this->loaners->update($id, $fields);
     }
 
-    public function allActive(): array {
-        return $this->loaners->allActive();
-    }
-
     public function assignBookLoanerIfNeeded(int $bookId, ?array $loaner, int $statusId, array $requestStatus): bool{
         return $this->loaners->assignBookLoanerIfNeeded($bookId, $loaner, $statusId, $requestStatus);
     }

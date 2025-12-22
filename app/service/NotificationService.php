@@ -71,6 +71,24 @@
  *      overdue_notice          -> (id=2 => id=6) Afwezig => Overdatum (CRON detecting past due date)
  */
 
+/** Temp mental note for status changes:
+ *   // Manual status change events:
+ *   'loan_confirm'          => ['status' => [2], 'from' => [1], 'trigger' => 'user_action', 'strict' => true],
+ *   'pickup_ready_confirm'  => ['status' => [4], 'from' => [3], 'trigger' => 'user_action', 'strict' => true],
+ *   'pickup_confirm'        => ['status' => [2], 'from' => [4], 'trigger' => 'user_action', 'strict' => true],
+ *   'reserv_confirm'        => ['status' => [5], 'trigger' => 'user_action', 'strict' => false],
+ *   'transport_request'     => ['status' => [3], 'trigger' => 'user_action', 'strict' => false],
+
+ *   // Automated (logic driven) status change events:
+ *   'reserv_confirm_auto'   => ['status' => [5], 'from' => [2], 'trigger' => 'auto_action', 'strict' => true],
+ *   'transp_req_auto'       => ['status' => [3], 'from' => [2], 'trigger' => 'auto_action', 'strict' => true],
+
+ *   // CRON status change events:
+ *   'return_reminder'       => ['status' => [2], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
+ *   'overdue_reminder_user' => ['status' => [6], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
+ *   'overdue_notice_admin'  => ['status' => [6], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
+ */
+
 /** Local TODO-List:
  *      - [ ] Evaluate if processCronEvents should be done here, or in a dedicated CronService/Controller.
  */
@@ -148,34 +166,44 @@ class NotificationService {
     }
 
     /** API: Dispatch and formulate status-related notification events */
-    public function dispatchStatusEvents(int $statusId, int $previousStatus, array $context = []): bool {
-        $allOk = true;
+    //  TODO: Review/Test AI's work here, but again looking decent so far
+    public function dispatchStatusEvents(int $statusId, array $context = []): bool {
+        $notiLinks  = App::getService('status')->getStatusLinks($context['book_status_id'], $statusId);
+        $allOk      = true;
 
-        // 1) Fetch all notification rows for this book_status
-        $notiLinks = App::getService('status')->getStatusLinks($context['book_status_id'], $statusId);
+        if (empty($notiLinks)) {
+            error_log("[NotificationService] No notification links found for status_id={$statusId}, book_status_id={$context['book_status_id']}");
+            return false;
+        }
 
         foreach ($notiLinks as $row) {
             $event = $row['event'];
-            $context['event'] = $event;
-
-            // 2) Render and send mail
-            if (!empty($context['noti_id'])) {
-                $email = App::getService('mail')->render($row['notification_id'], $context);
-            }
+            $email = App::getService('mail')->render($row['notification_id'], $context);
 
             if (!$email) {
-                error_log("[NotificationService] No template found for event={$event}, status_id={$statusId}");
+                error_log("[NotificationService] No template rendered for event={$event}, status_id={$statusId}, notification_id={$row['notification_id']}");
                 continue;
             }
 
             $success = $this->sendMail($context[':user_mail'], $email);
 
-            // 3) Update status_noti row if mail sent
-            if ($success && !empty($context['book_status_id'])) {
-                $ok = App::getService('status')->updateStatusLinks((int)$context['book_status_id'], (int)$row['notification_id']);
-                if (!$ok) {
-                    $allOk = false;
+            if ($success) {
+                error_log("[NotificationService] Email sent successfully for event={$event}, to={$context[':user_mail']}");
+
+                if (!empty($context['book_status_id'])) {
+                    $ok = App::getService('status')->updateStatusLinks(
+                        (int)$context['book_status_id'],
+                        (int)$row['notification_id']
+                    );
+
+                    if (!$ok) {
+                        error_log("[NotificationService] Failed to update status link for book_status_id={$context['book_status_id']}, notification_id={$row['notification_id']}");
+                        $allOk = false;
+                    }
                 }
+            } else {
+                error_log("[NotificationService] Failed to send email for event={$event}, to={$context[':user_mail']}");
+                $allOk = false;
             }
         }
 

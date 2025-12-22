@@ -1,4 +1,22 @@
 <?php
+/** Temp mental note for status changes:
+ *   // Manual status change events:
+ *   'loan_confirm'          => ['status' => [2], 'from' => [1], 'trigger' => 'user_action', 'strict' => true],
+ *   'pickup_ready_confirm'  => ['status' => [4], 'from' => [3], 'trigger' => 'user_action', 'strict' => true],
+ *   'pickup_confirm'        => ['status' => [2], 'from' => [4], 'trigger' => 'user_action', 'strict' => true],
+ *   'reserv_confirm'        => ['status' => [5], 'trigger' => 'user_action', 'strict' => false],
+ *   'transport_request'     => ['status' => [3], 'trigger' => 'user_action', 'strict' => false],
+
+ *   // Automated (logic driven) status change events:
+ *   'reserv_confirm_auto'   => ['status' => [5], 'from' => [2], 'trigger' => 'auto_action', 'strict' => true],
+ *   'transp_req_auto'       => ['status' => [3], 'from' => [2], 'trigger' => 'auto_action', 'strict' => true],
+
+ *   // CRON status change events:
+ *   'return_reminder'       => ['status' => [2], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
+ *   'overdue_reminder_user' => ['status' => [6], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
+ *   'overdue_notice_admin'  => ['status' => [6], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
+ */
+
 namespace Ext\Controllers;
 
 use App\App;
@@ -19,28 +37,29 @@ class StatusController {
         }
     }
 
-    /*  Return all book statuses as JSON. */
+    /** Return all book statuses as JSON. */
     public function requestStatus() {
         $statuses = $this->status->getAllStatuses('idType');
         header('Content-Type: application/json');
         echo json_encode($statuses);
     }
 
+    /** Request all status details, so the `periode-wijzigen` popin can be polulated */
     public function requestPopStatus() {
         $statuses = $this->status->getAllStatuses();
         header('Content-Type: application/json');
         echo json_encode($statuses);
     }
 
-    /*  Return the status of a specific book as JSON. */
+    /** Return the status of a specific book as JSON. */
     public function requestBookStatus() {
         $bookId = isset($_GET['book_id']) ? (int)$_GET['book_id'] : 0;
-        $book = $this->bookS->getBookById($bookId);
-        $status = ['type' => $book['status']];
+        $status = $this->status->getBookStatus($bookId, "type");
         header('Content-Type: application/json');
         echo json_encode([$status]);
     }
 
+    // Still need to review these last functions, but i think there still good
     /*  Set the period settings for a status. */
     public function setStatusPeriod()/*: Response */ {
         if (!App::getService('auth')->can('manageBooks')) {
@@ -111,7 +130,12 @@ class StatusController {
         }
 
         /* Attempt the status change */
-        $result = $this->bookS->changeBookStatus($clean['book_id'], $clean['status_id'], 'user_action', $cLoaner);
+        $result = $this->bookS->changeBookStatus(
+            $clean['book_id'],
+            $clean['status_id'],
+            'user_action',
+            $cLoaner
+        );
 
         /* Evaluate the result, and act acordingly */
         if (!$result) {

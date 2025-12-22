@@ -33,7 +33,7 @@ class StatusService {
         return $this->statuses->getStatusLinks($bookStatusId, $statusId);
     }
 
-    public function disableBookStatus(int $bookId): bool {
+    public function disableBookStatus(int $bookId): null {
         return $this->statuses->disableBookStatus($bookId);
     }
 
@@ -53,7 +53,7 @@ class StatusService {
         return $this->statuses->updateStatusPeriod($statusId, $periode_length, $reminder_day, $overdue_day);
     }
 
-    public function updateStatusLinks(int $bookStatusId, int $notifId): bool {
+    public function updateStatusLinks(int $bookStatusId, int $notifId): int {
         return $this->statuses->updateStatusLinks($bookStatusId, $notifId);
     }
 

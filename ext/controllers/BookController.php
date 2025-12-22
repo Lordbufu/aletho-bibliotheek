@@ -39,12 +39,14 @@ class BookController {
         exit;
     }
 
-    /** Filter and process book add form data, and call the add functions in the BooksService */
+    /** Filter and process book add form data, and call the add functions in the BooksService 
+     * 
+     *  TODO's:
+     *      - Remove hardcoded 0 key for `$tempData['book_offices'][0]`, if/when multiple office are implemented.
+     *          - Or adjust the 'cleanData()' output to be a single name only.
+     *      - Additionally, once everything is finalized, remove the need to set $newData to new key strings.
+     */
     public function add() {
-        $hasError   = false;
-        $newData    = [];
-        $result     = false;
-
         if (!App::getService('auth')->can('manageBooks')) {
             setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
             return App::redirect('/');
@@ -61,13 +63,19 @@ class BookController {
             return App::redirect('/#add-book-popin');
         }
 
-        $newData = $this->valS->cleanData();
+        $tempData = $this->valS->cleanData(); 
 
-        // Test/Refine/Re-factor below here
-        if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'add')) {
+        if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($tempData, 'add')) {
             setFlash('inlinePop', 'data', $this->valS->errors());
             return App::redirect('/#add-book-popin');
         }
+
+        $newData    = [
+            'title'     => $tempData['book_name'],
+            'writers'   => $tempData['book_writers'],
+            'genres'    => $tempData['book_genres'],
+            'office'    => $tempData['book_offices'][0]
+        ];
 
         if (!isset($_SESSION['_flash']['type'])) {
             $result = $this->bookS->addBook($newData);
@@ -87,10 +95,6 @@ class BookController {
 
     /** Filter and process book edit form data, and call the update function in the BooksService */
     public function edit() {
-        $hasError   = false;
-        $newData    = [];
-        $result     = false;
-
         if (!App::getService('auth')->can('manageBooks')) {
             setFlash('global', 'failure', 'Je hebt geen rechten om deze actie uit te voeren.');
             return App::redirect('/');
@@ -109,10 +113,9 @@ class BookController {
             return App::redirect('/');
         }
 
-        $newData = $this->valS->cleanData();
+        $tempData = $this->valS->cleanData();
 
-        // Test/Refine/Re-factor below here
-        if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($newData, 'edit')) {
+        if (!isset($_SESSION['_flash']['type']) && !$this->valS->validateBookForm($tempData, 'edit')) {
             foreach($this->valS->errors() as $key => $value) {
                 $tempKeys[] = $key;
                 $tempValues[] = $value;
@@ -122,8 +125,15 @@ class BookController {
             return App::redirect('/');
         }
 
-        if (!isset($_SESSION['_flash']['type'])) {
+        $newData = [
+            'id'        => $tempData['book_id'],
+            'title'     => $tempData['book_name'],
+            'writers'   => $tempData['book_writers'],
+            'genres'    => $tempData['book_genres'],
+            'offices'   => $tempData['book_offices'][0]
+        ];
 
+        if (!isset($_SESSION['_flash']['type'])) {
             $result = $this->bookS->updateBook($newData);
 
             if (!$result) {
@@ -150,7 +160,7 @@ class BookController {
         }
 
         $bookId = (int) $_POST['book_id'];
-        $result = $this->bookS->swapActiveState($bookId);
+        $result = $this->bookS->swapBookActiveState($bookId);
 
         if (!$result) {
             setFlash('global', 'failure', 'Boek kon niet worden verwijderd!');
