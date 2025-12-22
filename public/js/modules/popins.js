@@ -134,7 +134,7 @@ const Popins = (() => {
                     data: { data: 'book', book_id: bookId },
                     success: function (status) {
                         const $select = $('#change-status-type');
-                        const targetText = status[0].type;
+                        const targetText = status[0];
 
                         const $match = $select.find('option').filter(function () {
                             return $(this).text().trim() === targetText;
@@ -225,7 +225,7 @@ const Popins = (() => {
                     data: { data: 'book', book_id: bookId },
                     success: function (status) {
                         const $select = $('#change-status-type');
-                        const targetText = status[0].type;
+                        const targetText = status[0];
 
                         const $match = $select.find('option').filter(function () {
                             return $(this).text().trim() === targetText;
