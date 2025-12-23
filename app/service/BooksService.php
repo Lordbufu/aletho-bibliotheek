@@ -50,9 +50,10 @@ class BooksService {
             $this->libs->writers()->syncBookWriters($bookId, $input['writers']);
         }
 
-        if (isset($input['office'])) {      // TODO: Intended for future many-to-many office support if required.
-            $this->libs->offices()->syncBookOffices($bookId, $input['office']);
-        }
+        // TODO: Intended for future many-to-many office support if required.
+        // if (isset($input['office'])) {
+        //     $this->libs->offices()->syncBookOffices($bookId, $input['office']);
+        // }
     }
 
 // Basic API Library facade functions:
@@ -165,7 +166,7 @@ class BooksService {
     }
 
     /** API: Add a new book, or re-active if already in the DB, using our library classes */
-    public function addBook(array $input): false {
+    public function addBook(array $input): int {
         $existing = $this->searchBooks([
             'title' => $input['title'],
             'one' => true
@@ -194,12 +195,7 @@ class BooksService {
             $this->db->finishTransaction();
             return $bookId;
         } catch (\Throwable $t) {
-            App::getService('logger')->error("Book creation failed", [
-                'error' => $t->getMessage(),
-                'trace' => $t->getTraceAsString(),
-                'input' => $input
-            ]);
-
+            error_log("[BooksService]" . $t->getMessage());
             $this->db->cancelTransaction();
             throw $t;
         }
@@ -243,11 +239,7 @@ class BooksService {
             return $bookId;
 
         } catch (\Throwable $t) {
-            App::getService('logger')->error("Book update failed", [
-                'error' => $t->getMessage(),
-                'trace' => $t->getTraceAsString(),
-                'input' => $input
-            ]);
+            error_log("[BooksService]" . $t->getMessage());
             $this->db->cancelTransaction();
             throw $t;
         }
