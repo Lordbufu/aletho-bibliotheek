@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Service;
 
-class Logger {
+class LoggerService {
     protected string $logDir;
 
     /* Initialize the Logger, creates the log directory if it doesn't exist. */

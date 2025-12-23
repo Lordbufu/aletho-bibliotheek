@@ -11,7 +11,7 @@ return [
         'config' => BASE_PATH . '/ext/config/databaseConfig.php'
     ],
     'logger' => [
-        'class'  => \App\Logger::class
+        'class'  => \App\Service\LoggerService::class
     ],
     'auth' => [
         'class'  => \App\Service\AuthenticationService::class

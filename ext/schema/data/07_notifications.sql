@@ -8,5 +8,5 @@ INSERT INTO `notifications` (`type`, `active`, `template_id`) VALUES
     ('transp_req_auto', '1', '5'),
     ('reserv_confirm', '1', '6'),
     ('reserv_confirm_auto', '1', '6'),
-    ('overdue_reminder_user', '1', '7')
+    ('overdue_reminder_user', '1', '7'),
     ('overdue_reminder_admin', '1', '7');
