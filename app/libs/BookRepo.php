@@ -120,7 +120,7 @@ class BookRepo {
 
         if (!empty($filters['one'])) {
             $row = $this->db->query()->fetchOne($sql, $params);
-            return $row ? [$row] : [];
+            return $row ?? [];
         }
         
         return $this->db->query()->fetchAll($sql, $params);
