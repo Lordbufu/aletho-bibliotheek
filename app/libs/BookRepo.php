@@ -1,55 +1,6 @@
 <?php
 namespace App\Libs;
 
-/** BookRepo:
- *
- * Repository layer for all data operations related to the `books` table.
- * This class provides a clean, domain‑focused API for retrieving, searching,
- * creating, and updating book records. It acts as the single source of truth
- * for all book‑specific persistence logic.
- *
- * Responsibilities:
- * -----------------
- * - Fetching book records using exact filters (`findBooks`)
- * - Performing fuzzy/partial searches on selected fields (`searchBooks`)
- * - Creating new book entries (`addBook`)
- * - Updating individual book fields (title, home_office, cur_office)
- * - Toggling the active state of a book (`swapBookActiveState`)
- * - Determining return/transport logic for book movement workflows
- *
- * Data Ownership:
- * ---------------
- * This repository manages only the fields stored directly in the `books` table:
- *   - id
- *   - title
- *   - home_office
- *   - cur_office
- *   - active
- *
- * All other book‑related information (writers, genres, categories, metadata)
- * belongs to other domain repositories and is intentionally not handled here.
- *
- * Usage Notes:
- * ------------
- * - Controllers should interact with this class through the corresponding
- *   Service layer, which provides intention‑revealing wrapper methods.
- *
- * - `findBooks()` performs strict, exact‑match lookups and is intended for
- *   business‑logic‑driven queries (e.g., fetching a specific book or all active books).
- *
- * - `searchBooks()` performs partial (LIKE‑based) matching and is intended for
- *   user‑facing search features where input may be incomplete or fuzzy.
- *
- * - Update operations are field‑specific and validated internally to prevent
- *   unsafe column updates.
- *
- * - Helper methods (`resolveReturnTarget`, `resolveTransport`) support
- *   movement/loan workflows and encapsulate domain rules for determining
- *   where a book should be routed next.
- *
- * This repository is designed to remain stateless, predictable, and easy to
- * extend as the `books` domain evolves.
- */
 class BookRepo {
     protected \App\Database $db;
 
