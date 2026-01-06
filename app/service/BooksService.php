@@ -34,6 +34,7 @@ class BooksService {
         }
     }
 
+// Helper functions:
     /** Helper: Cancel current DB transaction and return false  */
     protected function failTransaction(): bool {
         $this->db->cancelTransaction();
@@ -50,33 +51,105 @@ class BooksService {
             $this->libs->writers()->syncBookWriters($bookId, $input['writers']);
         }
 
-        // TODO: Intended for future many-to-many office support if required.
+        // TODO: Re-factor these lines if office many to many office support has been added.
         // if (isset($input['office'])) {
         //     $this->libs->offices()->syncBookOffices($bookId, $input['office']);
         // }
     }
 
-// Basic API Library facade functions:
-    /** API - Exact lookup methods ("find" functions):
-     *      These functions return book records based on strict, exact database values.
-     *      They are typically used by controllers when the required book(s) are known
-     *      by ID or by fixed state (e.g., active/inactive).
-     *
-     *      - findSingleBook(int $id)
-     *          Returns exactly one book by its ID.
-     *
-     *      - findSingleActiveBook(int $id)
-     *          Returns one active book by ID. If the book exists but is inactive,
-     *          it will not be returned.
-     *
-     *      - findAllBooks()
-     *          Returns all books in the database, regardless of active state.
-     *
-     *      - findAllActiveBooks()
-     *          Returns all books where `active = 1`.
-     *
-     *    These methods internally call BookRepo::findBooks() with exact-match filters.
-     */
+    /** Helper: Determine if the book's current office should be updated */
+    protected function shouldUpdateOffice(array $book, int $targetOffice): bool {
+        return $targetOffice !== null && $book['cur_office'] !== $targetOffice;
+    }
+
+    /** Helper: Handle loaner context during status change */
+    protected function handleLoanerContext(array $book, int $bookId, int $requestedStatusId, array $requestStatus, array $loaner): array {
+        if (empty($loaner)) {
+            $this->libs->loaners()->deactivateBookLoanersIfNeeded($bookId, $requestStatus);
+            return [false, null, null];
+        }
+        
+        $transport = $this->resolveTransport($book, $loaner['office'] ?? null, $requestStatus['type'] ?? null);
+        $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
+        
+        if (!$newLoaner) {
+            return [false, null, null];
+        }
+        
+        $assigned = $this->libs->loaners()->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestedStatusId, $requestStatus);
+        
+        if (!$assigned) {
+            return [false, null, null];
+        }
+        
+        $targetOffice = null;
+
+        return [$transport, $newLoaner, $targetOffice];
+    }
+
+    /** Helper: Build notification payload for status change events */
+    protected function buildNotificationPayload(array $book, int $targetOffice, int $recordId, array $user): array {
+        return [
+            ':book_name' => $book['title'] ?? '',
+            ':user_name' => $user['name'] ?? '',
+            ':user_mail' => $user['email'] ?? '',
+            ':office' => $this->libs->offices()->getOfficeNameByOfficeId($targetOffice),
+            ':due_date' => $this->libs->statuses()->getBookDueDate((int)$book['id']),
+            'book_status_id' => $recordId,
+        ];
+    }
+
+    /** Helper: Determine the target office based on status update and conditions */
+    protected function determineTargetOffice(array $statusUpdate, int $requestedStatusId, array $book, ?array $newLoaner, bool $transport): ?int {
+        if ($statusUpdate['finalStatusId'] === 4 && !empty($newLoaner)) {
+            if ($book['cur_office'] !== $newLoaner['office_id']) {
+                $this->updateCurrentOffice($book['id'], $newLoaner['office_id']);
+            }
+
+            return $newLoaner['office_id'];
+        }
+
+        if (!empty($newLoaner) && in_array($requestedStatusId, [2, 5], true)) {
+            return $newLoaner['office_id'];
+        }
+
+        if ($transport) {
+            return $newLoaner['office_id'] ?? $book['home_office'] ?? $book['cur_office'];
+        }
+
+        if (!empty($newLoaner)) {
+            return $book['cur_office'];
+        }
+
+        return null;
+    }
+
+    /** Helper: Send notifications based on status update context */
+    protected function sendNotifications(array $statusUpdate, array $book, ?int $targetOffice, bool $transport, ?array $newLoaner, array $loanerInput): void {
+        // Transport → notify admins 
+        if ($transport) {
+            $admins = $this->libs->offices()->getAdminsForOffices($targetOffice);
+            foreach ($admins as $admin) {
+                App::getService('notification')->dispatchStatusEvents(
+                    $statusUpdate['finalStatusId'],
+                    $this->buildNotificationPayload($book, $targetOffice, $statusUpdate['record_id'], $admin)
+                );
+            }
+            return;
+        }
+        
+        // Loaner present → notify loaner
+        if ($newLoaner !== null) {
+            App::getService('notification')->dispatchStatusEvents(
+                $statusUpdate['finalStatusId'],
+                $this->buildNotificationPayload($book, $targetOffice, $statusUpdate['record_id'], $loanerInput)
+            );
+        }
+    }
+
+// API Basic logic functions:
+    /** API - Exact lookup methods ("find" functions) */
+    // Potentially useless
     public function findSingleBook(int $id) {
         return $this->libs->books()->findBooks(['id' => $id], true);
     }
@@ -85,12 +158,23 @@ class BooksService {
         return $this->libs->books()->findBooks(['id' => $id, 'active' => 1], true);
     }
 
+    // Potentially useless
     public function findAllBooks() {
         return $this->libs->books()->findBooks([], false);
     }
 
     public function findAllActiveBooks() {
         return $this->libs->books()->findBooks(['active' => 1], false);
+    }
+
+    /** API: Update the `books`.`home_office` location */
+    public function updateHomeOffice(int $bookId, int $officeId): bool {
+        return $this->libs->books()->updateBookOffice($bookId, $officeId, 'home_office');
+    }
+
+    /** API: Update the `books`.`cur_office` location */
+    public function updateCurrentOffice(int $bookId, int $officeId): bool {
+        return $this->libs->books()->updateBookOffice($bookId, $officeId, 'cur_office');
     }
 
     /** API: Swap book active state by ID */
@@ -101,17 +185,6 @@ class BooksService {
     /** API: Update `books`.`title` only */
     public function updateBookTitle(int $bookId, string $title): bool {
         return $this->libs->books()->updateBookTitle($bookId, $title);
-    }
-
-    // Shared book office update functions
-    /** API: Update the `books`.`home_office` location */
-    public function updateHomeOffice(int $bookId, int $officeId): bool {
-        return $this->libs->books()->updateBookOffice($bookId, $officeId, 'home_office');
-    }
-
-    /** API: Update the `books`.`cur_office` location */
-    public function updateCurrentOffice(int $bookId, int $officeId): bool {
-        return $this->libs->books()->updateBookOffice($bookId, $officeId, 'cur_office');
     }
 
     /** API: Resolve the books transport state */
@@ -129,29 +202,7 @@ class BooksService {
         return $this->libs->genres()->getGenresForDisplay();
     }
 
-// API Advanced logic functions:
-    /** API - Fuzzy lookup method ("search" function)
-     *      This function performs partial-match (LIKE) searches on selected fields.
-     *      It is intended for user-facing search features where the controller may
-     *      receive incomplete or non-exact input.
-     *
-     *      - searchBooks(array $query)
-     *          Accepts an associative array of optional search fields:
-     *              [
-     *                  'title'       => string,
-     *                  'home_office' => string|int,
-     *                  'cur_office'  => string|int
-     *              ]
-     *
-     *          Only fields that are present and non-empty are included in the search.
-     *          All comparisons use partial matching (SQL LIKE), allowing flexible
-     *          search behavior such as:
-     *              searchBooks(['title' => 'harry'])
-     *              searchBooks(['home_office' => 3])
-     *              searchBooks(['title' => 'ring', 'cur_office' => 2])
-     *
-     *          Returns an array of all matching books.
-     */
+    /** API - Fuzzy lookup method ("search" function) */
     public function searchBooks(array $query = []): array {
         $allowed = ['title', 'home_office', 'cur_office', 'one'];
         $filters = [];
@@ -246,9 +297,6 @@ class BooksService {
     }
 
     /** API: Change all book status related data, and notify user/admin when required */
-    // Mental note: @param $currentTrigger -> can be used to seperate user actions and cron jobs, but we are not using it yet.
-    // TODO-LIST:
-        // - Review potential database polution, and make sure old data is cleaned up properly
     public function changeBookStatus(int $bookId, int $requestedStatusId, string $currentTrigger, array $loaner = []): bool {
         $oldStatus      = (int)$this->libs->statuses()->getBookStatus($bookId, 'id');
         $requestStatus  = $this->libs->statuses()->getStatusById($requestedStatusId) ?? [];
@@ -257,123 +305,32 @@ class BooksService {
         $newLoaner      = null;
         $targetOffice   = null;
         $transport      = false;
-
+        
         $this->db->startTransaction();
 
         try {
-            /** LOANER HANDLING */
-            if (!empty($loaner)) {
-                $transport = $this->resolveTransport($book, $loaner['office'] ?? null, $requestStatus['type'] ?? null);
-                $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
-
-                // Set the correct trigger tag for event mapping for a logic driven trigger
-                if ($transport) { $localTrigger = 'auto_action'; }
-
-                if (!$newLoaner) {
-                    return $this->failTransaction();
-                }
-
-                if (!$this->libs->loaners()->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestedStatusId, $requestStatus)) {
-                    return $this->failTransaction();
-                }
-            } else {
-                if (!$this->libs->loaners()->deactivateBookLoanersIfNeeded($bookId, $requestStatus)) {
-                    return $this->failTransaction();
-                }
-
-                error_log("[BooksService] Starting to evaluate the transport state and office update based on: oldStatus=$oldStatus, requestedStatusId=$requestedStatusId, cur_office={$book['cur_office']}, home_office={$book['home_office']}");
-
-                if ($oldStatus == 3 && $requestedStatusId == 1) {
-                    if ($book['cur_office'] !== $book['home_office']) {
-                        $this->updateCurrentOffice($bookId, $book['home_office']);
-                        $book = $this->findSingleActiveBook($bookId); // refresh
-                        error_log("[BooksService] Updating book info after a office update for bookId=$bookId its cur_office={$book['home_office']}");
-                        $targetOffice = $book['home_office'];
-                    }
-                }
-
-                if ($requestedStatusId === 1) { // 1 = Aanwezig
-                    // Only trigger transport if coming from a status that represents a return
-                    if ((int)$oldStatus === 2) {
-                        if ($book['cur_office'] !== $book['home_office']) {
-                            $transport = true;
-                            $localTrigger = 'auto_action';
-                            $targetOffice = $book['home_office'];
-                            error_log("[BooksService] Return flow: transport=$transport, trigger=$localTrigger, targetOffice=$targetOffice");
-                        }
-                    }
-                }
+            [$transport, $newLoaner, $targetOffice] = $this->handleLoanerContext($book, $bookId, $requestedStatusId, $requestStatus, $loaner);
+            
+            if ($transport) {
+                $localTrigger = 'auto_action';
             }
 
-            /** STATUS UPDATE */
             $statusUpdate = $this->libs->statuses()->updateBookStatus($bookId, $requestedStatusId, $transport, $localTrigger);
-            error_log("[BooksService] finalStatusId={$statusUpdate['finalStatusId']}");
-
-            if ($statusUpdate['finalStatusId'] === 4) { // 4 = Ligt Klaar
-                if (!empty($newLoaner) && $book['cur_office'] !== $newLoaner['office_id']) {
-                    $this->updateCurrentOffice($bookId, $newLoaner['office_id']);
-                    $book = $this->findSingleActiveBook($bookId);   // refresh
-                    error_log("[BooksService] Updating book info after a office update for bookId=$bookId its cur_office={$book['home_office']}"); 
-                    $targetOffice = $newLoaner['office_id'];            // Set the correct target office
-                }
-            }
-
-            if ($requestedStatusId === 2 && !empty($newLoaner)) { // Afwezig
-                $targetOffice = $newLoaner['office_id'];
-            }
-
-            if ($requestedStatusId === 5 && !empty($newLoaner)) { // Gereserveerd
-                $targetOffice = $newLoaner['office_id'];
-            }
-
-            if ($transport && $targetOffice === null) { // Transport triggered by loaner request
-                $targetOffice = $newLoaner['office_id'] ?? $book['home_office'];
-            }
 
             if (!$statusUpdate['record_id']) {
                 return $this->failTransaction();
             }
 
-            /** STATUS → EVENT LINKING */
+            $targetOffice = $this->determineTargetOffice($statusUpdate, $requestedStatusId, $book, $newLoaner, $transport);
+
+            if ($this->shouldUpdateOffice($book, $targetOffice)) {
+                $this->updateCurrentOffice($bookId, $targetOffice);
+                $book = $this->findSingleActiveBook($bookId);
+            }
+
             $this->libs->statuses()->linkEventIfNeeded($statusUpdate, $requestedStatusId, $oldStatus, $localTrigger, $requestStatus);
 
-            /** NOTIFICATIONS */
-            if ($transport) {
-                if ($targetOffice === null) {
-                    $targetOffice = $book['cur_office'];
-                }
-
-                $admins = $this->libs->offices()->getAdminsForOffices($targetOffice);
-                foreach ($admins as $admin) {
-                    App::getService('notification')->dispatchStatusEvents(
-                        $statusUpdate['finalStatusId'],
-                        [
-                            ':book_name'        => $book['title']   ?? '',
-                            ':user_name'        => $admin['name']   ?? '',
-                            ':user_mail'        => $admin['email']  ?? '',
-                            ':office'           => $this->libs->offices()->getOfficeNameByOfficeId($targetOffice),
-                            ':due_date'         => $this->libs->statuses()->getBookDueDate((int)$book['id']),
-                            'book_status_id'    => $statusUpdate['record_id'],
-                        ]
-                    );
-                }
-            } elseif ($newLoaner !== null) {
-                if ($targetOffice === null) {
-                    $targetOffice = $book['cur_office'];
-                }
-
-                App::getService('notification')->dispatchStatusEvents(
-                    $statusUpdate['finalStatusId'],
-                    [
-                        ':book_name'        => $book['title']   ?? '',
-                        ':user_name'        => $loaner['name']  ?? '',
-                        ':user_mail'        => $loaner['email'] ?? '',
-                        ':office'           => $this->libs->offices()->getOfficeNameByOfficeId($targetOffice),
-                        ':due_date'         => $this->libs->statuses()->getBookDueDate((int)$book['id']),
-                        'book_status_id'    => $statusUpdate['record_id'],
-                    ]
-                );
-            }
+            $this->sendNotifications($statusUpdate, $book, $targetOffice, $transport, $newLoaner, $loaner);
 
             $this->db->finishTransaction();
         } catch(\Throwable $t) {
