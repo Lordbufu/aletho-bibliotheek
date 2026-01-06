@@ -24,10 +24,6 @@ class OfficesService {
         return $this->libs->offices()->getOfficeNameByOfficeId($officeId);
     }
 
-    public function getOfficeNamesByBookId(int $bookId): string {
-        return $this->libs->offices()->getOfficeNamesByBookId($bookId);
-    }
-
     public function getOfficesForDisplay(): array {
         return $this->libs->offices()->getOfficesForDisplay();
     }
@@ -40,11 +36,17 @@ class OfficesService {
         return $this->libs->offices()->getLinksByBookId($bookId);
     }
 
-    public function addBookOffices(array $names, int $bookId): void {
-        $this->libs->offices()->addBookOffices($names, $bookId);
-    }
+    // Potentially obsolete ?
+    // public function getOfficeNamesByBookId(int $bookId): string {
+    //     return $this->libs->offices()->getOfficeNamesByBookId($bookId);
+    // }
 
-    public function updateBookOffices(int $bookId, array $offices): void {
-        $this->libs->offices()->updateBookOffices($bookId, $offices);
-    }
+    // TODO: Review if still required, i think this was added for future admin functions ?
+    // public function addBookOffices(array $names, int $bookId): void {
+    //     $this->libs->offices()->addBookOffices($names, $bookId);
+    // }
+
+    // public function updateBookOffices(int $bookId, array $offices): void {
+    //     $this->libs->offices()->updateBookOffices($bookId, $offices);
+    // }
 }
