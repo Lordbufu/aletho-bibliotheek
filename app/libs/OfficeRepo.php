@@ -54,26 +54,27 @@ class OfficeRepo {
         return $this->db->query()->fetchAll($query);
     }
 
-    /** Get office ID by name, or 0 if not found. */
+    /** API: Get office ID by name, or 0 if not found. */
     public function getOfficeIdByName(string $name): int {
         $query  = "SELECT id FROM offices WHERE name = ?";
         $row    = $this->db->query()->fetchOne($query, [$name]);
         return $row['id'] ?? 0;
     }
 
-    /** Get office name by ID. */
+    /** API: Get office name by ID. */
     public function getOfficeNameByOfficeId(int $officeId): string {
         $offices    = $this->getAllOffices();
         $map        = array_column($offices, 'name', 'id');
         return $map[$officeId] ?? 'Unknown';
     }
 
+    // Potentially obsolete ?
     /** Get office names for a given book. */
-    public function getOfficeNamesByBookId(int $bookId): string {
-        $query  = "SELECT o.name FROM offices o JOIN book_office bo ON o.id = bo.office_id WHERE bo.book_id = ?";
-        $rows   = $this->db->query()->fetchAll($query, [$bookId]);
-        return implode(', ', array_column($rows, 'name'));
-    }
+    // public function getOfficeNamesByBookId(int $bookId): string {
+    //     $query  = "SELECT o.name FROM offices o JOIN book_office bo ON o.id = bo.office_id WHERE bo.book_id = ?";
+    //     $rows   = $this->db->query()->fetchAll($query, [$bookId]);
+    //     return implode(', ', array_column($rows, 'name'));
+    // }
 
     /** API: Get office names for the frontend */
     public function getOfficesForDisplay(): array {
@@ -104,12 +105,13 @@ class OfficeRepo {
         return $this->db->query()->fetchAll($query, [$officeId]);
     }
 
-    /** Get office IDs linked to a book. */
+    /** API: Get office IDs linked to a book. */
     public function getLinksByBookId(int $bookId): array {
         $query = "SELECT office_id FROM book_office WHERE book_id = ?";
         return $this->db->query()->fetchAll($query, [$bookId]);
     }
 
+    // Potentially obsolete ?
     // New re-factored API functions
     // TODO: Create schema table for `book_offices`, when many to many relations are requested, otherwhise this can be deleted/removed this from the codebase.
     /** API: Ensure all `offices` & `book_offices` data is correct, and the table isnt getting polluted over time */
@@ -141,55 +143,3 @@ class OfficeRepo {
         }
     }
 }
-
-/** Old Obsolete functions, that have be replaced with better versions
-    public function addBookOffices(array $names, int $bookId): void {
-        if (empty($names)) return;
-
-        $ids = $this->_getOrCreateOfficeIds($names);
-        $existing = array_column($this->getLinksByBookId($bookId), 'office_id');
-
-        $toAdd = array_diff($ids, $existing);
-        if (!empty($toAdd)) {
-            $placeholders = implode(', ', array_fill(0, count($toAdd), '(?, ?)'));
-            $values = [];
-            foreach ($toAdd as $oid) {
-                $values[] = $bookId;
-                $values[] = $oid;
-            }
-            $this->db->query()->run(
-                "INSERT INTO book_office (book_id, office_id) VALUES $placeholders",
-                $values
-            );
-        }
-    }
-
-    public function updateBookOffices(int $bookId, array $offices): void {
-        $ids = $this->_getOrCreateOfficeIds($offices);
-        $current = array_column($this->getLinksByBookId($bookId), 'office_id');
-
-        $toDelete = array_diff($current, $ids);
-        $toAdd = array_diff($ids, $current);
-
-        if (!empty($toDelete)) {
-            $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
-            $this->db->query()->run(
-                "DELETE FROM book_office WHERE book_id = ? AND office_id IN ($placeholders)",
-                array_merge([$bookId], $toDelete)
-            );
-        }
-
-        if (!empty($toAdd)) {
-            $placeholders = implode(', ', array_fill(0, count($toAdd), '(?, ?)'));
-            $values = [];
-            foreach ($toAdd as $oid) {
-                $values[] = $bookId;
-                $values[] = $oid;
-            }
-            $this->db->query()->run(
-                "INSERT INTO book_office (book_id, office_id) VALUES $placeholders",
-                $values
-            );
-        }
-    }
- */

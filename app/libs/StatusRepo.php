@@ -41,7 +41,7 @@ class StatusRepo {
         foreach ($eventStatusMap as $eventKey => $config) {
             // 1. Trigger check
             if (!empty($config['trigger']) && $config['trigger'] !== $currentTrigger) {
-                error_log("[EventMatch] Trigger mismatch for {$eventKey}: expected={$config['trigger']}, got={$currentTrigger}");
+                // error_log("[EventMatch] Trigger mismatch for {$eventKey}: expected={$config['trigger']}, got={$currentTrigger}");
                 continue;
             }
 
@@ -52,12 +52,12 @@ class StatusRepo {
             // 2. Strict mode: require exact from → to
             if ($strict) {
                 if ($from === null) {
-                    error_log("[EventMatch] Strict rule {$eventKey} missing 'from' definition");
+                    // error_log("[EventMatch] Strict rule {$eventKey} missing 'from' definition");
                     continue;
                 }
 
                 if (!in_array($oldStatus, $from, true) || !in_array($finalStatusId, $statuses, true)) {
-                    error_log("[EventMatch] Strict mismatch for {$eventKey}: from={$oldStatus}, to={$finalStatusId}");
+                    // error_log("[EventMatch] Strict mismatch for {$eventKey}: from={$oldStatus}, to={$finalStatusId}");
                     continue;
                 }
 
@@ -67,30 +67,30 @@ class StatusRepo {
 
             // 3. Non-strict mode: only match final status
             if (in_array($finalStatusId, $statuses, true)) {
-                error_log("[EventMatch] Non-strict match for {$eventKey}: to={$finalStatusId}");
+                // error_log("[EventMatch] Non-strict match for {$eventKey}: to={$finalStatusId}");
                 $matchedEvents[] = $eventKey;
                 continue;
             }
 
             // 4. No match
-            error_log("[EventMatch] No match for {$eventKey}: to={$finalStatusId}");
+            // error_log("[EventMatch] No match for {$eventKey}: to={$finalStatusId}");
         }
 
         // 5. Ambiguous matches
         if (count($matchedEvents) > 1) {
-            error_log("[EventMatch] Ambiguous event match: " . implode(', ', $matchedEvents));
+            // error_log("[EventMatch] Ambiguous event match: " . implode(', ', $matchedEvents));
             return null;
         }
 
         // 6. No matches
         if (count($matchedEvents) === 0) {
-            error_log("[EventMatch] No event matched for transition {$oldStatus} → {$finalStatusId} (trigger={$currentTrigger})");
+            // error_log("[EventMatch] No event matched for transition {$oldStatus} → {$finalStatusId} (trigger={$currentTrigger})");
             return null;
         }
 
         // 7. Single match
         $eventKey = $matchedEvents[0];
-        error_log("[EventMatch] Event matched: {$eventKey} for transition {$oldStatus} → {$finalStatusId}");
+        // error_log("[EventMatch] Event matched: {$eventKey} for transition {$oldStatus} → {$finalStatusId}");
         return $eventKey;
     }
 
@@ -250,9 +250,9 @@ class StatusRepo {
         $params = [$bookStatusId, $statusId, $notificationId];
         $stmt   = $this->db->query()->run($sql, $params);
 
-        if ($stmt->rowCount() === 0) {
-            error_log("[StatusRepo] Failed to insert status_noti for bk_st_id={$bookStatusId}, status_id={$statusId}, notification_id={$notificationId}");
-        }
+        // if ($stmt->rowCount() === 0) {
+        //     error_log("[StatusRepo] Failed to insert status_noti for bk_st_id={$bookStatusId}, status_id={$statusId}, notification_id={$notificationId}");
+        // }
 
         return ($stmt->rowCount() > 0);
     }
