@@ -25,10 +25,10 @@ if (!is_dir($logTempPath)) { mkdir($logTempPath, 0700, true); }
 ini_set('log_errors', 'On');
 ini_set('error_log', $logTempPath . '/custom_error.log');
 
-/** These should only be on, or set to all in the Development enviroment */
-ini_set('display_errors', 'On');                            // ensure this is disable on production.
-ini_set('display_startup_errors', 'On');                    // ensure this is disable on production.
-error_reporting(E_ALL);                                     // Temp addition to ensure correct error logging.
+/* These should only be on, or set to all in the Development enviroment */
+ini_set('display_errors', 'Off');                           // ensure this is disable on production.
+ini_set('display_startup_errors', 'Off');                   // ensure this is disable on production.
+// error_reporting(E_ALL);                                     // Temp addition to ensure correct error logging.
 
 /** Set secure session cookies */
 ini_set('session.cookie_secure', 1);
