@@ -2,7 +2,7 @@
 namespace App;
 
 use App\Database;
-use App\Libs\{BookRepo, GenreRepo, LoanerRepo, OfficeRepo, StatusRepo, WriterRepo, UserRepo, NotificationRepo};
+use App\Libs\{BookRepo, GenreRepo, LoanerRepo, OfficeRepo, StatusRepo, WriterRepo, UserRepo, NotificationRepo, BookStatusRuleRepo};
 
 class Libraries {
     protected array         $instances  = [];
@@ -20,6 +20,7 @@ class Libraries {
         $this->factories['status']          = fn() => new StatusRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['loaner']          = fn() => new LoanerRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['user']            = fn() => new UserRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['status_rules']    = fn() => new BookStatusRuleRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['notification']    = fn() => new NotificationRepo($this->db, fn($n) => $this->resolveLibrary($n));
     }
 
@@ -67,6 +68,10 @@ class Libraries {
 
     public function users(): UserRepo {
         return $this->resolveLibrary('user');
+    }
+
+    public function bookStatusRuleRepo(): BookStatusRuleRepo {
+        return $this->resolveLibrary('status_rules');
     }
 
     public function notifications(): NotificationRepo {
