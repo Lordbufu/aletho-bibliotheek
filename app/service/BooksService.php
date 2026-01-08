@@ -57,34 +57,26 @@ class BooksService {
         // }
     }
 
-    /** Helper: Determine if the book's current office should be updated */
-    protected function shouldUpdateOffice(array $book, int $targetOffice): bool {
-        return $targetOffice !== null && $book['cur_office'] !== $targetOffice;
-    }
-
-    /** Helper: Handle loaner context during status change */
-    protected function handleLoanerContext(array $book, int $bookId, int $requestedStatusId, array $requestStatus, array $loaner): array {
+    /** Helper: Handle pure loaner context during status change */
+    protected function handleLoanerContext(int $bookId, array $requestStatus, array $loaner): ?array {
         if (empty($loaner)) {
             $this->libs->loaners()->deactivateBookLoanersIfNeeded($bookId, $requestStatus);
-            return [false, null, null];
+            return null;
         }
-        
-        $transport = $this->resolveTransport($book, $loaner['office'] ?? null, $requestStatus['type'] ?? null);
-        $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
-        
-        if (!$newLoaner) {
-            return [false, null, null];
-        }
-        
-        $assigned = $this->libs->loaners()->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestedStatusId, $requestStatus);
-        
-        if (!$assigned) {
-            return [false, null, null];
-        }
-        
-        $targetOffice = null;
 
-        return [$transport, $newLoaner, $targetOffice];
+        $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
+
+        if (!$newLoaner) {
+            return null;
+        }
+
+        $assigned = $this->libs->loaners()->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestStatus['id'] ?? 0, $requestStatus );
+
+        if (!$assigned) {
+            return null;
+        }
+
+        return $newLoaner;
     }
 
     /** Helper: Build notification payload for status change events */
@@ -97,31 +89,6 @@ class BooksService {
             ':due_date' => $this->libs->statuses()->getBookDueDate((int)$book['id']),
             'book_status_id' => $recordId,
         ];
-    }
-
-    /** Helper: Determine the target office based on status update and conditions */
-    protected function determineTargetOffice(array $statusUpdate, int $requestedStatusId, array $book, ?array $newLoaner, bool $transport): ?int {
-        if ($statusUpdate['finalStatusId'] === 4 && !empty($newLoaner)) {
-            if ($book['cur_office'] !== $newLoaner['office_id']) {
-                $this->updateCurrentOffice($book['id'], $newLoaner['office_id']);
-            }
-
-            return $newLoaner['office_id'];
-        }
-
-        if (!empty($newLoaner) && in_array($requestedStatusId, [2, 5], true)) {
-            return $newLoaner['office_id'];
-        }
-
-        if ($transport) {
-            return $newLoaner['office_id'] ?? $book['home_office'] ?? $book['cur_office'];
-        }
-
-        if (!empty($newLoaner)) {
-            return $book['cur_office'];
-        }
-
-        return null;
     }
 
     /** Helper: Send notifications based on status update context */
@@ -185,11 +152,6 @@ class BooksService {
     /** API: Update `books`.`title` only */
     public function updateBookTitle(int $bookId, string $title): bool {
         return $this->libs->books()->updateBookTitle($bookId, $title);
-    }
-
-    /** API: Resolve the books transport state */
-    public function resolveTransport(array $book, ?int $loanerOffice, ?string $statusType): bool {
-        return $this->libs->books()->resolveTransport($book, $loanerOffice, $statusType);
     }
 
     /** API: Get all writer names, for frontend autocomplete JQuery */
@@ -302,34 +264,39 @@ class BooksService {
         $requestStatus  = $this->libs->statuses()->getStatusById($requestedStatusId) ?? [];
         $book           = $this->findSingleActiveBook($bookId);
         $localTrigger   = $currentTrigger;
-        $newLoaner      = null;
-        $targetOffice   = null;
-        $transport      = false;
         
         $this->db->startTransaction();
 
         try {
-            [$transport, $newLoaner, $targetOffice] = $this->handleLoanerContext($book, $bookId, $requestedStatusId, $requestStatus, $loaner);
-            
-            if ($transport) {
-                $localTrigger = 'auto_action';
-            }
+            // 1. Evaluate rules (pure logic)
+            $decision       = $this->libs->bookStatusRuleRepo()->evaluate($book, $oldStatus, $requestedStatusId, $loaner, $requestStatus);
+            $finalStatusId  = $decision['overrideStatus'] ?? $requestedStatusId;
+            $transport      = $decision['transport'];
+            $targetOffice   = $decision['targetOffice'];
+            $localTrigger   = $decision['trigger'] ?? $currentTrigger;
 
-            $statusUpdate = $this->libs->statuses()->updateBookStatus($bookId, $requestedStatusId, $transport, $localTrigger);
+            // 2. Apply loaner DB operations (side effects)
+            $newLoaner      = $this->handleLoanerContext($bookId, $requestStatus, $loaner);
+
+            // 3. Update status
+            $statusUpdate   = $this->libs->statuses()->updateBookStatus($bookId, $finalStatusId, $transport, $localTrigger);
 
             if (!$statusUpdate['record_id']) {
                 return $this->failTransaction();
             }
 
-            $targetOffice = $this->determineTargetOffice($statusUpdate, $requestedStatusId, $book, $newLoaner, $transport);
-
-            if ($this->shouldUpdateOffice($book, $targetOffice)) {
+            // 4. Update office if needed
+            if ($decision['shouldUpdateOffice']) {
                 $this->updateCurrentOffice($bookId, $targetOffice);
-                $book = $this->findSingleActiveBook($bookId);
             }
 
-            $this->libs->statuses()->linkEventIfNeeded($statusUpdate, $requestedStatusId, $oldStatus, $localTrigger, $requestStatus);
+            // Always refresh book before notifications
+            $book = $this->findSingleActiveBook($bookId);
 
+            // 5. Link event using FINAL status
+            $this->libs->statuses()->linkEventIfNeeded($statusUpdate, $finalStatusId, $oldStatus, $localTrigger, $requestStatus);
+
+            // 6. Notifications
             $this->sendNotifications($statusUpdate, $book, $targetOffice, $transport, $newLoaner, $loaner);
 
             $this->db->finishTransaction();
