@@ -119,13 +119,13 @@ class NotificationService {
             $this->mailer->Password   = $this->config['password'];
 
             if (!PHPMailer::validateAddress($to)) {
-                error_log("[NotificationService] Invalid recipient address: $to");
+                // error_log("[NotificationService] Invalid recipient address: $to");
                 return false;
             }
 
             if (!PHPMailer::validateAddress($email['from_mail'])) {
                 $adress = $email['from_mail'];
-                error_log("[NotificationService] Invalid from address: $adress");
+                // error_log("[NotificationService] Invalid from address: $adress");
                 return false;
             }
 
@@ -141,7 +141,7 @@ class NotificationService {
             // $this->mailer->Debugoutput = 'error_log'
 
             if (!$this->mailer->send()) {
-                error_log("[NotificationService] Mail send failed: " . $this->mailer->ErrorInfo);
+                // error_log("[NotificationService] Mail send failed: " . $this->mailer->ErrorInfo);
                 return false;
             }
 
@@ -172,7 +172,7 @@ class NotificationService {
         $allOk      = true;
 
         if (empty($notiLinks)) {
-            error_log("[NotificationService] No notification links found for status_id={$statusId}, book_status_id={$context['book_status_id']}");
+            // error_log("[NotificationService] No notification links found for status_id={$statusId}, book_status_id={$context['book_status_id']}");
             return false;
         }
 
@@ -181,14 +181,14 @@ class NotificationService {
             $email = App::getService('mail')->render($row['notification_id'], $context);
 
             if (!$email) {
-                error_log("[NotificationService] No template rendered for event={$event}, status_id={$statusId}, notification_id={$row['notification_id']}");
+                // error_log("[NotificationService] No template rendered for event={$event}, status_id={$statusId}, notification_id={$row['notification_id']}");
                 continue;
             }
 
             $success = $this->sendMail($context[':user_mail'], $email);
 
             if ($success) {
-                error_log("[NotificationService] Email sent successfully for event={$event}, to={$context[':user_mail']}");
+                // error_log("[NotificationService] Email sent successfully for event={$event}, to={$context[':user_mail']}");
 
                 if (!empty($context['book_status_id'])) {
                     $ok = App::getService('status')->updateStatusLinks(
@@ -197,12 +197,12 @@ class NotificationService {
                     );
 
                     if (!$ok) {
-                        error_log("[NotificationService] Failed to update status link for book_status_id={$context['book_status_id']}, notification_id={$row['notification_id']}");
+                        // error_log("[NotificationService] Failed to update status link for book_status_id={$context['book_status_id']}, notification_id={$row['notification_id']}");
                         $allOk = false;
                     }
                 }
             } else {
-                error_log("[NotificationService] Failed to send email for event={$event}, to={$context[':user_mail']}");
+                // error_log("[NotificationService] Failed to send email for event={$event}, to={$context[':user_mail']}");
                 $allOk = false;
             }
         }
