@@ -110,17 +110,4 @@ class BookRepo {
 
         return $this->updateField($bookId, $field, $officeId);
     }
-
-    /** Helper & API: Resolve a book its transport state */
-    public function resolveTransport(array $book, ?int $loanerOffice, ?string $statusType): bool {
-        if (!$loanerOffice) {
-            return false;
-        }
-        
-        $targetOffice = ($statusType === 'Afwezig')
-            ? ($loanerOffice ?: (int)$book['home_office'])
-            : (int)$book['cur_office'];
-
-        return $book['cur_office'] !== $targetOffice;
-    }
 }
