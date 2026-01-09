@@ -61,8 +61,8 @@ class StatusService {
         return $this->statuses->setBookStatus($bookId, $statusId);
     }
     
-    public function updateBookStatus(int $bookId, int $requestedStatusId, bool $transport): array {
-        return $this->statuses->updateBookStatus($bookId, $requestedStatusId, $transport);
+    public function updateBookStatus(int $bookId, int $requestedStatusId, bool $transport, string $trigger): array {
+        return $this->statuses->updateBookStatus($bookId, $requestedStatusId, $transport, $trigger);
     }
 
     public function linkEventIfNeeded(array $statusResult, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
