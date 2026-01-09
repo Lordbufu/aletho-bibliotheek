@@ -60,17 +60,17 @@ class BooksService {
     /** Helper: Handle pure loaner context during status change */
     protected function handleLoanerContext(int $bookId, array $requestStatus, array $loaner): ?array {
         if (empty($loaner)) {
-            $this->libs->loaners()->deactivateBookLoanersIfNeeded($bookId, $requestStatus);
+            App::getService('loaners')->deactivateActiveBookLoaners($bookId, $requestStatus);
             return null;
         }
 
-        $newLoaner = $this->libs->loaners()->findOrCreateByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
+        $newLoaner = $this->libs->loaners()->findOrCreateLoanerByEmail($loaner['name'] ?? '', $loaner['email'], (int)($loaner['office'] ?? 0));
 
         if (!$newLoaner) {
             return null;
         }
 
-        $assigned = $this->libs->loaners()->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestStatus['id'] ?? 0, $requestStatus );
+        $assigned = App::getService('loaners')->assignBookLoanerIfNeeded($bookId, $newLoaner, $requestStatus['id'] ?? 0, $requestStatus );
 
         if (!$assigned) {
             return null;
@@ -116,18 +116,8 @@ class BooksService {
 
 // API Basic logic functions:
     /** API - Exact lookup methods ("find" functions) */
-    // Potentially useless
-    public function findSingleBook(int $id) {
-        return $this->libs->books()->findBooks(['id' => $id], true);
-    }
-
     public function findSingleActiveBook(int $id) {
         return $this->libs->books()->findBooks(['id' => $id, 'active' => 1], true);
-    }
-
-    // Potentially useless
-    public function findAllBooks() {
-        return $this->libs->books()->findBooks([], false);
     }
 
     public function findAllActiveBooks() {
@@ -306,5 +296,15 @@ class BooksService {
         }
 
         return true;
+    }
+
+    // Potentially useless
+    public function findSingleBook(int $id) {
+        return $this->libs->books()->findBooks(['id' => $id], true);
+    }
+
+    // Potentially useless
+    public function findAllBooks() {
+        return $this->libs->books()->findBooks([], false);
     }
 }
