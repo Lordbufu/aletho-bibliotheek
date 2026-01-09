@@ -33,13 +33,11 @@ class StatusRepo {
         return $transport ? 3 : $requestedStatusId;
     }
 
-    /** Helper: Find the correct event key, in the pre-defined statusMap */
-    //  TODO: Review AI's work here, seems good so far though.
-    protected function findEventKey(array $eventStatusMap, int $finalStatusId, ?int $oldStatus = null, ?string $currentTrigger = null): ?string {
+    /** API: Find the correct event key, in the pre-defined statusMap */
+    public function findEventKey(array $eventStatusMap, int $finalStatusId, ?int $oldStatus = null, ?string $currentTrigger = null): ?string {
         $matchedEvents = [];
 
         foreach ($eventStatusMap as $eventKey => $config) {
-            // 1. Trigger check
             if (!empty($config['trigger']) && $config['trigger'] !== $currentTrigger) {
                 // error_log("[EventMatch] Trigger mismatch for {$eventKey}: expected={$config['trigger']}, got={$currentTrigger}");
                 continue;
@@ -49,7 +47,6 @@ class StatusRepo {
             $statuses = $config['status'];
             $from = $config['from'] ?? null;
 
-            // 2. Strict mode: require exact from → to
             if ($strict) {
                 if ($from === null) {
                     // error_log("[EventMatch] Strict rule {$eventKey} missing 'from' definition");
@@ -65,30 +62,25 @@ class StatusRepo {
                 continue;
             }
 
-            // 3. Non-strict mode: only match final status
             if (in_array($finalStatusId, $statuses, true)) {
                 // error_log("[EventMatch] Non-strict match for {$eventKey}: to={$finalStatusId}");
                 $matchedEvents[] = $eventKey;
                 continue;
             }
 
-            // 4. No match
             // error_log("[EventMatch] No match for {$eventKey}: to={$finalStatusId}");
         }
 
-        // 5. Ambiguous matches
         if (count($matchedEvents) > 1) {
             // error_log("[EventMatch] Ambiguous event match: " . implode(', ', $matchedEvents));
             return null;
         }
 
-        // 6. No matches
         if (count($matchedEvents) === 0) {
             // error_log("[EventMatch] No event matched for transition {$oldStatus} → {$finalStatusId} (trigger={$currentTrigger})");
             return null;
         }
 
-        // 7. Single match
         $eventKey = $matchedEvents[0];
         // error_log("[EventMatch] Event matched: {$eventKey} for transition {$oldStatus} → {$finalStatusId}");
         return $eventKey;
@@ -165,7 +157,7 @@ class StatusRepo {
             // }
             
             $queryBoSt = "SELECT status_id FROM book_status WHERE book_id = ? AND active = 1 LIMIT 1";
-            $bookStatusId = $this->db->query()->value($queryBoSt, [$bookId]);
+            $bookStatusId = $this->db->query()->fetchValue($queryBoSt, [$bookId]);
 
             if ((int)$bookStatusId === 1) {
                 return (new \DateTimeImmutable())->format('Y-m-d');
@@ -221,27 +213,6 @@ class StatusRepo {
             'record_id'     => $statusRecordId,
             'finalStatusId' => $finalStatusId
         ];
-    }
-
-    /** API: Set `status_noti` to link notifications to a `book_status` if needed */
-    public function linkEventIfNeeded(array $statusUpdate, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
-        if ($statusUpdate['finalStatusId'] === 1) {
-            return null;
-        }
-
-        $statusResult   = $statusUpdate['record_id'];
-        $finalStatusId  = $statusUpdate['finalStatusId'];
-
-        // Resolve eventKey + eventKeyId inline
-        $eventStatusMap = App::getService('status')->getEventStatusMap();
-        $eventKey = $this->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $trigger);
-        $eventKeyId = $eventKey ? App::getLibrary('notification')->getNotiIdByType($eventKey) : null;
-
-        if ($eventKeyId && !empty($requestStatus)) {
-            $this->setStatusEvent($statusResult, $finalStatusId, $eventKeyId);
-        }
-
-        return $eventKeyId;
     }
 
     /** API: Set `status_noti` to link notifications to a `book_status` */
@@ -321,3 +292,24 @@ class StatusRepo {
         return ($stmt->rowCount() > 0);
     }
 }
+
+    // /** API: Set `status_noti` to link notifications to a `book_status` if needed */
+    // public function linkEventIfNeeded(array $statusUpdate, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
+    //     if ($statusUpdate['finalStatusId'] === 1) {
+    //         return null;
+    //     }
+
+    //     $statusResult   = $statusUpdate['record_id'];
+    //     $finalStatusId  = $statusUpdate['finalStatusId'];
+
+    //     // Resolve eventKey + eventKeyId inline
+    //     $eventStatusMap = App::getService('status')->getEventStatusMap();
+    //     $eventKey = $this->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $trigger);
+    //     $eventKeyId = $eventKey ? App::getLibrary('notification')->getNotiIdByType($eventKey) : null;
+
+    //     if ($eventKeyId && !empty($requestStatus)) {
+    //         $this->setStatusEvent($statusResult, $finalStatusId, $eventKeyId);
+    //     }
+
+    //     return $eventKeyId;
+    // }

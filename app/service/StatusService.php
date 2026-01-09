@@ -6,13 +6,11 @@ use App\App;
 /** Status Service file, basicaly a facade for the SatusRepo. */
 class StatusService {
     protected \App\Libs\StatusRepo  $statuses;
-    protected \App\Database         $db;
     protected array                 $eventStatusMap;
 
     public function __construct(array $config) {
         try {
             $this->statuses         = App::getLibrary('status');
-            $this->db               = App::getService('database');
             $this->eventStatusMap   = $config;
         } catch (\Throwable $t) {
             throw $t;
@@ -65,15 +63,42 @@ class StatusService {
         return $this->statuses->updateBookStatus($bookId, $requestedStatusId, $transport, $trigger);
     }
 
-    public function linkEventIfNeeded(array $statusResult, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
-        return $this->statuses->linkEventIfNeeded($statusResult, $requestedStatusId, $oldStatus, $trigger, $requestStatus);
-    }
-
     public function getNotificationsForStatus(int $statusId): array {
         return $this->statuses->getNotificationsForStatus($statusId);
     }
 
     public function updateBookStatusContext(int $bookStatusId, array $actionContext = [], ?bool $finished = null): bool {
         return $this->statuses->updateBookStatusContext($bookStatusId, $actionContext, $finished);
+    }
+
+    /** API\Facade: Find the correct event key, in the pre-defined statusMap */
+    public function findEventKey(array $eventStatusMap, int $finalStatusId, ?int $oldStatus = null, ?string $currentTrigger = null): ?string {
+        if (empty($eventStatusMap)) {
+            $eventStatusMap = $this->eventStatusMap;
+        }
+
+        return $this->statuses->findEventKey($eventStatusMap, $finalStatusId, $oldStatus, $currentTrigger);
+    }
+
+    /** API: Local logic operations */
+    public function linkEventIfNeeded(array $statusUpdate, int $requestedStatusId, int $oldStatus, string $trigger, array $requestStatus): ?int {
+        if ($statusUpdate['finalStatusId'] === 1) {
+            return null;
+        }
+
+        $finalStatusId  = $statusUpdate['finalStatusId'];
+        $recordId       = $statusUpdate['record_id'];
+
+        $eventKey = $this->findEventKey($this->eventStatusMap, $finalStatusId, $oldStatus, $trigger);
+        if (!$eventKey) {
+            return null;
+        }
+
+        $eventKeyId = App::getLibrary('notification')->getNotiIdByType($eventKey);
+
+        if ($eventKeyId && !empty($requestStatus)) {
+            $this->statuses->setStatusEvent($recordId, $finalStatusId, $eventKeyId);
+        }
+        return $eventKeyId;
     }
 }
