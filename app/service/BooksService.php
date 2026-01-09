@@ -85,7 +85,7 @@ class BooksService {
             ':book_name' => $book['title'] ?? '',
             ':user_name' => $user['name'] ?? '',
             ':user_mail' => $user['email'] ?? '',
-            ':office' => $this->libs->offices()->getOfficeNameByOfficeId($targetOffice),
+            ':office' => App::getService('offices')->getOfficeNameByOfficeId($targetOffice),
             ':due_date' => $this->libs->statuses()->getBookDueDate((int)$book['id']),
             'book_status_id' => $recordId,
         ];
@@ -95,7 +95,7 @@ class BooksService {
     protected function sendNotifications(array $statusUpdate, array $book, ?int $targetOffice, bool $transport, ?array $newLoaner, array $loanerInput): void {
         // Transport → notify admins 
         if ($transport) {
-            $admins = $this->libs->offices()->getAdminsForOffices($targetOffice);
+            $admins = App::getService('offices')->getAdminsForOffices($targetOffice);
             foreach ($admins as $admin) {
                 App::getService('notification')->dispatchStatusEvents(
                     $statusUpdate['finalStatusId'],
@@ -284,7 +284,7 @@ class BooksService {
             $book = $this->findSingleActiveBook($bookId);
 
             // 5. Link event using FINAL status
-            $this->libs->statuses()->linkEventIfNeeded($statusUpdate, $finalStatusId, $oldStatus, $localTrigger, $requestStatus);
+            App::getService('status')->linkEventIfNeeded($statusUpdate, $finalStatusId, $oldStatus, $localTrigger, $requestStatus);
 
             // 6. Notifications
             $this->sendNotifications($statusUpdate, $book, $targetOffice, $transport, $newLoaner, $loaner);

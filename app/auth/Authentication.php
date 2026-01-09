@@ -120,7 +120,7 @@ class Authentication {
         }
 
 
-        $storedHash = App::getService('database')->query()->value(
+        $storedHash = App::getService('database')->query()->fetchValue(
             "SELECT password FROM users WHERE id = ?",
             [$userId]
         );
