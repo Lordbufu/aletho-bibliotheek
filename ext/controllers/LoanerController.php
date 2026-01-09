@@ -31,7 +31,7 @@ class LoanerController {
             exit;
         }
 
-        $loaners = $this->loaners->findByName($query);
+        $loaners = $this->loaners->findLoanerByName($query);
 
         $offices = $this->offices->getOfficesForDisplay();
         $officeMap = [];
