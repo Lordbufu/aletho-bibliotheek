@@ -10,46 +10,8 @@ class OfficeRepo {
         $this->db = $db;
     }
 
-    // New re-factored Helper functions
-    // TODO: If many to many relations are not requested, deleted/removed this from the codebase.
-    /** Helper: Resolve office names/IDs into valid office IDs, creating if needed. */
-    protected function _getOrCreateOfficeIds(array $names): array {
-        if (empty($names)) return [];
-
-        $offices    = $this->getAllOffices();
-        $nameToId   = array_column($offices, null, 'name');
-        $officesIds = [];
-
-        foreach ($names as $name) {
-            if (is_numeric($name)) {
-                $officesIds[] = (int)$name;
-                continue;
-            }
-
-            if (isset($nameToId[$name])) {
-                $office     = $nameToId[$name];
-                $officeId   = (int)$office['id'];
-
-                if (isset($office['active']) && (int)$office['active'] === 0) {
-                    $query = "UPDATE offices SET active = 1 WHERE id = ?";
-                    $this->db->query()->run($query, [$officeId]);
-                }
-
-                $officesIds[] = $officeId;
-                continue;
-            }
-
-            $query          = "INSERT INTO offices (name, active) VALUES (?, 1)";
-            $this->db->query()->run($query, [$name]);
-            $id             = $this->db->query()->lastInsertId();
-            $officesIds[]   = $id;
-        }
-
-        return $officesIds;
-    }
-
-    /** API & Helper: Fetch offices */
-    public function getAllOffices(): array {
+    /** Helper: Fetch offices */
+    protected function getAllOffices(): array {
         $query = "SELECT * FROM offices";
         return $this->db->query()->fetchAll($query);
     }
@@ -63,18 +25,9 @@ class OfficeRepo {
 
     /** API: Get office name by ID. */
     public function getOfficeNameByOfficeId(int $officeId): string {
-        $offices    = $this->getAllOffices();
-        $map        = array_column($offices, 'name', 'id');
-        return $map[$officeId] ?? 'Unknown';
+        $query = "SELECT name FROM offices WHERE id = ?";
+        return $this->db->query()->fetchValue($query, [$officeId]) ?? 'Unknown';
     }
-
-    // Potentially obsolete ?
-    /** Get office names for a given book. */
-    // public function getOfficeNamesByBookId(int $bookId): string {
-    //     $query  = "SELECT o.name FROM offices o JOIN book_office bo ON o.id = bo.office_id WHERE bo.book_id = ?";
-    //     $rows   = $this->db->query()->fetchAll($query, [$bookId]);
-    //     return implode(', ', array_column($rows, 'name'));
-    // }
 
     /** API: Get office names for the frontend */
     public function getOfficesForDisplay(): array {
@@ -101,45 +54,90 @@ class OfficeRepo {
                     INNER JOIN user_office uo ON u.id = uo.user_id
                     WHERE u.is_office_admin  = 1
                     AND uo.office_id = ?";
-
         return $this->db->query()->fetchAll($query, [$officeId]);
     }
-
-    /** API: Get office IDs linked to a book. */
-    public function getLinksByBookId(int $bookId): array {
-        $query = "SELECT office_id FROM book_office WHERE book_id = ?";
-        return $this->db->query()->fetchAll($query, [$bookId]);
-    }
-
-    // Potentially obsolete ?
-    // New re-factored API functions
-    // TODO: Create schema table for `book_offices`, when many to many relations are requested, otherwhise this can be deleted/removed this from the codebase.
-    /** API: Ensure all `offices` & `book_offices` data is correct, and the table isnt getting polluted over time */
-    public function syncBookOffices(int $bookId, array $names): void {
-        $newIds     = $this->_getOrCreateOfficeIds($names);
-        $currentIds = array_column($this->getLinksByBookId($bookId), 'office_id');
-        $toDelete   = array_diff($currentIds, $newIds);
-        $toAdd      = array_diff($newIds, $currentIds);
-
-        if (!empty($toDelete)) {
-            $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
-            $query        = "DELETE FROM book_office WHERE book_id = ? AND office_id IN ($placeholders)";
-            $params       = array_merge([$bookId], $toDelete);
-
-            $this->db->query()->run($query, $params);
-        }
-
-        if (!empty($toAdd)) {
-            $placeholders = implode(', ', array_fill(0, count($toAdd), '(?, ?)'));
-            $values       = [];
-
-            foreach ($toAdd as $oid) {
-                $values[] = $bookId;
-                $values[] = $oid;
-            }
-
-            $query = "INSERT INTO book_office (book_id, office_id) VALUES $placeholders";
-            $this->db->query()->run($query, $values);
-        }
-    }
 }
+
+    // // Potentially obsolete ?
+    // // TODO: If many to many relations are not requested, deleted/removed this from the codebase.
+    // /** Helper: Resolve office names/IDs into valid office IDs, creating if needed. */
+    // protected function _getOrCreateOfficeIds(array $names): array {
+    //     if (empty($names)) return [];
+
+    //     $offices    = $this->getAllOffices();
+    //     $nameToId   = array_column($offices, null, 'name');
+    //     $officesIds = [];
+
+    //     foreach ($names as $name) {
+    //         if (is_numeric($name)) {
+    //             $officesIds[] = (int)$name;
+    //             continue;
+    //         }
+
+    //         if (isset($nameToId[$name])) {
+    //             $office     = $nameToId[$name];
+    //             $officeId   = (int)$office['id'];
+
+    //             if (isset($office['active']) && (int)$office['active'] === 0) {
+    //                 $query = "UPDATE offices SET active = 1 WHERE id = ?";
+    //                 $this->db->query()->run($query, [$officeId]);
+    //             }
+
+    //             $officesIds[] = $officeId;
+    //             continue;
+    //         }
+
+    //         $query          = "INSERT INTO offices (name, active) VALUES (?, 1)";
+    //         $this->db->query()->run($query, [$name]);
+    //         $id             = $this->db->query()->lastInsertId();
+    //         $officesIds[]   = $id;
+    //     }
+
+    //     return $officesIds;
+    // }
+
+    // // Potentially obsolete ?
+    // // TODO: Create schema table for `book_offices`, when many to many relations are requested, otherwhise this can be deleted/removed this from the codebase.
+    // /** API: Ensure all `offices` & `book_offices` data is correct, and the table isnt getting polluted over time */
+    // public function syncBookOffices(int $bookId, array $names): void {
+    //     $newIds     = $this->_getOrCreateOfficeIds($names);
+    //     $currentIds = array_column($this->getLinksByBookId($bookId), 'office_id');
+    //     $toDelete   = array_diff($currentIds, $newIds);
+    //     $toAdd      = array_diff($newIds, $currentIds);
+
+    //     if (!empty($toDelete)) {
+    //         $placeholders = implode(',', array_fill(0, count($toDelete), '?'));
+    //         $query        = "DELETE FROM book_office WHERE book_id = ? AND office_id IN ($placeholders)";
+    //         $params       = array_merge([$bookId], $toDelete);
+
+    //         $this->db->query()->run($query, $params);
+    //     }
+
+    //     if (!empty($toAdd)) {
+    //         $placeholders = implode(', ', array_fill(0, count($toAdd), '(?, ?)'));
+    //         $values       = [];
+
+    //         foreach ($toAdd as $oid) {
+    //             $values[] = $bookId;
+    //             $values[] = $oid;
+    //         }
+
+    //         $query = "INSERT INTO book_office (book_id, office_id) VALUES $placeholders";
+    //         $this->db->query()->run($query, $values);
+    //     }
+    // }
+
+    // // Potentially obsolete ?
+    // /** Get office names for a given book. */
+    // public function getOfficeNamesByBookId(int $bookId): string {
+    //     $query  = "SELECT o.name FROM offices o JOIN book_office bo ON o.id = bo.office_id WHERE bo.book_id = ?";
+    //     $rows   = $this->db->query()->fetchAll($query, [$bookId]);
+    //     return implode(', ', array_column($rows, 'name'));
+    // }
+
+    // // Potentially obsolete ?
+    // /** API: Get office IDs linked to a book. */
+    // public function getLinksByBookId(int $bookId): array {
+    //     $query = "SELECT office_id FROM book_office WHERE book_id = ?";
+    //     return $this->db->query()->fetchAll($query, [$bookId]);
+    // }

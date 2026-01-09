@@ -5,15 +5,9 @@ use App\App;
 
 class OfficesService {
     protected \App\Libraries    $libs;
-    protected \App\Database     $db;
 
     public function __construct() {
-        try {
-            $this->libs = App::getLibraries();
-            $this->db   = App::getService('database');
-        } catch (\Throwable $t) {
-            throw $t;
-        }
+        $this->libs = App::getLibraries();
     }
 
     public function getOfficeIdByName(string $name): int {
@@ -31,22 +25,24 @@ class OfficesService {
     public function getAdminsForOffices(int $officeId): array {
         return $this->libs->offices()->getAdminsForOffices($officeId);
     }
-
-    public function getLinksByBookId(int $bookId): array {
-        return $this->libs->offices()->getLinksByBookId($bookId);
-    }
-
-    // Potentially obsolete ?
+}
+    // // Potentially obsolete ?
     // public function getOfficeNamesByBookId(int $bookId): string {
     //     return $this->libs->offices()->getOfficeNamesByBookId($bookId);
     // }
 
-    // TODO: Review if still required, i think this was added for future admin functions ?
+    // // Potentially obsolete ?
+    // // TODO: Review if still required, i think this was added for future admin functions ?
     // public function addBookOffices(array $names, int $bookId): void {
-    //     $this->libs->offices()->addBookOffices($names, $bookId);
+    //     // $this->libs->offices()->addBookOffices($names, $bookId);
     // }
 
+    // // Potentially obsolete ?
     // public function updateBookOffices(int $bookId, array $offices): void {
-    //     $this->libs->offices()->updateBookOffices($bookId, $offices);
+    //     // $this->libs->offices()->updateBookOffices($bookId, $offices);
     // }
-}
+
+    // // Potentially obsolete ?
+    // public function getLinksByBookId(int $bookId): array {
+    //     return $this->libs->offices()->getLinksByBookId($bookId);
+    // }
