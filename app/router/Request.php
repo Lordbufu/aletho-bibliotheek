@@ -2,11 +2,6 @@
 
 namespace App\Router;
 
-/**
- * Simple HTTP Request abstraction.
- * Responsible for reading basic request data from PHP superglobals.
- * Intentionally small: method, path, query, body, headers and route params.
- */
 class Request {
     protected string $method;
     protected string $path;
@@ -15,10 +10,7 @@ class Request {
     protected array $headers;
     public array $params = [];
 
-    /**
-     * Construct request from PHP globals. This is deliberately simple and
-     * deterministic so future maintainers can easily see what's available.
-     */
+    /** Initialize request by detecting method, path, query, body, headers. */
     public function __construct() {
         $this->method  = $this->detectMethod();
         $this->path    = $this->detectPath();
@@ -45,11 +37,8 @@ class Request {
 
         return rtrim($path, '/') ?: '/';
     }
-
-    /**
-     * Read request headers. Uses getallheaders() when available, otherwise
-     * builds a list from $_SERVER entries starting with HTTP_.
-     */
+    
+    /** Detect request headers into an associative array. */
     protected function detectHeaders(): array {
         if (function_exists('getallheaders')) {
             return getallheaders() ?: [];
@@ -91,14 +80,7 @@ class Request {
         return $this->headers;
     }
 
-    /**
-     * Convenience accessor: look up an input value from body first, then query.
-     * Returns $default when not present.
-     *
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
-     */
+    /** Retrieve a specific input value from body or query with optional default. */
     public function input(string $key, $default = null) {
         if (array_key_exists($key, $this->body)) {
             return $this->body[$key];

@@ -2,29 +2,21 @@
 namespace App\Libs;
 
 class LoanerRepo {
-    protected ?array        $loaners = null;
+    protected ?array        $cachedActiveLoanersForDisplay = null;
     protected \App\Database $db;
 
     public function __construct(\App\Database $db) {
         $this->db = $db;
     }
 
-    /** Helper: Format full `loaner` object (`loaners` + `book_loaners`), for service\controller\view logic */
+    /** Helper: Format a loaner row into a standard array */
     protected function formatLoaner(array $row): array {
-        $loaner = [
+        return [
             'id'        => (int)$row['id'],
             'name'      => $row['name'],
             'email'     => $row['email'],
-            'office_id' => (int)$row['office_id']
+            'office_id' => (int)$row['office_id'],
         ];
-
-        /** Deal with the potentially present `book_loaners` data */
-        isset($row['status_id']) && $loaner['status_id'] = (int)$row['status_id'];
-        isset($row['book_id'])  && $loaner['book_id'] = (int)$row['book_id'];
-        isset($row['start_date']) && $loaner['start_date'] = $row['start_date'];
-        isset($row['end_date'])   && $loaner['end_date']   = $row['end_date'];
-
-        return $loaner;
     }
 
     /** Helper: Format only `loaners` names and `id`, for frontend purposes. */
@@ -36,7 +28,10 @@ class LoanerRepo {
     protected function insertLoaner(string $name, string $email, int $office): int {
         $query  = "INSERT INTO loaners (name, email, office_id, active) VALUES (?, ?, ?, 1)";
         $params =  [$name, $email, $office];
+
         $this->db->query()->run($query, $params);
+        $this->cachedActiveLoanersForDisplay = null;
+
         return (int)$this->db->query()->lastInsertId();
     }
 
@@ -46,26 +41,10 @@ class LoanerRepo {
         return $this->findById($id);
     }
 
-    /** Helper: Create a book_loaners row and return rowCount (bool) */
-    protected function assignLoanerToBook(int $bookId, int $loanerId, int $statusId, ?string $endDate): bool {
-        $query = "INSERT INTO book_loaners (book_id, loaner_id, status_id, end_date, active)
-                VALUES (?, ?, ?, ?, 1)";
-        $params = [$bookId, $loanerId, $statusId, $endDate];
-        $result = $this->db->query()->run($query, $params);
-        return $result?->rowCount() > 0;
-    }
-
-    /** Helper: Deactivate active book_loaners rows for a book */
-    protected function deactivateActiveBookLoaners(int $bookId): bool {
-        $query = "UPDATE book_loaners SET active = 0 WHERE book_id = ? AND active = 1";
-        $result = $this->db->query()->run($query, [$bookId]);
-        return $result?->rowCount() >= 0;
-    }
-
     /** Helper: Get/Set all active `loaners` to global */
-    protected function setLoaners(): void {
-        $query          = "SELECT * FROM loaners WHERE active = 1";
-        $this->loaners  = $this->db->query()->fetchAll($query);
+    protected function loadActiveLoanersForDisplay(): void {
+        $query                                  = "SELECT * FROM loaners WHERE active = 1";
+        $this->cachedActiveLoanersForDisplay    = $this->db->query()->fetchAll($query);
     }
 
     /** Helper: Find `loaners` by $email */
@@ -75,16 +54,8 @@ class LoanerRepo {
         return $row ? $this->formatLoaner($row) : null;
     }
 
-    /** Helper: Evaluate assignment state for status changes */
-    protected function shouldAssignLoaner(int $statusId): bool {
-        return !in_array($statusId, [1, 3], true);
-    }
-
-    /** Helper: Evaluate if loaners should be deactivated */
-    protected function shouldDeactivateLoaners(?string $statusType): bool {
-        return $statusType === 'Aanwezig';
-    }
-
+    // Potentially useless function?
+    // Maybe remove the API link, and keep it as helper ?
     /** API & Helper: get/find loaner by $id, returning full `loaners` object */
     public function findById(int $id): ?array {
         $query  = "SELECT * FROM loaners WHERE id = ? AND active = 1";
@@ -93,15 +64,17 @@ class LoanerRepo {
     }
 
     /** API: Find loaners by partial name */
-    public function findByName(string $partial): array {
+    public function findLoanerByName(string $partial): array {
         $query = "SELECT * FROM loaners WHERE name LIKE ? AND active = 1";
-        $result = $this->db->query()->fetchAll($query, ["%$partial%"]);
-        return $result ?: [];
+        $rows = $this->db->query()->fetchAll($query, ["%$partial%"]);
+
+        return array_map(fn($row) => $this->formatLoaner($row), $rows ?: []);
     }
 
     /** API: get or create by $email */
-    public function findOrCreateByEmail(string $name, string $email, int $office): ?array {
+    public function findOrCreateLoanerByEmail(string $name, string $email, int $office): ?array {
         $loaner = $this->findByEmail($email);
+
         if ($loaner) {
             return $loaner;
         }
@@ -110,73 +83,56 @@ class LoanerRepo {
         return (!empty($created['id'])) ? $created : null;
     }
 
-    /** API: Get all currently active `loaners` for the frontend */
-    public function getLoanersForDisplay(): ?array {
-        if ($this->loaners === null) {
-            $this->setLoaners();
-        }
+    /** API: Get all loaners by book ID, regardless of active status */
+    public function getActiveLoanersByBookId(int $bookId): array {
+        $query = "SELECT l.*, bl.book_id, bl.status_id, bl.start_date, bl.end_date, bl.active AS bl_active
+                    FROM book_loaners bl
+                    JOIN loaners l ON l.id = bl.loaner_id
+                    WHERE bl.book_id = ? AND bl.active = 1
+                    ORDER BY bl.start_date DESC";
 
-        $out = [];
-
-        foreach ($this->loaners as $loaner) {
-            $out[] = $this->formatLoanerForView($loaner);
-        }
-
-        return $out;
+        return $this->db->query()->fetchAll($query, [$bookId]);
     }
 
-    /** API: Get full active `loaners` objects for logic operations by $id */
-    public function getLoanersForLogic(?int $loanerId = null): array {
-        $query  = "SELECT l.*, bl.status_id, bl.book_id, bl.start_date, bl.end_date
-                    FROM loaners l
-                    LEFT JOIN book_loaners bl 
-                    ON l.id = bl.loaner_id AND bl.active = 1
-                    WHERE l.active = 1";
-        $params = [];
-        if ($loanerId !== null) {
-            $query .= " AND l.id = ? ORDER BY bl.start_date DESC LIMIT 1";
-            $params[] = $loanerId;
-        }
+    /** API: Get inactive loaners by book ID */
+    public function getInactiveLoanersByBookId(int $bookId): array {
+        $query = "SELECT l.*, bl.book_id, bl.status_id, bl.start_date, bl.end_date, bl.active AS bl_active
+                    FROM book_loaners bl
+                    JOIN loaners l ON l.id = bl.loaner_id
+                    WHERE bl.book_id = ? AND bl.active = 0
+                    ORDER BY bl.start_date DESC";
 
-        $rows = $loanerId !== null
-            ? $this->db->query()->fetchAll($query, $params) // returns array of 0 or 1
-            : $this->db->query()->fetchAll($query, $params);
-
-        return array_map(fn($row) => $this->formatLoaner($row), $rows);
+        return $this->db->query()->fetchAll($query, [$bookId]);
     }
 
-    /** API: Deactivate active 'loaners' record */
-    public function deactivateLoaner(int $id): bool {
-        $query = "UPDATE loaners SET active = 0 WHERE id = ?";
-        $result = $this->db->query()->run($query, [$id]);
+    /** API: Get full loaner history for a book */
+    public function getAllLoanersByBookId(int $bookId): array {
+        $query = "SELECT l.*, bl.book_id, bl.status_id, bl.start_date, bl.end_date, bl.active AS bl_active
+                    FROM book_loaners bl
+                    JOIN loaners l ON l.id = bl.loaner_id
+                    WHERE bl.book_id = ?
+                    ORDER BY bl.start_date DESC";
+
+        return $this->db->query()->fetchAll($query, [$bookId]);
+    }
+
+    /** API: Deactivate active book_loaners rows for a book */
+    public function deactivateActiveBookLoaners(int $bookId): bool {
+        $query = "UPDATE book_loaners SET active = 0 WHERE book_id = ? AND active = 1";
+        $result = $this->db->query()->run($query, [$bookId]);
+        return $result?->rowCount() >= 0;
+    }
+
+    /** API: Create a book_loaners row and return rowCount (bool) */
+    public function assignLoanerToBook(int $bookId, int $loanerId, int $statusId, ?string $endDate): bool {
+        $query = "INSERT INTO book_loaners (book_id, loaner_id, status_id, end_date, active)
+                VALUES (?, ?, ?, ?, 1)";
+        $params = [$bookId, $loanerId, $statusId, $endDate];
+        $result = $this->db->query()->run($query, $params);
         return $result?->rowCount() > 0;
     }
 
-    /** API: Assign loaner if required */
-    public function assignBookLoanerIfNeeded(int $bookId, ?array $loaner, int $statusId, array $requestStatus): bool {
-        if (!$loaner || !$this->shouldAssignLoaner($statusId)) {
-            return true;
-        }
-
-        $periodeLength = (int)($requestStatus['periode_length'] ?? 0);
-        $dueDate = calculateDueDate(null, $periodeLength);
-
-        return $this->assignLoanerToBook($bookId, $loaner['id'], $statusId, $dueDate);
-    }
-
-    /** API: Deactivate `book_loaner` is needed */
-    public function deactivateBookLoanersIfNeeded(int $bookId, array $requestStatus): bool {
-        $statusType = $requestStatus['type'] ?? null;
-
-        if (!$this->shouldDeactivateLoaners($statusType)) {
-            return true;
-        }
-
-        $result = $this->deactivateActiveBookLoaners($bookId);
-
-        return $result !== false;
-    }
-
+    // Potentially useless function?
     /** API: Update `loaners` record */
     public function update(int $id, array $fields): bool {
         if (empty($fields)) {
@@ -194,39 +150,79 @@ class LoanerRepo {
 
         $query = "UPDATE loaners SET " . implode(", ", $set) . " WHERE id = ?";
         $result = $this->db->query()->run($query, $params);
+        $this->cachedActiveLoanersForDisplay = null;
 
         return $result?->rowCount() > 0;
     }
 
-    /** API: Get loaners by book, with optional filters:
-     *      @param int    $bookId   Book ID
-     *      @param string $type     'current' | 'previous' | 'all'
-     *      @param string $fallback Fallback string if no results (only applied for 'current'/'previous')
-     *      @param int    $limit    Limit results (default null = no limit)
-     *      @param bool   $namesOnly Return only names (true) or full formatted loaner objects (false)
-     */
-    public function getLoanersByBookId(int $bookId, string $type = 'all', string $fallback = '', ?int $limit = null, bool $namesOnly = false ): array {
-        $where = "bl.book_id = ?";
-        $params = [$bookId];
-
-        if ($type === 'current') {
-            $where .= " AND bl.active = 1";
-        } elseif ($type === 'previous') {
-            $where .= " AND bl.active = 0";
+    // Potentially useless function?
+    /** API: Get all currently active `loaners` for the frontend */
+    public function getLoanersForDisplay(): array {
+        if ($this->cachedActiveLoanersForDisplay === null) {
+            $this->loadActiveLoanersForDisplay();
         }
 
-        $query  = "SELECT l.*, bl.book_id, bl.status_id, bl.start_date, bl.end_date, bl.active AS bl_active
-                    FROM book_loaners bl
-                    JOIN loaners l ON l.id = bl.loaner_id
-                    WHERE $where
-                    ORDER BY bl.start_date DESC
-                    " . ($limit ? "LIMIT $limit" : "");
-        $rows   = $this->db->query()->fetchAll($query, $params);
+        return array_map(
+            fn($l) => $this->formatLoanerForView($l),
+            $this->cachedActiveLoanersForDisplay
+        );
+    }
 
-        if (empty($rows) && $fallback !== '') {
-            return [$fallback];
+    // Potentially useless function?
+    /** API: Deactivate active 'loaners' record */
+    public function deactivateLoaner(int $id): bool {
+        $query = "UPDATE loaners SET active = 0 WHERE id = ?";
+        $result = $this->db->query()->run($query, [$id]);
+        $this->cachedActiveLoanersForDisplay = null;
+        return $result?->rowCount() > 0;
+    }
+
+    // Potentially useless function?
+    /** Helper: Merge book_loaners data into loaner array */
+    protected function mergeLoanerAssignment(array $loaner, array $row): array {
+        if (isset($row['status_id']))  $loaner['status_id']  = (int)$row['status_id'];
+        if (isset($row['book_id']))    $loaner['book_id']    = (int)$row['book_id'];
+        if (isset($row['start_date'])) $loaner['start_date'] = $row['start_date'];
+        if (isset($row['end_date']))   $loaner['end_date']   = $row['end_date'];
+
+        return $loaner;
+    }
+
+    // Potentially useless function?
+    /** API: Get loaner with active assignment by loaner ID */
+    public function getLoanerWithActiveAssignment(int $loanerId): ?array {
+        $query = "SELECT l.*, bl.status_id, bl.book_id, bl.start_date, bl.end_date
+                FROM loaners l
+                LEFT JOIN book_loaners bl 
+                    ON l.id = bl.loaner_id AND bl.active = 1
+                WHERE l.active = 1 AND l.id = ?
+                ORDER BY bl.start_date DESC
+                LIMIT 1";
+
+        $row = $this->db->query()->fetchOne($query, [$loanerId]);
+
+        if (!$row) {
+            return null;
         }
 
-        return $namesOnly ? array_map(fn($row) => $row['name'], $rows) : array_map(fn($row) => $this->formatLoaner($row), $rows);
+        $loaner = $this->formatLoaner($row);
+        return $this->mergeLoanerAssignment($loaner, $row);
+    }
+
+    // Potentially useless function?
+    /** API: Get all loaners with active assignments */
+    public function getAllLoanersWithActiveAssignments(): array {
+        $query = "SELECT l.*, bl.status_id, bl.book_id, bl.start_date, bl.end_date
+                    FROM loaners l
+                    LEFT JOIN book_loaners bl 
+                        ON l.id = bl.loaner_id AND bl.active = 1
+                    WHERE l.active = 1";
+
+        $rows = $this->db->query()->fetchAll($query);
+
+        return array_map(function($row) {
+            $loaner = $this->formatLoaner($row);
+            return $this->mergeLoanerAssignment($loaner, $row);
+        }, $rows);
     }
 }

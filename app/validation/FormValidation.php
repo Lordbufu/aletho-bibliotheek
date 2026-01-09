@@ -5,7 +5,7 @@ class FormValidation {
 	protected array $errors = [];
 	protected array $cleanData = [];
 
-	/*	Sanitize an array of strings: trim, strip tags, drop empties, deduplicate. */
+	/** Helper: Sanitize an array of strings: trim, strip tags, drop empties, deduplicate */
 	protected function sanitizeArray($value): array {
 		if (!is_array($value)) {
 			return [];
@@ -22,6 +22,7 @@ class FormValidation {
 		return array_values($cleaned);
 	}
 
+	/** Helper: Validate if the int is positive */
 	protected function validatePositiveInt($value, string $field): ?int {
 		if ($value === null || $value === '') {
 			return null;
@@ -34,7 +35,7 @@ class FormValidation {
 		return $intVal;
 	}
 
-	/*	Sanitize and filter input data, always keeps all expected keys, never drops them. */
+	/** Sanitize and filter input data, always keeps all expected keys, never drops them */
 	public function sanitizeInput(array $input, string $mode = 'add'): bool {
 		$this->errors = [];
 		$this->cleanData = [];
@@ -67,7 +68,7 @@ class FormValidation {
 		return empty($this->errors);
 	}
 
-	/*	Validate the user login form data, and store potential errors. */
+	/** Validate the user login form data, and store potential errors */
 	public function validateUserLogin(array $data): bool {
 		$this->errors = [];
 		$this->cleanData = [];
@@ -90,7 +91,7 @@ class FormValidation {
 		return empty($this->errors);
 	}
 
-	/*	Validate the password change form data, and store potential errors. */
+	/** Validate the password change form data, and store potential errors */
 	public function validatePasswordChange(array $data, bool $isGlobalAdmin = false): bool {
 		$this->errors = [];
 		$this->cleanData = [];
@@ -134,7 +135,7 @@ class FormValidation {
 		return empty($this->errors);
 	}
 
-	/*	Validate book form data. Mode 'add' requires all fields, 'edit' only validates non-empty fields. */
+	/** Validate book form data. Mode 'add' requires all fields, 'edit' only validates non-empty fields */
 	public function validateBookForm(array $data, string $mode = 'add'): bool {
 		$this->errors = [];
 
@@ -169,7 +170,7 @@ class FormValidation {
 		return empty($this->errors);
 	}
 
-	/*	Validate status-change form data. */
+	/** Validate status-change form data */
 	public function validateStatusChangeForm(array $data): bool {
 		$this->errors = [];
 		$this->cleanData = [];
@@ -237,12 +238,12 @@ class FormValidation {
 		return empty($this->errors);
 	}
 
-	/* Simple get errors helper. */
+	/** Simple get errors helper */
 	public function errors(): array {
 		return $this->errors;
 	}
 
-	/* Simple get get data helper. */
+	/** Simple get get data helper */
 	public function cleanData(): array {
 		return $this->cleanData;
 	}

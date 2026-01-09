@@ -2,7 +2,7 @@
 
 namespace App\Validation;
 
-/*  Validates password strength against configurable rules. */
+/** Validates password strength against configurable rules. */
 class PasswordValidation {
     private const MIN_LENGTH      = 8;
     private const REQUIRE_UPPER   = true;
@@ -10,7 +10,7 @@ class PasswordValidation {
     private const REQUIRE_DIGIT   = true;
     private const REQUIRE_SPECIAL = false;
 
-    /*  Validate password against all requirements. */
+    /** Validate password against all requirements. */
     public function isValid(string $password): bool {
         if (strlen($password) < self::MIN_LENGTH) {
             return false;
@@ -32,7 +32,7 @@ class PasswordValidation {
         return true;
     }
 
-    /*  Return current password requirements for display. */
+    /** Return current password requirements for display. */
     public function getRequirements(): array {
         return [
             'min_length'      => self::MIN_LENGTH,

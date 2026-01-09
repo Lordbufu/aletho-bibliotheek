@@ -34,37 +34,4 @@ class ViewController {
             'canEdit' => App::getService('auth')->can('manageBooks')
         ]);
     }
-
-    // public function landing() {
-    //     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
-
-    //     if (!$userAgent) {
-    //         return App::redirect('/login');
-    //     }
-
-    //     if (empty($_SESSION['user']) || !isset($_SESSION['user']['role'])) {
-    //         $_SESSION['user'] = ['role' => 'Guest'];
-    //     }
-
-    //     if (!isset($_SESSION['user']) || ($_SESSION['user']['role'] ?? 'Guest') === 'Guest') {
-    //         return App::redirect('/login');
-    //     }
-
-    //     return $this->home();
-    // }
-
-    // public function home() {
-    //     $bookFormatter = new \Ext\Controllers\Formatting\BookFormatter();
-    //     if (!isset($_SESSION['user']) || $_SESSION['user']['role'] === 'Guest') {
-    //         return App::redirect('/');
-    //     }
-
-    //     $books      = App::getService('books')->findAllActiveBooks();
-    //     $formatted  = $bookFormatter->formatMany($books);
-
-    //     return App::view('main', [
-    //         'books' => $formatted ?? null,
-    //         'canEdit' => App::getService('auth')->can('manageBooks')
-    //     ]);
-    // }
 }

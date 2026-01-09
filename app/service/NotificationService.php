@@ -89,10 +89,6 @@
  *   'overdue_notice_admin'  => ['status' => [6], 'from' => [2], 'trigger' => 'cron_action', 'strict' => true],
  */
 
-/** Local TODO-List:
- *      - [ ] Evaluate if processCronEvents should be done here, or in a dedicated CronService/Controller.
- */
-
 namespace App\Service;
 
 use App\App;
@@ -209,81 +205,4 @@ class NotificationService {
 
         return $allOk;
     }
-
-    // TODO: Evaluate if this should be done here, or in a dedicated CronService/Controller
-    /** API: Process scheduled events (cron jobs). Example: send overdue notices, reminders, etc. */
-    public function processCronEvents(): void {
-        // PSEUDO-CODE:
-        // 1) Query DB for loans that are overdue, or due soon
-        // 2) For each loan, determine if a notification should be sent (e.g. overdue notice, return reminder)
-        // 3) Formulate context and call dispatchStatusEvents() or dispatchNotif() accordingly
-    }
 }
-
-/** Old code that has been removed, leaving it untill the re-factor is finished and working */
-    // Status event map.
-    // protected array $statusEventMap = [
-    //     2 => ['user' => 'loan_confirm'],                                    // Afwezig
-    //     5 => ['user' => 'reserv_confirm'],                                  // Gereserveerd
-    //     3 => ['office' => 'transport_request'],                             // Transport
-    //     4 => ['user' => 'pickup_ready_confirm'],                            // Ligt Klaar
-    //     6 => ['user' => 'overdue_reminder', 'office' => 'overdue_notice'],  // Overdatum
-    // ];
-
-    // // PSEUDO-CODE: Re-factor to properly handle a event like this.
-    // // Inject action block only for return_reminder and non-reserved status
-    // if ($eventType === 'return_reminder' && $statusId !== 5) {
-    //     $context[':action_intro'] = 'Het is ons opgevallen dat je dit boek kan verlengen, mocht je daar belang bij hebben.';
-    //     $context[':action_link']  = 'https://biblioapp.nl/';
-    //     $context[':action_label'] = 'Boek Verlengen';
-    // }
-
-    // /** Helper: Dispatch a notification event to the appropriate target */
-    // protected function dispatchEvent(string $target, string $event, array $context): void {
-    //     try {
-    //         $this->sendNotif($event, $context);
-    //     } catch (\Throwable $t) {
-    //         error_log("[NotificationService] Notification failed: " . $t->getMessage());
-    //     }
-    // }
-
-    // /*  Notify a specific office about an event. */
-    // public function notifyOffice(string $event, array $context): void {
-    //     $email = App::getService('mail')->render($event, $context);
-
-    //     if (!$email) {
-    //         error_log("[NotificationService] No template found for event: $event");
-    //         return;
-    //     }
-
-    //     $this->sendMail($context[':user_mail'], $email);
-    // }
-
-    // foreach ($this->statusEventMap[$statusId] ?? [] as $entry) {
-    //     $trigger = $entry['trigger'] ?? 'instant';
-
-    //     // skip cron-only entries here
-    //     if ($trigger === 'cron') {
-    //         continue;
-    //     }
-
-    //     // if transition-based, require previousStatus match
-    //     if ($trigger === 'transition') {
-    //         $rel = $entry['relation'] ?? null;
-    //         if (!$previousStatus || !$rel || ($rel['from'] ?? null) !== $previousStatus) {
-    //             continue;
-    //         }
-    //     }
-
-    //     foreach ($entry['targets'] as $target) {
-    //         $context['event'] = $entry['event'];
-    //         if ($target === 'user') {
-    //             $mailSend = $this->dispatchNotif($statusId, $context);
-    //         }
-
-    //         if ($target === 'admin') {
-    //             $baseContext['admin_email'] = "bibliotheek@aletho.nl";
-    //             $mailSend = $this->dispatchNotif($statusId, $context);
-    //         }
-    //     }
-    // }

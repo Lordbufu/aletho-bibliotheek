@@ -8,7 +8,7 @@ use PDOException;
 class Connection {
     protected PDO $pdo;
 
-    /*  Constructor initializes the PDO connection using provided configuration. */
+    /** API: Construct the Connection class using provided configuration */
     public function __construct(array $config) {
         $requiredKeys = ['driver', 'host', 'port', 'database', 'charset', 'username', 'password'];
         foreach ($requiredKeys as $key) {
@@ -36,12 +36,12 @@ class Connection {
         }
     }
 
-    /*  Get the active PDO instance. */
+    /** API: Get the underlying PDO instance */
     public function pdo(): PDO {
         return $this->pdo;
     }
 
-    /*  Start a new database transaction. */
+    /** API: Start a new database transaction */
     public function startTransaction(): bool {
         try {
             if ($this->isTransactionActive()) {
@@ -57,7 +57,7 @@ class Connection {
         }
     }
 
-    /*  Finalize the current transaction. */
+    /** API: Commit the current database transaction */
     public function finishTransaction(): bool {
         try {
             return $this->pdo->commit();
@@ -67,7 +67,7 @@ class Connection {
         }
     }
 
-    /*  Cancel the current transaction. */
+    /** API: Rollback the current database transaction */
     public function cancelTransaction(): bool {
         try {
             return $this->pdo->rollBack();
@@ -77,7 +77,7 @@ class Connection {
         }
     }
 
-    /*  Check if a transaction is currently active. */
+    /** API: Check if a transaction is currently active */
     public function isTransactionActive(): bool {
         return $this->pdo->inTransaction();
     }

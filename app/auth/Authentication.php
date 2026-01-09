@@ -8,12 +8,13 @@ class Authentication {
     protected array $permissionsMap;
     protected PasswordValidation $passwordValidator;
 
+    /** API: Construct the Authentication class with an optional password validator */
     public function __construct(PasswordValidation $passwordValidator = null) {
         $this->permissionsMap = include BASE_PATH . '/ext/config/permissionsConfig.php';
         $this->passwordValidator = $passwordValidator ?? new PasswordValidation();
     }
 
-    /*  Map database field to a easier to user string value. */
+    /** Helper: Get the role of a user based on their database fields */
     private function getRole(array $user): string {
         if (!empty($user['is_global_admin'])) return 'Gadmin';
         if (!empty($user['is_office_admin'])) return 'Oadmin';
@@ -21,7 +22,7 @@ class Authentication {
         return 'Guest';
     }
 
-    /*  Get user based on the name field. */
+    /** Helper: Find a user by their name */
     private function findUserByName(string $name): ?array {
         return App::getService('database')->query()->fetchOne(
             "SELECT * FROM users WHERE name = ?",
@@ -29,7 +30,7 @@ class Authentication {
         );
     }
 
-    /*  Get office id associated with the user. */
+    /** Helper: Resolve the primary office for a user */
     private function resolveOffice(array $user) {
         if (empty($user['is_global_admin']) && empty($user['is_office_admin'])) {
             return null;
@@ -47,7 +48,7 @@ class Authentication {
         return count($userOffices) > 1 ? 2 : $userOffices[0]['office_id'];
     }
 
-    /*  Get all office IDs associated with the user, returns an array of office IDs (empty if none). */
+    /** Helper: Resolve all accessible offices for a user */
     private function resolveOffices(array $user): array {
         if (!empty($user['is_global_admin'])) {
             return [];
@@ -61,13 +62,13 @@ class Authentication {
         return array_map(fn($row) => (int)$row['office_id'], $rows);
     }
 
-    /*  Public function to check if current session user has  a permission. */
+    /** API: Check if user can perform a specific action */
     public function can(string $permission): bool {
         $role = $_SESSION['user']['role'] ?? 'Guest';
         return in_array($permission, $this->permissionsMap[$role] ?? []);
     }
 
-    /*  Check if user can edit office based on permission and/or office id. */
+    /** API: Check if user can manage a specific office */
     public function canManageOffice(int $officeId): bool {
         if ($this->can('manageOffices')) {
             return true;
@@ -81,7 +82,7 @@ class Authentication {
         return false;
     }
 
-    /*  Attempts to log in a user by there name and password, and sets there initial session data. */
+    /** API: Log in a user with name and password */
     public function login(string $name, string $password): bool {
         $user = $this->findUserByName($name);
 
@@ -103,7 +104,7 @@ class Authentication {
         return true;
     }
 
-    /*  Log out the current user, and destory its session. */
+    /** API: Log out the current user, and destroy its session */
     public function logout(): void {
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_regenerate_id(true);
@@ -112,7 +113,7 @@ class Authentication {
         }
     }
 
-    /*  Password reset, for Office Admins. */
+    /** API: Reset own password */
     public function resetOwnPassword(int $userId, string $currentPassword, string $newPassword): array {
         if (!$this->can('pwChange')) {
             return [ 'success' => false, 'message' => 'Unauthorized' ];
@@ -147,7 +148,7 @@ class Authentication {
         return [ 'success' => false, 'message' => 'Password update failed' ];
     }
 
-    /*  Password reset for Global Admins, allowing it for any account. */
+    /** API: Reset another user's password */
     public function resetUserPassword(string $targetUserName, string $newPassword, string $confirmPassword): array {
         if (!$this->can('pwChanges')) {
             return [ 'success' => false, 'message' => 'Unauthorized' ];
@@ -171,19 +172,22 @@ class Authentication {
         return [ 'success' => false, 'message' => 'Password update failed' ];
     }
 
-    // Temp additions:
+    /** API: Get the current user's role */
     public function getCurrentRole(): string {
         return $_SESSION['user']['role'] ?? 'Guest';
     }
 
+    /** API: Check if a user is logged in */
     public function isLoggedIn(): bool {
         return $this->getCurrentRole() !== 'Guest';
     }
 
+    /** API: Validate if a role exists */
     public function isValidRole(string $role): bool {
         return array_key_exists($role, $this->permissionsMap);
     }
 
+    /** API: Get permissions for a specific role */
     public function getPermissionsForRole(string $role): array {
         return $this->permissionsMap[$role] ?? [];
     }

@@ -2,32 +2,20 @@
 
 namespace App\Router;
 
-/**
- * Represents a single route definition. Stores HTTP method, path pattern and
- * handler. Capable of matching an incoming method+URI and extracting named
- * parameters.
- */
 class Route {
     public string $method;
     public string $path;
     public $handler;
     public array $params = [];
 
-    /**
-     * @param string $method HTTP method (GET, POST, ...)
-     * @param string $path   Route path pattern (e.g. /books/{id:\\d+})
-     * @param callable|string $handler Controller handler or callable
-     */
+    /** Constructor */ 
     public function __construct(string $method, string $path, $handler) {
         $this->method  = strtoupper($method);
         $this->path    = $path;
         $this->handler = $handler;
     }
 
-    /**
-     * Check whether this route matches the provided method and URI.
-     * If matched, $this->params will contain named regex captures.
-     */
+    /** Check if the route matches the given method and URI, extracting parameters if so. */
     public function matches(string $method, string $uri): bool {
         if ($this->method !== strtoupper($method)) {
             return false;
