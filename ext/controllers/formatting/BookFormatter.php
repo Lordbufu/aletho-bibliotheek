@@ -16,8 +16,8 @@ class BookFormatter {
             'curOffice' => $libs->offices()->getOfficeNameByOfficeId($book['cur_office']),
             'status'    => $libs->statuses()->getBookStatus($book['id']),
             'dueDate'   => $libs->statuses()->getBookDueDate($book['id']),
-            'curLoaner' => $libs->loaners()->getLoanersByBookId($book['id'], 'current', 'Geen huidige lener', 1, true),
-            'prevLoaners' => $libs->loaners()->getLoanersByBookId($book['id'], 'previous', 'Geen vorige leners', 5, true),
+            'curLoaner' => App::getService('loaners')->getCurrentLoanerNames($book['id']),
+            'prevLoaners' => App::getService('loaners')->getPreviousLoanerNames($book['id']),
             'canEditOffice' => App::getService('auth')->canManageOffice($book['home_office']),
         ];
     }
