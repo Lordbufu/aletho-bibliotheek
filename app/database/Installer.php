@@ -5,25 +5,17 @@ namespace App\Database;
 use Throwable;
 use RuntimeException;
 use PDO;
-use DirectoryIterator;
 use App\App;
 
-/**
- * Handles initial database setup by executing schema and optional seed data scripts.
- * Uses a lock file to prevent reinstallation and verifies required tables exist.
- */
 class Installer {
     protected Connection    $connection;
     protected Query         $query;
     protected string        $schemaPath;
     protected string        $dataPath;
     protected string        $lockFile;
+    protected array         $installerState = [];
 
-    /**
-     * Holds detailed state of installation checks
-     */
-    protected array $installerState = [];
-
+    /** Constructor */
     public function __construct(Connection $connection, ?string $schemaPath = null) {
         $this->connection = $connection;
         $this->query      = new \App\Database\Query($this->connection);
@@ -38,9 +30,7 @@ class Installer {
         }
     }
 
-    /**
-     * Collect lock file and directory context.
-     */
+    /** Helper: Retrieve schema and data file lists along with lock data. */
     protected function getFileData(): array {
         $lock = [];
         if (file_exists($this->lockFile)) {
@@ -57,9 +47,7 @@ class Installer {
         ];
     }
 
-    /**
-     * Check required tables against DB and lock file.
-     */
+    /** Helper: Check required tables against DB and lock file. */
     protected function checkTables(array $fileData): bool {
         try {
             $existingTables = $this->query
@@ -102,11 +90,7 @@ class Installer {
         }
     }
 
-    /**
-     * Check data files against lock file.
-     * For now: only compares lock entries with directory presence.
-     * Later: can query DB for actual seed rows.
-     */
+    /** Helper: Check required data files against DB and lock file. */
     protected function checkData(array $fileData): bool {
         $lockedData = $fileData['lock']['data_files'] ?? [];
         $lockedFiles = array_column($lockedData, 'file');
@@ -138,17 +122,12 @@ class Installer {
         return empty($missing) && empty($newFiles);
     }
 
-    /**
-     * Extract table name from schema filename.
-     * Example: "01_users.sql" -> "users"
-     */
+    /** Helper: Extract table name from schema filename. */
     protected function extractTableName(string $filename): string {
         return preg_replace('/^\d+_/', '', pathinfo($filename, PATHINFO_FILENAME));
     }
 
-    /**
-     * Find schame file for table.
-     */
+    /** Helper: Find schema file for a given table name. */
     protected function findSchemaFileForTable(string $table): ?string {
         $files = glob($this->schemaPath . '/*.sql') ?: [];
         foreach ($files as $file) {
@@ -159,13 +138,9 @@ class Installer {
         return null;
     }
 
-    /**
-     * Install specific schema files (by filename).
-     */
+    /** Helper: Install specific schema files (by filename). */
     protected function installTables(array $files): void {
-        $manifest = file_exists($this->lockFile)
-            ? json_decode(file_get_contents($this->lockFile), true) ?: []
-            : [];
+        $manifest = file_exists($this->lockFile) ? (json_decode(file_get_contents($this->lockFile), true) ?: []) : [];
 
         foreach ($files as $file) {
             $path = $this->schemaPath . '/' . $file;
@@ -185,13 +160,9 @@ class Installer {
         file_put_contents($this->lockFile, json_encode($manifest, JSON_PRETTY_PRINT));
     }
 
-    /**
-     * Install specific data files (by filename).
-     */
+    /** Helper: Install specific data files (by filename). */
     protected function installData(array $files): void {
-        $manifest = file_exists($this->lockFile)
-            ? json_decode(file_get_contents($this->lockFile), true) ?: []
-            : [];
+        $manifest = file_exists($this->lockFile) ? (json_decode(file_get_contents($this->lockFile), true) ?: []) : [];
 
         foreach ($files as $file) {
             $path = $this->dataPath . '/' . $file;
@@ -210,9 +181,7 @@ class Installer {
         file_put_contents($this->lockFile, json_encode($manifest, JSON_PRETTY_PRINT));
     }
 
-    /**
-     * High-level check: is the system installed?
-     */
+    /** API: Check if the database is fully installed. */
     public function isInstalled(): bool {
         $fileData = $this->getFileData();
 
@@ -222,16 +191,12 @@ class Installer {
         return $tablesOk && $dataOk;
     }
 
-    /**
-     * Expose detailed installer state for debugging or targeted installs.
-     */
+    /** API: Retrieve the current installer state details. */
     public function getInstallerState(): array {
         return $this->installerState;
     }
 
-    /**
-     * Perform installation of schema and optional seed data.
-     */  
+    /** API: Perform installation of missing tables and data. */
     public function install(bool $withData = false): void {
         $state = $this->getInstallerState();
 

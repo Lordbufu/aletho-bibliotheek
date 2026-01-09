@@ -1,12 +1,12 @@
 <?php
 namespace App;
 
-/*  Core application bootstrapper and service accessor. */
+/** Core application bootstrapper and service accessor. */
 class App {
     protected static Services   $container;
     protected static Libraries  $libraries;
 
-    /*  Boot the application by loading and initializing all services. */
+    /** Boot the application by loading and initializing all services. */
     public static function boot(): bool {
         try {
             $configPath = BASE_PATH . '/ext/config/servicesConfig.php';

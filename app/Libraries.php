@@ -37,11 +37,12 @@ class Libraries {
         return $this->instances[$name] = ($this->factories[$name])();
     }
 
-    /** Public accessors to offer various way to interact with these factories. */
+    /** API: Public accessors to offer various way to interact with these factories. */
     public function get(string $name) {
         return $this->resolveLibrary($name);
     }
 
+    /** API: Specific library accessors for convenience. */
     public function books(): BookRepo {
         return $this->resolveLibrary('books');
     }

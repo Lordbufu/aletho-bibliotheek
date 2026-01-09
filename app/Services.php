@@ -4,12 +4,12 @@ namespace App;
 
 use App\App;
 
-/*  Simple service container / dependency injector: Loads service definitions from a config file or array and instantiates them on demand. */
+/** Simple service container / dependency injector: Loads service definitions from a config file or array and instantiates them on demand. */
 class Services {
     protected array $instances          = [];
     protected array $factories          = [];
 
-    /*  Construct the Services container. */
+    /** Construct the Services container. */
     public function __construct(string|array $configFile) {
         if (is_string($configFile)) {
             if (!is_file($configFile)) {
@@ -30,7 +30,7 @@ class Services {
         }
     }
 
-    /*  Retrieve a service instance by name, instantiating it if necessary. */
+    /** Retrieve a service instance by name, instantiating it if necessary. */
     public function get(string $name) {
         if (isset($this->instances[$name])) {
             return $this->instances[$name];
