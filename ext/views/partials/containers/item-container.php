@@ -1,3 +1,17 @@
+<?php
+    $statusClassMap = [
+        'aanwezig' => 'statusOne',
+        'afwezig' => 'statusTwo',
+        'overdatum' => 'statusTwo',
+        'transport' => 'statusThree',
+        'ligt klaar' => 'statusThree',
+        'gereserveerd' => 'statusFour'
+    ];
+
+    $status = strtolower($book['status']);
+    $statusClass = $statusClassMap[$status] ?? '';  // empty string fallback
+?>
+
 <div class="aletho-item-container" id="item-container-<?= $book['id'] ?>">
     <div class="aletho-item">
         <button class="aletho-dropdown-buttons"
@@ -10,7 +24,7 @@
             ▼
         </button>
         <span class="dropdown-item flex-fill text-center mn-main-col"><?= htmlspecialchars($book['title']) ?></span>
-        <span class="status-dot statusOne d-flex justify-content-end" id="status-dot-<?= $book['id'] ?>"></span>
+        <span class="status-dot d-flex justify-content-end <?= $statusClass ?>" id="status-dot-<?= $book['id'] ?>"></span>
     </div>
 
     <div id="customItemDropdown-<?= $book['id'] ?>" class="collapse aletho-item-dropdown <?= (isset($_SESSION['_flashSingle']) && (int)$_SESSION['_flashSingle']['message'] === (int)$book['id']) ? ' show' : '' ?>">
