@@ -280,7 +280,7 @@ $(function() {
     $('#status-type').trigger('change');
 
     // W.I.P. Testing functions
-    $('.status-dot').on('click', testLights);
+    // $('.status-dot').on('click', testLights);
 });
 
 $(document).ajaxSuccess(function (event, xhr, settings, data) {
