@@ -66,7 +66,7 @@
                     <div class="aletho-alert-inline"><?= htmlspecialchars($errors['book_writers']) ?></div>
                 <?php endif; ?>
             <?php else: ?>
-                <input type="text" class="aletho-inputs extra-input-style" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
+                <input type="text" class="aletho-inputs extra-input-style writer-input" value="<?= htmlspecialchars($book['writers'] ?? '') ?>" disabled>
             <?php endif; ?>
 
             <?php if ($canEdit): // Genre section ?>
@@ -94,10 +94,7 @@
                     <div class="aletho-alert-inline"><?= htmlspecialchars($errors['book_genres']) ?></div>
                 <?php endif; ?>
             <?php else: ?>
-                <input  type="text"
-                        class="aletho-inputs extra-input-style"
-                        value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>"
-                        disabled>
+                <input type="text" class="aletho-inputs extra-input-style genre-input" value="<?= htmlspecialchars($book['genres'] ?? 'Onbekend') ?>" disabled>
             <?php endif; ?>
 
             <?php if ($canEdit && $book['canEditOffice']): // Office section ?>
