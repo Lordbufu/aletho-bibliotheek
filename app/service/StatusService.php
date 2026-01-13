@@ -35,7 +35,7 @@ class StatusService {
         return $this->statuses->disableBookStatus($bookId);
     }
 
-    public function getBookStatus(int $bookId, string $flag = "type"): ?string {
+    public function getBookStatus(int $bookId, string $flag = "type") {
         return $this->statuses->getBookStatus($bookId, $flag);
     }
     
@@ -100,5 +100,13 @@ class StatusService {
             $this->statuses->setStatusEvent($recordId, $finalStatusId, $eventKeyId);
         }
         return $eventKeyId;
+    }
+
+    /** API: Is there a 2nd status called `Gereserveerd` ? */
+    public function checkMultipleStatus($bookId) {
+        $statuses = $this->getBookStatus($bookId, 'all');
+        $ids      = array_column($statuses, 'id');
+
+        return in_array(5, $ids, true);
     }
 }
