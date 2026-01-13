@@ -41,11 +41,7 @@
                     </div>
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-location" class="aletho-labels extra-popin-style">Lener Locatie</label>
-                        <input  type="text"
-                                class="aletho-inputs extra-popin-style mb-2"
-                                id="change-loaner-location"
-                                name="loaner_location"
-                                autocomplete="off">
+                        <select id="change-loaner-location" name="loaner_location" class="aletho-inputs extra-popin-style mb-2"> </select>
                         <?php if (!empty($popErrors['loaner_location'])): ?>
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['loaner_location']) ?></div>
                         <?php endif; ?>
