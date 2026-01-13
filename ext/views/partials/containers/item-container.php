@@ -159,6 +159,11 @@
                             aria-label="Edit Book status">
                         ✏️
                     </button>
+                <?php if ($book['is_reserved']): ?>
+                    <div class="reserved-wrapper">
+                        🔒 <span class="status-badge reserved">Gereserveerd</span>
+                    </div>
+                <?php endif; ?>
                 </div>
 
                 <?php if (!empty($errors['book_status'])): ?>
@@ -172,6 +177,11 @@
                         name="book_status"
                         value="<?= htmlspecialchars($book['status']) ?>"
                         disabled>
+                <?php if ($book['is_reserved']): ?>
+                    <div class="reserved-wrapper">
+                        🔒 <span class="status-badge reserved">Gereserveerd</span>
+                    </div>
+                <?php endif; ?>
             <?php endif; ?>
 
             <?php if (isset($book['dueDate']) && $canEdit): // Status expires section ?>

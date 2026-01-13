@@ -715,6 +715,7 @@ button:disabled.needs-save {
 	background-color: rgb(105, 103, 103);
 }
 
+/** Late testing changes, derived from feedback and issue if found */
 #add-book-form {
 	width: 100%;
 }
@@ -734,4 +735,25 @@ button:disabled.needs-save {
 }
 
 /* Ensure the selected item and input follow that alignment */
-.ts-control .item, .ts-control input { text-align: center; }
+.ts-control .item, .ts-control input {
+	text-align: center;
+}
+
+/** Wrap the status-badge for alignments*/
+.reserved-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 85%;
+}
+
+/** Status badge styles for item list */
+.status-badge.reserved {
+    background: var(--color-primary-2);
+    color: var(--sec-brd-color);
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 0.1rem;
+}
