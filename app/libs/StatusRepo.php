@@ -115,15 +115,22 @@ class StatusRepo {
     }
 
     /** API: Get a book status type for a specific book */
-    public function getBookStatus(int $bookId, string $flag = "type"): ?string {
-        $query = "SELECT s.id, s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1 LIMIT 1";
-        $row = $this->db->query()->fetchOne($query,[$bookId]);
+    public function getBookStatus(int $bookId, string $flag = "type") {
+        $query = "SELECT s.id, s.type FROM book_status bs JOIN status s ON bs.status_id = s.id WHERE bs.book_id = ? AND bs.active = 1";
+        $rows = $this->db->query()->fetchAll($query, [$bookId]);
 
-        if ($flag !== "type") {
-            return (int)$row['id'] ?? null;
+        if (!$rows) {
+            return null;
         }
 
-        return $row['type'] ?? null;
+        // If caller wants all statuses, return them
+        if ($flag === 'all') {
+            return $rows;
+        }
+
+        // the old functionality
+        $first = $rows[0];
+        return $flag === 'type' ? $first['type'] : (int)$first['id'];
     }
 
     /** API: Request status_noti links, based on `book_status`.`id` and `status`.`id` */
