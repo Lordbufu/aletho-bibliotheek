@@ -2,15 +2,16 @@ import { Utility } from './utility.js';
 
 const Popins = (() => {
     // Centralized selectors for all popins
-    const popinSelectors = [
+    const popinSelectors    = [
         '#add-book-popin',
         '#status-period-popin',
         '#password-reset-popin',
         '#change-book-status-popin'
     ];
-    let isOpen = false;
-    let scrollY = 0;
-    let padRight = 0;
+    let isOpen              = false;
+    let scrollY             = 0;
+    let padRight            = 0;
+    let officeSelect        = null;
 
     /*  Get all popin selectors as an array. */
     function getSelectors() {
@@ -187,6 +188,24 @@ const Popins = (() => {
     /*  Setup open/close event handlers for a popin. */
     function setup(openBtn, popinId, closeBtn) {
         $(document).on('click', openBtn, function () {
+            Utility.request({
+                url: '/bookdata',
+                data: { data: 'offices' },
+                success: function(list) {
+                    const $select = $('#change-loaner-location');
+
+                    list.forEach(o => {
+                        $select.append(`<option value="${o.name}">${o.name}</option>`);
+                    });
+
+                    officeSelect = new TomSelect('#change-loaner-location', {
+                        maxItems: 1,
+                        create: false,
+                        placeholder: 'Selecteer locatie...',
+                    });
+                }
+            });
+
             open(popinId);
 
             // For change-book-status-popin, set book_id from triggering button
@@ -241,15 +260,14 @@ const Popins = (() => {
                     url: '/requestLoanerForBook',
                     data: { data: 'book', book_id: bookId },
                     success: function(loaner) {
-                        if (loaner && loaner.name) {
-                            $('#change-loaner-name').val(loaner.name || '');
-                            $('#change-loaner-email').val(loaner.email || '');
-                            $('#change-loaner-location').val(loaner.location || '');
+                        if (loaner && loaner.location) {
+                            officeSelect?.setValue(loaner.location || '');
                         } else {
-                            $('#change-loaner-name').val('');
-                            $('#change-loaner-email').val('');
-                            $('#change-loaner-location').val('');
+                            officeSelect?.clear();
                         }
+
+                        $('#change-loaner-name').val(loaner.name || '');
+                        $('#change-loaner-email').val(loaner.email || '');
                     }
                 });
             }
@@ -273,10 +291,29 @@ const Popins = (() => {
         if (window.location.hash) {
             const popinId = window.location.hash;
             const $popin = $(popinId);
+
             if ($popin.length) {
                 open(popinId);
                 history.replaceState(null, '', window.location.pathname + window.location.search);
             }
+
+            Utility.request({
+                url: '/bookdata',
+                data: { data: 'offices' },
+                success: function(list) {
+                    const $select = $('#change-loaner-location');
+
+                    list.forEach(o => {
+                        $select.append(`<option value="${o.name}">${o.name}</option>`);
+                    });
+
+                    officeSelect = new TomSelect('#change-loaner-location', {
+                        maxItems: 1,
+                        create: false,
+                        placeholder: 'Selecteer locatie...',
+                    });
+                }
+            });
         }
     }
 
@@ -290,6 +327,13 @@ const Popins = (() => {
         }
     }
 
+    /** */
+    function setOfficeLocation(value) {
+        if (officeSelect) {
+            officeSelect.setValue(value);
+        }
+    }
+
     // Exported API
     return {
         getSelectors,
@@ -297,7 +341,8 @@ const Popins = (() => {
         close,
         setup,
         initFromHash,
-        handleOutsideClick
+        handleOutsideClick,
+        setOfficeLocation
     };
 })();
 

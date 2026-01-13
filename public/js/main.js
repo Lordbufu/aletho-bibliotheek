@@ -229,10 +229,14 @@ $(function() {
                     e.preventDefault();
                     const name = $(this).text().trim();
                     const selected = list.find(l => l.name === name);
+                    const ts = $('#change-loaner-location')[0]?.tomselect;
+
                     if (selected) {
                         $input.val(selected.name);
-                        $('#change-loaner-email').val(selected.email || '');
-                        $('#change-loaner-location').val(selected.location || '');
+                        $('#change-loaner-email').val(selected.email || '');                        
+                        if (ts) {
+                            ts.setValue(selected.location || '');
+                        }
                         // Optionally store office id for later use if needed: $input.data('office-id', selected.office_id);
                     }
                     Suggestions.close();
@@ -278,9 +282,6 @@ $(function() {
 
     // Trigger change on load to pre-fill with the first status
     $('#status-type').trigger('change');
-
-    // W.I.P. Testing functions
-    // $('.status-dot').on('click', testLights);
 });
 
 $(document).ajaxSuccess(function (event, xhr, settings, data) {
@@ -290,28 +291,3 @@ $(document).ajaxSuccess(function (event, xhr, settings, data) {
 $(document).ajaxError(function (event, xhr, settings, error) {
     console.error('AJAX ERROR:', settings.url, xhr.responseText);
 });
-
-// W.I.P. helper, to review the basic status light colors via a simple click to change/rotate.
-function testLights(e) {
-    let $el = $(e.target);
-
-    if ($el.hasClass('statusOne')) {
-        $el.removeClass('statusOne').addClass('statusTwo');
-        return;
-    }
-
-    if ($el.hasClass('statusTwo')) {
-        $el.removeClass('statusTwo').addClass('statusThree');
-        return;
-    }
-
-    if ($el.hasClass('statusThree')) {
-        $el.removeClass('statusThree').addClass('statusFour');
-        return;
-    }
-
-    if ($el.hasClass('statusFour')) {
-        $el.removeClass('statusFour').addClass('statusOne');
-        return;
-    }
-}
