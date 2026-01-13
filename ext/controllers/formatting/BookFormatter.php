@@ -19,6 +19,7 @@ class BookFormatter {
             'curLoaner' => App::getService('loaners')->getCurrentLoanerNames($book['id']),
             'prevLoaners' => App::getService('loaners')->getPreviousLoanerNames($book['id']),
             'canEditOffice' => App::getService('auth')->canManageOffice($book['home_office']),
+            'is_reserved' => App::getService('status')->checkMultipleStatus($book['id']),
         ];
     }
 
@@ -29,6 +30,7 @@ class BookFormatter {
                 $out[] = $this->format($book);
             }
         }
+
         return $out;
     }
 }
