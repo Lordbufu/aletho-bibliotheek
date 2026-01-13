@@ -201,7 +201,7 @@ $(function() {
         $('#shared-delete-form').trigger('submit');
     });
 
-    // Loaner name suggestion logic for change-book-status-popin
+    // Loaner-name input suggestion event trigger
     $('#change-loaner-name').on('input', function() {
         const $input = $(this);
         const query = $input.val().trim();
@@ -235,45 +235,10 @@ $(function() {
                         $input.val(selected.name);
                         $('#change-loaner-email').val(selected.email || '');                        
                         if (ts) {
-                            ts.setValue(selected.location || '');
+                            ts.setValue(selected.location || '', false);
                         }
                         // Optionally store office id for later use if needed: $input.data('office-id', selected.office_id);
                     }
-                    Suggestions.close();
-                });
-            }
-        });
-    });
-
-    // Office location suggestion logic for change-book-status-popin
-    $('#change-loaner-location').on('input', function() {
-        const $input = $(this);
-        const query = $input.val().trim().toLowerCase();
-
-        if (query.length < 1) {
-            Suggestions.close();
-            return;
-        }
-
-        Utility.request({
-            url: '/bookdata',
-            data: { data: 'offices' },
-            success: function(list) {
-                if (!Array.isArray(list) || list.length === 0) {
-                    Suggestions.close();
-                    return;
-                }
-
-                // Filter office names by query
-                const filtered = list.filter(o => o.name.toLowerCase().includes(query));
-                Suggestions.show($input, filtered.map(o => o.name), 'office-suggestion');
-                Suggestions.bindCloseOnBlur($input);
-
-                // Click handler for suggestion selection
-                $(document).off('mousedown.office-suggestion').on('mousedown.office-suggestion', '.office-suggestion', function(e) {
-                    e.preventDefault();
-                    const name = $(this).text().trim();
-                    $input.val(name);
                     Suggestions.close();
                 });
             }

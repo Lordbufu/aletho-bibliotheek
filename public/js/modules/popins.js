@@ -106,14 +106,11 @@ const Popins = (() => {
                     url: '/requestLoanerForBook',
                     data: { data: 'book', book_id: bookId },
                     success: function(loaner) {
-                        if (loaner && loaner.name) {
-                            $('#change-loaner-name').val(loaner.name || '');
-                            $('#change-loaner-email').val(loaner.email || '');
-                            $('#change-loaner-location').val(loaner.location || '');
-                        } else {
-                            $('#change-loaner-name').val('');
-                            $('#change-loaner-email').val('');
-                            $('#change-loaner-location').val('');
+                        $('#change-loaner-name').val(loaner.name || '');
+                        $('#change-loaner-email').val(loaner.email || '');
+
+                        if (loaner && loaner.location) {
+                            officeSelect.setValue(loaner.location || '');
                         }
                     }
                 });
@@ -198,11 +195,13 @@ const Popins = (() => {
                         $select.append(`<option value="${o.name}">${o.name}</option>`);
                     });
 
-                    officeSelect = new TomSelect('#change-loaner-location', {
-                        maxItems: 1,
-                        create: false,
-                        placeholder: 'Selecteer locatie...',
-                    });
+                    if (!officeSelect) {
+                        officeSelect = new TomSelect('#change-loaner-location', {
+                            maxItems: 1,
+                            create: false,
+                            controlInput: null,
+                        });
+                    }
                 }
             });
 
@@ -261,9 +260,9 @@ const Popins = (() => {
                     data: { data: 'book', book_id: bookId },
                     success: function(loaner) {
                         if (loaner && loaner.location) {
-                            officeSelect?.setValue(loaner.location || '');
+                            officeSelect.setValue(loaner.location || '');
                         } else {
-                            officeSelect?.clear();
+                            officeSelect.setValue('_placeholder');
                         }
 
                         $('#change-loaner-name').val(loaner.name || '');
@@ -277,6 +276,7 @@ const Popins = (() => {
         $(closeBtn).on('click', () => close(popinId));
 
         const $popin = $(popinId);
+
         if ($popin.hasClass('backdrop-close')) {
             $popin.on('click', function (e) {
                 if (e.target === this) {
@@ -307,11 +307,14 @@ const Popins = (() => {
                         $select.append(`<option value="${o.name}">${o.name}</option>`);
                     });
 
-                    officeSelect = new TomSelect('#change-loaner-location', {
-                        maxItems: 1,
-                        create: false,
-                        placeholder: 'Selecteer locatie...',
-                    });
+                    if (!officeSelect) {
+                        officeSelect = new TomSelect('#change-loaner-location', {
+                            maxItems: 1,
+                            create: false,
+                            // allowEmptyOption: false,
+                            controlInput: null,
+                        });
+                    }
                 }
             });
         }
