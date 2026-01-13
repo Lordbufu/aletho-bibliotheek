@@ -41,6 +41,7 @@
 		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
 		<link rel="stylesheet" href="https://use.typekit.net/rsa4jkk.css">
 		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet'>
+		<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
 		<link rel="stylesheet" type="text/css" href="css/style.css">
 		<script src="js/jquery-3.7.1.min.js"></script>
 		<script type="module" src="js/main.js"></script>
