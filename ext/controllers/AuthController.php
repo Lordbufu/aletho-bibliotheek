@@ -3,90 +3,101 @@ namespace Ext\Controllers;
 
 use App\App;
 
-/** Handles authentication-related HTTP requests. */
-class AuthController {
-    protected \App\Service\AuthenticationService    $auth;
-    protected \App\Service\ValidationService        $validator;
+final class AuthController {
+    /** The login route for all users */
+    public function login() {
+        $val = App::getService('form_val')->validateLogin($_POST);
 
-    /** Construct Auth as default local service. */
-    public function __construct() {
-        try {
-            $this->auth         = App::getService('auth');
-            $this->validator    = App::getService('val');
-        } catch(\Throwable $t) {
-            throw $t;
-        }
-    }
-
-    /** Show the login form. */
-    public function showForm() {
-        /*  Basically a session timeout protection, going back to the landingpage route. */
-        if (!isset($_SESSION['user'])) {
+        if (!$val['valid']) {
+            setFlash('inline', 'error', $val['errors']);
+            setFlash('form', 'data', $val['data']);
             return App::redirect('/');
         }
 
-        return App::view('main');
-    }
+        $clean = $val['data'];
+        $result = App::getService('auth')->authenticate(
+            $clean['userName'],
+            $clean['password'],
+            $_SERVER['HTTP_USER_AGENT'] ?? ''
+        );
 
-    /** Handle login submission. */
-    public function authenticate() {
-        if (!$this->validator->validateUserLogin($_POST)) {
-            setFlash('inline', 'credentials', 'Vul zowel gebruikersnaam als wachtwoord in.');
-            setFlash('form', 'data', ['userName' => $this->validator->cleanData()['userName'] ?? '']);
-            return App::redirect('/login');
+        if (!$result->success) {
+            setFlash('inline', 'error', [ 'credentials' => 'Ongeldige inloggegevens.' ]);
+            setFlash('form', 'data', [ 'userName' => $clean['userName'] ?? '' ]);
+            return App::redirect('/');
         }
 
-        $data = $this->validator->cleanData();
-
-        if (!$this->auth->login($data['userName'], $data['userPw'])) {
-            setFlash('inline', 'credentials', 'Ongeldige gebruikersnaam of wachtwoord.');
-            setFlash('form', 'data', ['userName' => $data['userName']]);
-            return App::redirect('/login');
-        }
-
-        return App::redirect('/');
+        setFlash('global', 'success', 'Welkom ' . $clean['userName'] . ', veel plezier in de Bibliotheek!');
+        return App::redirect('/home');
     }
 
-    /** Handle logout. */
+    /** The logout route for all users */
     public function logout() {
-        $this->auth->logout();
-
-        if (!isset($_SESSION['user'])) {
-            $_SESSION['user']['role'] = 'Guest';
-        }
-        
+        session_destroy();
         return App::redirect('/');
     }
 
-    /** Handle all password resets. */
+    /** Password reset form route */
     public function resetPassword() {
-        $isGlobal = ($_SESSION['user']['role'] ?? '') === 'Gadmin';
+        // Authenticate login state and user roles
+        App::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
-        if (!$this->validator->validatePasswordChange($_POST, $isGlobal)) {
-            setFlash('inline', 'failure', 'Controleer de invoer en probeer opnieuw.');
-            setFlash('form', 'data', [
-                'user_name' => $this->validator->cleanData()['user_name'] ?? ''
-            ]);
+        $input  = $_POST;
+        $mode = isset($_POST['old_password']) ? 'self' : 'admin';
+
+        switch ($mode) {
+            case 'invalid':
+                setFlash('inlinePop', 'error', 'Ongeldige aanvraag.');
+                return App::redirect('/home#password-reset-popin');
+            case 'self':
+                $val = App::getService('form_val')->validatePasswordChange($input);
+                break;
+            case 'admin':
+                $val = App::getService('form_val')->validatePasswordReset($input);
+                break;
+        }
+
+        if (!$val['valid']) {
+            setFlash('inlinePop', 'error', 'Wachtwoord wijzigen mislukt.');
+            setFlash('form', 'data', $val['data']);
             return App::redirect('/home#password-reset-popin');
         }
 
-        $data = $this->validator->cleanData();
+        $clean = $val['data'];
 
-        if ($isGlobal) {
-            $result = $this->auth->resetUserPassword(
-                $data['user_name'],
-                $data['new_password'],
-                $data['confirm_password']
-            );
-        } else {
-            $result = $this->auth->resetOwnPassword(
-                $_SESSION['user']['id'],
-                $data['current_password'],
-                $data['new_password']
-            );
+        switch ($mode) {
+            case 'self':
+                $result = App::getService('user')->resetOwnPassword(
+                    $_SESSION['user']['id'],
+                    $clean['old_password'],
+                    $clean['new_password']
+                );
+
+                if (!$result) {
+                    setFlash('inlinePop', 'error', 'Oud wachtwoord klopt niet.');
+                    return App::redirect('/home#password-reset-popin');
+                }
+
+                setFlash('global', 'success', 'Je wachtwoord is succesvol gewijzigd.');
+                break;
+            case 'admin':
+                $result = App::getService('user')->resetPasswordForUser(
+                    $_SESSION['user']['id'],
+                    $clean['user_name'],
+                    $clean['new_password']
+                );
+
+                if (!$result) {
+                    setFlash('inlinePop', 'error', ['credentials' => 'Gebruiker niet gevonden.']);
+                    return App::redirect('/home#password-reset-popin');
+                }
+
+                setFlash('global', 'success', 'Wachtwoord succesvol gereset.');
+                break;
+            default:
+                throw new \RuntimeException('Unexpected mode after the input validation in: resetPassword()');
         }
 
-        setFlash('inline', $result['success'] ? 'success' : 'failure', $result['message']);
-        return App::redirect('/home#password-reset-popin');
+        return App::redirect('/home');
     }
 }
