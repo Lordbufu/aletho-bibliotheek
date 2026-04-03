@@ -11,8 +11,8 @@
                 <form id="password-reset-form mb-1" method="POST" action="/resetPassword">
                     <input type="hidden" name="_method" value="PATCH">
 
-                    <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Gadmin'): ?>
-                        <label for="user-name" class="aletho-labels extra-popin-style">Account</label>
+                    <?php if (isset($_SESSION['user']['role']) && isGlobalAdmin()): ?>
+                        <label  for="user-name" class="aletho-labels extra-popin-style">Account</label>
                         <input  type="text"
                                 class="aletho-inputs extra-popin-style"
                                 id="user-name"
@@ -20,7 +20,7 @@
                                 value="<?= htmlspecialchars($old['user_name'] ?? '') ?>"
                                 required>
                     <?php else: ?>
-                        <label for="current-password" class="aletho-labels extra-popin-style">Huidig Wachtwoord</label>
+                        <label  for="current-password" class="aletho-labels extra-popin-style">Huidig Wachtwoord</label>
                         <input  type="password"
                                 class="aletho-inputs extra-popin-style"
                                 id="current-password"
@@ -28,25 +28,24 @@
                                 required>
                     <?php endif; ?>
 
-                    <label for="new-password" class="aletho-labels extra-popin-style">Nieuw Wachtwoord</label>
+                    <label  for="new-password" class="aletho-labels extra-popin-style">Nieuw Wachtwoord</label>
                     <input  type="password"
                             class="aletho-inputs extra-popin-style"
                             id="new-password"
                             name="new_password"
                             required>
 
-                    <label for="confirm-password" class="aletho-labels extra-popin-style">Bevestig Nieuw Wachtwoord</label>
+                    <label  for="confirm-password" class="aletho-labels extra-popin-style">Bevestig Nieuw Wachtwoord</label>
                     <input  type="password"
                             class="aletho-inputs extra-popin-style mb-2"
                             id="confirm-password"
                             name="confirm_password"
                             required>
 
-                    <?php if (!empty($_SESSION['_flashInline'])): ?>
-                        <div class="aletho-border mt-1 aletho-inline-<?= $_SESSION['_flashInline']['type'] ?>">
-                            <?= htmlspecialchars($_SESSION['_flashInline']['message']) ?>
+                    <?php if (!empty($popErrors) && isset($popErrors['credentials'])): ?>
+                        <div class="aletho-border mt-1 aletho-alert-inline">
+                            <?= htmlspecialchars($popErrors['credentials']) ?>
                         </div>
-                        <?php unset($_SESSION['_flashInline']); ?>
                     <?php endif; ?>
 
                     <button type="submit" class="aletho-buttons extra-popin-style">Resetten</button>
