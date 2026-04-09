@@ -1,37 +1,37 @@
 <?php
 namespace Ext\Controllers;
 
-final class ViewController {
-    private \Ext\Controllers\Formatter\BookFormatter    $formatter;
-    private \App\App                                    $app;
-    
-    public function __construct() {
-        $this->formatter    = new \Ext\Controllers\Formatter\BookFormatter();
-        $this->app          = new \App\App();
-    }
+use App\App;
+use Ext\Controllers\Formatting\BookFormatter;
+use Ext\Controllers\Middleware\AuthMiddleware;
 
-    /** The initial landing route (Tested & Working) */
-    public function landing(): void {
-        $this->app::getService('auth')->uaIpChecker();
+class ViewController {
 
-        if ($this->app::getService('auth')->isLoggedIn()) {
-            $this->app::redirect('/home');
-        }
+    public function landing() {
+        // Evaluate user-agent, exit if null
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+        if (!$userAgent) exit;
 
+        // Evaluate user role, login if not set
         if (!isset($_SESSION['user']['role'])) {
             $_SESSION['user']['role'] = 'Guest';
+            return App::redirect('/login');
         }
 
-        $this->app::view('main');
+        // Go home to evaluate the user role
+        return App::redirect('/home');
     }
 
-    /** The main book catalog view for logged in users (Tested & Working) */
-    public function home(): void {
-        $this->app::getService('auth')->requireLogin();
+    public function home() {
+        $auth = new AuthMiddleware();
+        $auth->requireLogin();
 
-        $books      = $this->app::getService('books')->getBooksForView();
-        $formatted  = $this->formatter->formatMany($books);
+        $books = App::getService('books')->findAllActiveBooks();
+        $formatter = new BookFormatter();
 
-        $this->app::view('main', ['books' => $formatted]);
+        return App::view('main', [
+            'books' => $formatter->formatMany($books),
+            'canEdit' => App::getService('auth')->can('manageBooks')
+        ]);
     }
 }

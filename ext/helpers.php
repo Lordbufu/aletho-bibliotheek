@@ -1,12 +1,26 @@
 <?php
-/** Function to set viewpaths more cleanly. */
+/* Function to set viewpaths more cleanly. */
 if (!function_exists('viewPath')) {
     function viewPath($string) {
         return  __DIR__ . "/views/" . $string;
     }
 }
 
-/** Dump and Die data on screen for debug reasons. */
+/* Needed a logger to log before the logging service is active. */
+if (!function_exists('handleBootFailure')) {
+    function handleBootFailure(array $errors): void {
+        error_log("App failed to boot with " . count($errors) . " errors: " . implode('; ', $errors));
+
+        if (php_sapi_name() === 'cli') {
+            fwrite(STDERR, "Boot failed:\n" . implode("\n", $errors) . "\n");
+        } else {
+            http_response_code(500);
+            include BASE_PATH . '/ext/views/errors/500.php';
+        }
+    }
+}
+
+/* Dump and Die data on screen for debug reasons. */
 if (!function_exists('dd')) {
     function dd($data) {
         echo '<pre style="background:#222;color:#0f0;padding:0.625rem;font-size:0.875rem;line-height:1.4;">';
@@ -17,14 +31,6 @@ if (!function_exists('dd')) {
         }
         echo '</pre>';
         die;
-    }
-}
-
-/** Calculate due date for setting the correct end_date (might get removed later) */
-if(!function_exists('calculateDueDate')) {
-    function calculateDueDate(?string $startDate, int $days): string {
-        $dt = $startDate ? new \DateTimeImmutable($startDate) : new \DateTimeImmutable('now');
-        return $dt->add(new \DateInterval("P{$days}D"))->format('Y-m-d');
     }
 }
 
@@ -50,36 +56,16 @@ if (!function_exists('setFlash')) {
         }
 
         $_SESSION[$buckets[$bucket]] = [
-            'type' => $type,
-            'message' => $message
+            'type'    => $type,
+            'message' => $message,
         ];
     }
 }
 
-/** Check if user is a guest */
-if(!function_exists('checkGuestRole')) {
-    function checkGuestRole() {
-        return ($_SESSION['user']['role'] ?? null) === 'Guest';
-    }
-}
-
-/** Check if user is a global admin (currently used to seperate global and office admins) */
-if (!function_exists('isGlobalAdmin')) {
-    function isGlobalAdmin(): bool {
-        return ($_SESSION['user']['role'] ?? null) === 'global_admin';
-    }
-}
-
-/** Check if user is a office admin (currently unused) */
-if (!function_exists('isOfficeAdmin')) {
-    function isOfficeAdmin(): bool {
-        return ($_SESSION['user']['role'] ?? null) === 'office_admin';
-    }
-}
-
-/** Check if user can edit (is either a global or office admin) */
-if (!function_exists('canEdit')) {
-    function canEdit(): bool {
-        return in_array($_SESSION['user']['role'], ['office_admin', 'global_admin']);
+/** Calculate due date for setting the correct end_date (might get removed later) */
+if(!function_exists('calculateDueDate')) {
+    function calculateDueDate(?string $startDate, int $days): string {
+        $dt = $startDate ? new \DateTimeImmutable($startDate) : new \DateTimeImmutable('now');
+        return $dt->add(new \DateInterval("P{$days}D"))->format('Y-m-d');
     }
 }

@@ -2,16 +2,15 @@ import { Utility } from './utility.js';
 
 const Popins = (() => {
     // Centralized selectors for all popins
-    const popinSelectors    = [
+    const popinSelectors = [
         '#add-book-popin',
         '#status-period-popin',
         '#password-reset-popin',
         '#change-book-status-popin'
     ];
-    let isOpen              = false;
-    let scrollY             = 0;
-    let padRight            = 0;
-    let officeSelect        = null;
+    let isOpen = false;
+    let scrollY = 0;
+    let padRight = 0;
 
     /*  Get all popin selectors as an array. */
     function getSelectors() {
@@ -62,7 +61,7 @@ const Popins = (() => {
                     statuses.forEach(status => {
                         $select.append(`
                             <option value="${status.id}"
-                                    data-period_length="${status.period_length ?? ''}"
+                                    data-periode_length="${status.periode_length ?? ''}"
                                     data-reminder_day="${status.reminder_day ?? ''}"
                                     data-overdue_day="${status.overdue_day ?? ''}">${status.type}
                             </option>
@@ -85,8 +84,8 @@ const Popins = (() => {
             const $selected = $(this).find('option:selected');
 
             // Only set the value if the field is empty
-            if (!$('#period-length').val()) {
-                $('#period-length').val($selected.data('period_length') || '');
+            if (!$('#periode-length').val()) {
+                $('#periode-length').val($selected.data('periode_length') || '');
             }
             if (!$('#reminder-day').val()) {
                 $('#reminder-day').val($selected.data('reminder_day') || '');
@@ -106,11 +105,14 @@ const Popins = (() => {
                     url: '/requestLoanerForBook',
                     data: { data: 'book', book_id: bookId },
                     success: function(loaner) {
-                        $('#change-loaner-name').val(loaner.name || '');
-                        $('#change-loaner-email').val(loaner.email || '');
-
-                        if (loaner && loaner.location) {
-                            officeSelect.setValue(loaner.location || '');
+                        if (loaner && loaner.name) {
+                            $('#change-loaner-name').val(loaner.name || '');
+                            $('#change-loaner-email').val(loaner.email || '');
+                            $('#change-loaner-location').val(loaner.location || '');
+                        } else {
+                            $('#change-loaner-name').val('');
+                            $('#change-loaner-email').val('');
+                            $('#change-loaner-location').val('');
                         }
                     }
                 });
@@ -120,7 +122,7 @@ const Popins = (() => {
                     data: { data: 'book', book_id: bookId },
                     success: function (statuses) {
                         const $select = $('#change-status-type');
-                        $select.empty().append('<option disabled hidden>Selecteer een status</option>');
+                        $select.empty().append('<option disabled selected hidden>Selecteer een status</option>');
                         statuses.forEach(status => {
                             $select.append(`<option value="${status.id}">${status.type}</option>`);
                         });
@@ -132,7 +134,7 @@ const Popins = (() => {
                     data: { data: 'book', book_id: bookId },
                     success: function (status) {
                         const $select = $('#change-status-type');
-                        const targetText = status;
+                        const targetText = status[0];
 
                         const $match = $select.find('option').filter(function () {
                             return $(this).text().trim() === targetText;
@@ -189,26 +191,6 @@ const Popins = (() => {
 
             // For change-book-status-popin, set book_id from triggering button
             if (popinId === '#change-book-status-popin') {
-                Utility.request({
-                    url: '/bookData',
-                    data: { data: 'offices' },
-                    success: function(list) {
-                        const $select = $('#change-loaner-location');
-
-                        list.forEach(o => {
-                            $select.append(`<option value="${o.name}">${o.name}</option>`);
-                        });
-
-                        if (!officeSelect) {
-                            officeSelect = new TomSelect('#change-loaner-location', {
-                                maxItems: 1,
-                                create: false,
-                                controlInput: null,
-                            });
-                        }
-                    }
-                });
-
                 // Try to get book_id from the clicked button
                 let bookId = $(this).data('book-id');
 
@@ -243,7 +225,7 @@ const Popins = (() => {
                     data: { data: 'book', book_id: bookId },
                     success: function (status) {
                         const $select = $('#change-status-type');
-                        const targetText = status;
+                        const targetText = status[0];
 
                         const $match = $select.find('option').filter(function () {
                             return $(this).text().trim() === targetText;
@@ -259,14 +241,15 @@ const Popins = (() => {
                     url: '/requestLoanerForBook',
                     data: { data: 'book', book_id: bookId },
                     success: function(loaner) {
-                        if (loaner && loaner.location) {
-                            officeSelect.setValue(loaner.location || '');
+                        if (loaner && loaner.name) {
+                            $('#change-loaner-name').val(loaner.name || '');
+                            $('#change-loaner-email').val(loaner.email || '');
+                            $('#change-loaner-location').val(loaner.location || '');
                         } else {
-                            officeSelect.setValue('_placeholder');
+                            $('#change-loaner-name').val('');
+                            $('#change-loaner-email').val('');
+                            $('#change-loaner-location').val('');
                         }
-
-                        $('#change-loaner-name').val(loaner.name || '');
-                        $('#change-loaner-email').val(loaner.email || '');
                     }
                 });
             }
@@ -276,7 +259,6 @@ const Popins = (() => {
         $(closeBtn).on('click', () => close(popinId));
 
         const $popin = $(popinId);
-
         if ($popin.hasClass('backdrop-close')) {
             $popin.on('click', function (e) {
                 if (e.target === this) {
@@ -291,32 +273,9 @@ const Popins = (() => {
         if (window.location.hash) {
             const popinId = window.location.hash;
             const $popin = $(popinId);
-
             if ($popin.length) {
                 open(popinId);
                 history.replaceState(null, '', window.location.pathname + window.location.search);
-            }
-
-            if (popinId === '#change-book-status-popin') {
-                Utility.request({
-                    url: '/bookData',
-                    data: { data: 'offices' },
-                    success: function(list) {
-                        const $select = $('#change-loaner-location');
-
-                        list.forEach(o => {
-                            $select.append(`<option value="${o.name}">${o.name}</option>`);
-                        });
-
-                        if (!officeSelect) {
-                            officeSelect = new TomSelect('#change-loaner-location', {
-                                maxItems: 1,
-                                create: false,
-                                controlInput: null,
-                            });
-                        }
-                    }
-                });
             }
         }
     }
@@ -331,13 +290,6 @@ const Popins = (() => {
         }
     }
 
-    /** */
-    function setOfficeLocation(value) {
-        if (officeSelect) {
-            officeSelect.setValue(value);
-        }
-    }
-
     // Exported API
     return {
         getSelectors,
@@ -345,8 +297,7 @@ const Popins = (() => {
         close,
         setup,
         initFromHash,
-        handleOutsideClick,
-        setOfficeLocation
+        handleOutsideClick
     };
 })();
 

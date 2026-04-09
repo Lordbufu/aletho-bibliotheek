@@ -13,12 +13,6 @@
 					value="<?= htmlspecialchars($old['userName'] ?? '') ?>"
 					autocomplete="username"
 					required>
-			<?php if (!empty($errors['userName'])): ?>
-				<div class="aletho-border aletho-alert-inline" role="alert">
-					<?= htmlspecialchars($errors['userName']) ?>
-				</div>
-			<?php endif; ?>
-
 			<label class="aletho-labels extra-popin-style" for="login-passw">Wachtwoord</label>
 			<input	class="aletho-inputs extra-popin-style mb-2"
 					id="login-passw"
@@ -27,13 +21,7 @@
 					type="password"
 					autocomplete="current-password"
 					required>
-			<?php if (!empty($errors['password'])): ?>
-				<div class="aletho-border aletho-alert-inline" role="alert">
-					<?= htmlspecialchars($errors['password']) ?>
-				</div>
-			<?php endif; ?>
-
-			<?php if (!empty($errors['credentials'])): ?>
+			<?php if (!empty($errors)): ?>
 				<div class="aletho-border aletho-alert-inline" role="alert">
 					<?= htmlspecialchars($errors['credentials']) ?>
 				</div>

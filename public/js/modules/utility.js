@@ -52,7 +52,7 @@ const Utility = (() => {
         return {
             inputSelector: `.${type}-input`,
             containerSelector: `.${type}-tags-container`,
-            endpoint: `/bookData?data=${type}s`,
+            endpoint: `/bookdata?data=${type}s`,
             tagClass: `${type}-tag`,
             suggestionClass: `${type}-suggestion`,
             hiddenInputName: `book_${type}s[]`,
@@ -66,7 +66,7 @@ const Utility = (() => {
         return {
             inputSelector: `.${type}-input-pop`,
             containerSelector: `.add-${type}-tags-container`,
-            endpoint: `/bookData?data=${type}s`,
+            endpoint: `/bookdata?data=${type}s`,
             tagClass: `${type}-tag`,
             suggestionClass: `${type}-suggestion-pop`,
             hiddenInputName: `book_${type}s[]`,

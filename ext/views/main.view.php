@@ -5,7 +5,7 @@
 		<?php
 			require viewPath('partials/templates/banner.php');
 
-			if (!checkGuestRole()) {
+			if ($_SESSION['user']['role'] !== 'Guest') {
 				require viewPath('auth/user.php');
 			} else {
 				require viewPath('auth/login.php');

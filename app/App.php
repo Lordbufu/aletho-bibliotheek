@@ -1,11 +1,12 @@
 <?php
 namespace App;
 
+/** Core application bootstrapper and service accessor. */
 class App {
     protected static Services   $container;
     protected static Libraries  $libraries;
 
-    /** API: Boot the application by loading and initializing all services. */
+    /** Boot the application by loading and initializing all services. */
     public static function boot(): bool {
         try {
             $configPath = BASE_PATH . '/ext/config/servicesConfig.php';
@@ -59,12 +60,12 @@ class App {
         }
     }
 
-    /** API: Retrieve a service from the container */
+    /** Retrieve a service from the container */
     public static function getService(string $name): mixed {
         return self::$container->get($name);
     }
 
-    /** API: Retrieve all libraries from the container */
+    /** Retrieve all libraries from the container */
     public static function getLibraries() {
         if (self::$libraries === null) {
             throw new \RuntimeException('Libraries not booted');
@@ -73,7 +74,7 @@ class App {
         return self::$libraries;
     }
 
-    /** API: Retrieve a specific library from the container */
+    /** Retrieve a specific library from the container */
     public static function getLibrary(string $name): object {
         if (self::$libraries === null) {
             throw new \RuntimeException('Libraries not booted');
@@ -82,7 +83,7 @@ class App {
         return self::$libraries->get($name);
     }
 
-    /** API: Render a view file with optional data */
+    /** Render a view file with optional data */
     public static function view(string $template, array $data = []): void {
         $baseDir = __DIR__ . '/../ext/views/';
         $file = $baseDir . $template . '.view.php';
@@ -98,36 +99,9 @@ class App {
         require $file;
     }
 
-    /** API: Redirect to a given URL */
+    /** Redirect to a given URL */
     public static function redirect(string $url): void {
         header("Location: {$url}");
-        exit;
-    }
-
-    /** API: Return JSON data for the frontend logic  */
-    public static function json($data, int $status = 200): void {
-        http_response_code($status);
-        header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit;
-    }
-
-    /** API: Bypass the router, and trigger a HTML error page manually */
-    public static function htmlError(int $code): void {
-        $response = new \App\Router\Response();
-        $response->setStatusCode($code);
-
-        $view = BASE_PATH . "/ext/views/errors/{$code}.php";
-        
-        if (file_exists($view)) {
-            ob_start();
-            include $view;
-            $response->setContent(ob_get_clean());
-        } else {
-            $response->setContent("Error {$code}");
-        }
-        
-        $response->send();
         exit;
     }
 }

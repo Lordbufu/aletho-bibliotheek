@@ -2,7 +2,7 @@
 CREATE TABLE `status`(
     `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
     `type` VARCHAR(25) NOT NULL UNIQUE,
-    `period_length` INT(11) DEFAULT NULL,
+    `periode_length` INT(11) DEFAULT NULL,
     `reminder_day` INT(11) DEFAULT NULL,
     `overdue_day` INT(11) DEFAULT NULL,
     `active` BOOLEAN NOT NULL DEFAULT TRUE,

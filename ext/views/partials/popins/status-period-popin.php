@@ -8,10 +8,9 @@
             </div>
 
             <div class="aletho-modal-body p-1">
-                <form id="status-period-form" method="post" action="/editStatusPeriod">
+                <form id="status-period-form" method="post" action="/setStatusPeriod">
                     <input type="hidden" name="_method" value="PATCH">
 
-                    <!-- Status type select -->
                     <div class="input-group input-group-sm">
                         <label for="status-type" class="aletho-labels extra-popin-style">Status</label>
                         <select class="aletho-inputs extra-popin-style" id="status-type" name="status_type" required>
@@ -22,21 +21,19 @@
                         <?php endif; ?>
                     </div>
 
-                    <!-- Status length input -->
                     <div class="input-group input-group-sm">
-                        <label for="period-length" class="aletho-labels extra-popin-style">Periode Lengte (dagen)</label>
+                        <label for="periode-length" class="aletho-labels extra-popin-style">Periode Lengte (dagen)</label>
                         <input  type="number"
                                 class="aletho-inputs extra-popin-style"
-                                id="period-length"
-                                name="period_length"
-                                value="<?= htmlspecialchars($old['period_length'] ?? '') ?>">
+                                id="periode-length"
+                                name="periode_length"
+                                value="<?= htmlspecialchars($old['periode_length'] ?? '') ?>">
 
-                        <?php if (!empty($popErrors['period_length'])): ?>
-                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['period_length']) ?></div>
+                        <?php if (!empty($popErrors['periode_length'])): ?>
+                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['periode_length']) ?></div>
                         <?php endif; ?>
                     </div>
 
-                    <!-- Status reminder day -->
                     <div class="input-group input-group-sm">
                         <label for="reminder-day" class="aletho-labels extra-popin-style">Herinnering (dagen voor einde)</label>
                         <input  type="number"
@@ -50,7 +47,6 @@
                         <?php endif; ?>
                     </div>
 
-                    <!-- Status overdue day -->
                     <div class="input-group input-group-sm">
                         <label for="overdue-day" class="aletho-labels extra-popin-style">Overdue (dagen na einde)</label>
                         <input  type="number"
