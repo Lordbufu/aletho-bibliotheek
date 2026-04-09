@@ -1,25 +1,14 @@
 <?php
 	// Store _flashForm data, or set empty array.
     $old = $_SESSION['_flashForm']['message'] ?? [];
-    unset($_SESSION['_flashForm']);
-
+	unset($_SESSION['_flashForm']);
+	
 	// Store _flashInlinePop data, or set empty array.
 	$popErrors = $_SESSION['_flashInlinePop']['message'] ?? [];
 	unset($_SESSION['_flashInlinePop']);
 
     // ensure $errors exists to avoid undefined notices
-    $errors = [];
-
-	// Store the correct inline error formats, for book details.
-    if (!empty($_SESSION['_flashInline']) && $_SESSION['_flashInline']['type'] !== 'data') {
-        $errors[$_SESSION['_flashInline']['type']] = $_SESSION['_flashInline']['message'];
-    } elseif (!empty($_SESSION['_flashInline']) && is_array($_SESSION['_flashInline']['type'])) {
-		foreach($_SESSION['_flashInline']['type'] as $key => $value) {
-			$errors[$value] = $_SESSION['_flashInline']['message'][$key];
-		}
-	}
-
-	
+    $errors = $_SESSION['_flashInline']['message'] ?? [];
 	unset($_SESSION['_flashInline']);
 
 	// expose server flash to javascript so client can restore popins / old input

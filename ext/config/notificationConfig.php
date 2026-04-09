@@ -1,4 +1,5 @@
 <?php
+
 return [
     'host'          => $_ENV['MAIL_HOST'] ?? $_SERVER['MAIL_HOST'] ?? 'localhost',
     'port'          => $_ENV['MAIL_PORT'] ?? $_SERVER['MAIL_PORT'] ?? '587',

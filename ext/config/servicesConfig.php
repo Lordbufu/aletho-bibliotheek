@@ -1,44 +1,68 @@
 <?php
 
 return [
-    // Core App services
-    'router' => [
-        'class' => \App\Router::class,
-        'config' => BASE_PATH . '/ext/config/routes.php'
+    // Core App services, already cleaned and changed.
+    'router'        => [
+        'class'     => \App\Router::class,
+        'config'    => BASE_PATH . '/ext/config/routes.php'
     ],
-    'database' => [
-        'class'  => \App\Database::class,
-        'config' => BASE_PATH . '/ext/config/databaseConfig.php'
+    'database'      => [
+        'class'     => \App\Database::class,
+        'config'    => BASE_PATH . '/ext/config/databaseConfig.php'
     ],
-    'logger' => [
-        'class'  => \App\Service\LoggerService::class
+
+    // Authentication and User related services
+    'auth'          => [                                      // Changed/Cleaned service 
+        'class'     => \App\Services\AuthService::class
     ],
-    'auth' => [
-        'class'  => \App\Service\AuthenticationService::class
+    'user'          => [                                      // Changed/Cleaned service
+        'class'     => \App\Services\UserService::class
     ],
+
+    // Validation services
+    'form_val'      => [                                      // Changed/Cleaned service
+        'class'     => \App\Validation\FormValidator::class
+    ],
+
     // View & Flow Specific Services
-    'books' => [
-        'class' => \App\Service\BooksService::class
+    'books'         => [                                      // Changed/Cleaned service
+        'class'     => \App\Services\BookService::class
     ],
-    'loaners' => [
-        'class' => \App\Service\LoanersService::class
+
+    'book_status'   => [                                      // Changed/Cleaned service
+        'class'     => \App\Services\BookStatusService::class 
     ],
-    'mail' => [
-        'class' => \App\Service\MailTemplateService::class,
-        'config' => BASE_PATH . '/ext/config/mailTemplateConfig.php'
+
+    'offices'      => [                                       // Changed/Cleaned service
+        'class'     => \App\Services\OfficesService::class
+    ],    
+
+    'statuses'      => [                                      // Changed/Cleaned service
+        'class'     => \App\Services\StatusService::class
     ],
-    'notification' => [
-        'class' => \App\Service\NotificationService::class,
+
+    'loan'      => [                                          // Changed/Cleaned service
+        'class'     => \App\Services\LoanService::class
+    ],
+
+    'loaner'      => [                                        // Changed/Cleaned service
+        'class'     => \App\Services\LoanerService::class
+    ],
+
+    // Re-view to complete the refactor process.
+    'notifications' => [
+        'class' => \App\Services\NotificationService::class,
         'config' => BASE_PATH . '/ext/config/notificationConfig.php'
     ],
-    'offices' => [
-        'class' => \App\Service\OfficesService::class
+    
+    'mail' => [
+        'class' => \App\Services\MailTemplateService::class,
+        'config' => BASE_PATH . '/ext/config/mailTemplateConfig.php'
     ],
-    'status' => [
-        'class' => \App\Service\StatusService::class,
-        'config' => BASE_PATH . '/ext/config/statusConfig.php'
-    ],
-    'val' => [
-        'class'  => \App\Service\ValidationService::class
-    ],
+
+
+    // Extra functionality
+    // 'logger' => [
+    //     'class'  => \App\Services\LoggerService::class
+    // ],
 ];

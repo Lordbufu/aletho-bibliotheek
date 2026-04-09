@@ -249,10 +249,10 @@ $(function() {
     $('#status-type').trigger('change');
 });
 
-$(document).ajaxSuccess(function (event, xhr, settings, data) {
-    console.log('AJAX SUCCESS:', settings.url, data);
-});
+// $(document).ajaxSuccess(function (event, xhr, settings, data) {
+//     console.log('AJAX SUCCESS:', settings.url, data);
+// });
 
-$(document).ajaxError(function (event, xhr, settings, error) {
-    console.error('AJAX ERROR:', settings.url, xhr.responseText);
-});
+// $(document).ajaxError(function (event, xhr, settings, error) {
+//     console.error('AJAX ERROR:', settings.url, xhr.responseText);
+// });

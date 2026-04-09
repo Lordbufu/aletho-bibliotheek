@@ -1,25 +1,29 @@
 <?php
 return [
-    /*  App User-Managment routes */
-    ['GET',    '/',                     'ViewController@landing'],
-    ['GET',    '/login',                'AuthController@showform'],
-    ['POST',   '/login',                'AuthController@authenticate'],
+    /** App main view routes */
+    ['GET',     '/',                    'ViewController@landing'],
+    ['GET',     '/home',                'ViewController@home'],
+
+    /** App User-Managment routes */
+    ['POST',   '/login',                'AuthController@login'],
     ['POST',   '/logout',               'AuthController@logout'],
     ['PATCH',  '/resetPassword',        'AuthController@resetPassword'],
-    /*  App main view route */
-    ['GET',    '/home',                 'ViewController@home'],
-    /*  App book related routes */
-    ['GET',    '/bookdata',             'BookController@bookdata'],
-    ['POST',   '/addBook',              'BookController@add'],
-    ['PATCH',  '/editBook',             'BookController@edit'],
-    ['DELETE', '/delBook',              'BookController@delete'],
-    /*  App status related routes */
-    ['PATCH',  '/setStatusPeriod',      'StatusController@setStatusPeriod'],
-    ['PATCH',  '/changeStatus',         'StatusController@changeStatus'],
+
+    /** App book related routes */
+    ['GET',    '/bookData',             'BookController@bookData'],
+    ['POST',   '/addBook',              'BookController@addBook'],
+    ['PATCH',  '/editBook',             'BookController@editBook'],
+    ['DELETE', '/delBook',              'BookController@deleteBook'],
+
+    /** Status period popin routes */
+    ['PATCH',  '/editStatusPeriod',     'StatusController@editStatusPeriod'],
+    ['PATCH',  '/changeStatus',         'StatusController@changeStatus'],    
+    
+
+    // XHR requests for frontend scripts:
     ['GET',    '/requestStatus',        'StatusController@requestStatus'],
-    ['GET',    '/requestPopinStatus',   'StatusController@requestPopStatus'],
     ['GET',    '/requestBookStatus',    'StatusController@requestBookStatus'],
-    /*  App loaner related routes */
-    ['GET',    '/requestLoaners',       'LoanerController@requestLoaners'],
+    ['GET',    '/requestPopinStatus',   'StatusController@requestPopinStatus'],
     ['GET',    '/requestLoanerForBook', 'LoanerController@requestLoanerForBook'],
+    ['GET',    '/requestLoaners',       'LoanerController@requestLoaners'],
 ];
