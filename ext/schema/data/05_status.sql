@@ -1,6 +1,6 @@
 -- Insert default status data
 INSERT INTO `status`
-    (`type`, `periode_length`, `reminder_day`, `overdue_day`, `active`)
+    (`type`, `period_length`, `reminder_day`, `overdue_day`, `active`)
 VALUES
     ('Aanwezig', NULL, NULL, NULL, '1'),
     ('Afwezig', '14', '3', '1', '1'),

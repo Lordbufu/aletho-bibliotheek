@@ -201,7 +201,7 @@ $(function() {
         $('#shared-delete-form').trigger('submit');
     });
 
-    // Loaner name suggestion logic for change-book-status-popin
+    // Loaner-name input suggestion event trigger
     $('#change-loaner-name').on('input', function() {
         const $input = $(this);
         const query = $input.val().trim();
@@ -229,10 +229,14 @@ $(function() {
                     e.preventDefault();
                     const name = $(this).text().trim();
                     const selected = list.find(l => l.name === name);
+                    const ts = $('#change-loaner-location')[0]?.tomselect;
+
                     if (selected) {
                         $input.val(selected.name);
-                        $('#change-loaner-email').val(selected.email || '');
-                        $('#change-loaner-location').val(selected.location || '');
+                        $('#change-loaner-email').val(selected.email || '');                        
+                        if (ts) {
+                            ts.setValue(selected.location || '', false);
+                        }
                         // Optionally store office id for later use if needed: $input.data('office-id', selected.office_id);
                     }
                     Suggestions.close();
@@ -241,77 +245,14 @@ $(function() {
         });
     });
 
-    // Office location suggestion logic for change-book-status-popin
-    $('#change-loaner-location').on('input', function() {
-        const $input = $(this);
-        const query = $input.val().trim().toLowerCase();
-
-        if (query.length < 1) {
-            Suggestions.close();
-            return;
-        }
-
-        Utility.request({
-            url: '/bookdata',
-            data: { data: 'offices' },
-            success: function(list) {
-                if (!Array.isArray(list) || list.length === 0) {
-                    Suggestions.close();
-                    return;
-                }
-
-                // Filter office names by query
-                const filtered = list.filter(o => o.name.toLowerCase().includes(query));
-                Suggestions.show($input, filtered.map(o => o.name), 'office-suggestion');
-                Suggestions.bindCloseOnBlur($input);
-
-                // Click handler for suggestion selection
-                $(document).off('mousedown.office-suggestion').on('mousedown.office-suggestion', '.office-suggestion', function(e) {
-                    e.preventDefault();
-                    const name = $(this).text().trim();
-                    $input.val(name);
-                    Suggestions.close();
-                });
-            }
-        });
-    });
-
     // Trigger change on load to pre-fill with the first status
     $('#status-type').trigger('change');
-
-    // W.I.P. Testing functions
-    $('.status-dot').on('click', testLights);
 });
 
-$(document).ajaxSuccess(function (event, xhr, settings, data) {
-    console.log('AJAX SUCCESS:', settings.url, data);
-});
+// $(document).ajaxSuccess(function (event, xhr, settings, data) {
+//     console.log('AJAX SUCCESS:', settings.url, data);
+// });
 
-$(document).ajaxError(function (event, xhr, settings, error) {
-    console.error('AJAX ERROR:', settings.url, xhr.responseText);
-});
-
-// W.I.P. helper, to review the basic status light colors via a simple click to change/rotate.
-function testLights(e) {
-    let $el = $(e.target);
-
-    if ($el.hasClass('statusOne')) {
-        $el.removeClass('statusOne').addClass('statusTwo');
-        return;
-    }
-
-    if ($el.hasClass('statusTwo')) {
-        $el.removeClass('statusTwo').addClass('statusThree');
-        return;
-    }
-
-    if ($el.hasClass('statusThree')) {
-        $el.removeClass('statusThree').addClass('statusFour');
-        return;
-    }
-
-    if ($el.hasClass('statusFour')) {
-        $el.removeClass('statusFour').addClass('statusOne');
-        return;
-    }
-}
+// $(document).ajaxError(function (event, xhr, settings, error) {
+//     console.error('AJAX ERROR:', settings.url, xhr.responseText);
+// });

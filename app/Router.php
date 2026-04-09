@@ -23,7 +23,7 @@ class Router {
             }
 
             if (!is_callable($handler)) {
-                $response->setStatusCode(500)->setContent('Internal Server Error')->send();
+                \App\App::htmlError(500);
                 return;
             }
 
@@ -42,7 +42,7 @@ class Router {
             ));
             error_log('[Router] Trace: ' . $t->getTraceAsString());
 
-            $response->setStatusCode(500)->setContent('Internal Server Error')->send();
+            \App\App::htmlError(500);
         }
     }
 
@@ -66,6 +66,6 @@ class Router {
             }
         }
 
-        $response->setStatusCode(404)->setContent('Not Found')->send();
+        \App\App::htmlError(404);
     }
 }

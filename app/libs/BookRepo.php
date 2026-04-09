@@ -1,113 +1,153 @@
 <?php
+
 namespace App\Libs;
 
-class BookRepo {
-    protected \App\Database $db;
+use App\Libs\Context\BookContext;
 
-    public function __construct(\App\Database $db) {
-        $this->db = $db;
+final class BookRepo {
+    private \App\Database   $db;
+    
+    public function __construct() {
+        $this->db           = \App\App::getService('database');
     }
 
-    /** Helper: Update a specific field, based on the parameters */
-    protected function updateField(int $bookId, string $field, $value): bool {
-        $query  = "UPDATE books SET {$field} = ? WHERE id = ?";
-        $params = [$value, $bookId];
-
-        return $this->db->query()->run($query, $params) !== false;
+    /** Helper: Convert DB row → BookContext (domain object) */
+    private function mapRowToBook(array $row): BookContext {
+        $b                  = new BookContext();
+        $b->id              = (int)$row['id'];
+        $b->title           = $row['title'];
+        $b->homeOfficeId    = (int)$row['home_office'];
+        $b->curOfficeId     = (int)$row['cur_office'];
+        $b->active          = (bool)$row['active'];
+        $b->resvLoanerId    = $row['resv_loaner_id'] ? (int)$row['resv_loaner_id'] : null;
+        $b->resvOfficeId    = $row['resv_office_id'] ? (int)$row['resv_office_id'] : null;
+        $b->resvCreatedAt   = $row['resv_created_at'] ? new \DateTimeImmutable($row['resv_created_at']) : null;
+        $b->resvExpiresAt   = $row['resv_expires_at'] ? new \DateTimeImmutable($row['resv_expires_at']) : null;
+        return $b;
     }
 
-    /** API: Find exact book(s) based on variable input conditions */
-    public function findBooks(array $filters = [], bool $single = false): array {
-        $sql    = "SELECT * FROM books";
-        $where  = [];
-        $params = [];
+    /** API: Return all active books (raw domain data only) */
+    public function findAllActiveBooks(): array {
+        $rows = $this->db->query()->fetchAll("
+            SELECT *
+            FROM books
+            WHERE active = 1
+            ORDER BY title ASC
+        ");
 
-        $allowed = [
-            'id'          => 'id = ?',
-            'title'       => 'title = ?',
-            'home_office' => 'home_office = ?',
-            'cur_office'  => 'cur_office = ?',
-            'active'      => 'active = ?'
-        ];
-
-        foreach ($allowed as $key => $condition) {
-            if (array_key_exists($key, $filters)) {
-                $where[]  = $condition;
-                $params[] = $filters[$key];
-            }
-        }
-
-        if ($where) {
-            $sql .= " WHERE " . implode(" AND ", $where);
-        }
-
-        return $single
-            ? $this->db->query()->fetchOne($sql, $params)
-            : $this->db->query()->fetchAll($sql, $params);
+        return array_map(fn($r) => $this->mapRowToBook($r), $rows);
     }
 
-    /** API: Search fuzzy book(s) by input filter */
-    public function searchBooks(array $filters = []): array {
-        $sql    = "SELECT * FROM books";
-        $where  = [];
-        $params = [];
+    /** API: Find a book by exact title (CRUD-safe) */
+    public function findBookByTitle(string $title): ?BookContext {
+        $row = $this->db->query()->fetchOne("
+            SELECT *
+            FROM books
+            WHERE title = :title
+            LIMIT 1
+        ", ['title' => $title]);
 
-        $allowed = [
-            'title'       => 'title LIKE ?',
-            'home_office' => 'home_office LIKE ?',
-            'cur_office'  => 'cur_office LIKE ?',
-        ];
-
-        foreach ($allowed as $key => $condition) {
-            if (array_key_exists($key, $filters)) {
-                $where[]  = $condition;
-                $params[] = '%' . $filters[$key] . '%';
-            }
-        }
-
-        if ($where) {
-            $sql .= " WHERE " . implode(" AND ", $where);
-        }
-
-        if (!empty($filters['one'])) {
-            $row = $this->db->query()->fetchOne($sql, $params);
-            return $row ?? [];
-        }
-        
-        return $this->db->query()->fetchAll($sql, $params);
+        return $row ? $this->mapRowToBook($row) : null;
     }
 
-    /** API: Simple add book to table function returning the insterted ID */
-    public function addBook(string $title, int $office): int {
-        $query  = "INSERT INTO `books` (`title`, `home_office`, `cur_office`, `active`) VALUES (?, ?, ?, 1)";
-        $params = [$title, $office, $office];
+    /** API: Find book by id */
+    public function findBookById(int $bookId): ?BookContext {
+        $row = $this->db->query()->fetchOne("
+            SELECT *
+            FROM books
+            WHERE id = :id
+            LIMIT 1
+        ", ['id' => $bookId]);
 
-        $db = $this->db->query();
-        $db->run($query, $params);
-        
-        return $db->lastInsertId();
+        return $row ? $this->mapRowToBook($row) : null;
     }
 
-    /** API: Swap book object active state by ID */
-    public function swapBookActiveState(int $bookId): bool {
-        $query  = "UPDATE books SET active = CASE WHEN active = 1 THEN 0 ELSE 1 END WHERE id = ?";
-        $stmt = $this->db->query()->run($query, [$bookId]);
-        return ($stmt->rowCount() > 0);
+    /** API: Insert a new book record */
+    public function insertBook(string $title, int $officeId): int {
+        $this->db->query()->run("
+            INSERT INTO books (title, home_office, cur_office, active)
+            VALUES (:title, :office, :office, 1)
+        ", [
+            'title'  => $title,
+            'office' => $officeId
+        ]);
+
+        return (int)$this->db->query()->lastInsertId();
     }
 
-    /** API: Update the book title for edit functions */
-    public function updateBookTitle(int $bookId, string $title): bool {
-        return $this->updateField($bookId, 'title', $title);
+    /** API: Reactivate a previously inactive book */
+    public function reactivateBook(int $bookId): void {
+        $this->db->query()->run("
+            UPDATE books
+            SET active = 1
+            WHERE id = :id
+        ", ['id' => $bookId]);
     }
 
-    /** API: Update the book office for edit functions */
-    public function updateBookOffice(int $bookId, int $officeId, string $field): bool {
-        $allowed = ['home_office', 'cur_office'];
+    /** API: Deactivate book in database */
+    public function deactivateBook(int $bookId): void {
+        $this->db->query()->run("
+            UPDATE books
+            SET active = 0 
+            WHERE id = :id
+        ", ['id' => $bookId]);
+    }
 
-        if (!in_array($field, $allowed, true)) {
-            return false;
-        }
+    /** API: Update the book's title */
+    public function updateBookTitle(int $bookId, string $title): void {
+        $this->db->query()->run("
+            UPDATE books
+            SET title = :title
+            WHERE id = :id
+        ", [
+            'title' => $title,
+            'id'    => $bookId
+        ]);
+    }
 
-        return $this->updateField($bookId, $field, $officeId);
+    /** API: Update the book’s office (single-office model) */
+    public function setAllBookOffices(int $bookId, int $officeId): void {
+        $this->db->query()->run("
+            UPDATE books
+            SET home_office = :office,
+                cur_office  = :office
+            WHERE id = :id
+        ", [
+            'office' => $officeId,
+            'id'     => $bookId
+        ]);
+    }
+
+    /** API: Update only the current office location (single-office model) */
+    public function updateCurBookOffice(int $bookId, int $officeId): void {
+        $this->db->query()->run("
+            UPDATE books
+            SET cur_office = :office
+            WHERE id = :id
+        ", [
+            'office' => $officeId,
+            'id'     => $bookId
+        ]);
+    }
+
+    /** API: Update the book its reservation meta data */
+    public function updateReservationDataForBook(int $bookId, array $data): void {
+        $this->db->query()->run("
+            UPDATE
+                books
+            SET
+                resv_loaner_id  = :loanerId,
+                resv_office_id  = :officeId,
+                resv_created_at = :created,
+                resv_expires_at = :expires
+            WHERE
+                id = :bookId
+        ", [
+            'loanerId'  => $data['resv_loaner_id'],
+            'officeId'  => $data['resv_office_id'],
+            'created'   => $data['resv_created_at'] ?? null,
+            'expires'   => $data['resv_expires_at'] ?? null,
+            'bookId'    => $bookId
+        ]);
     }
 }

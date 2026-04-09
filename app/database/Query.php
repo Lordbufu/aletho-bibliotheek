@@ -49,7 +49,7 @@ class Query {
     }
 
     /** API: Fetch a single scalar value from a query */
-    public function value(string $sql, array $params = []): mixed {
+    public function fetchValue(string $sql, array $params = []): mixed {
         $stmt = $this->run($sql, $params);
         return $stmt ? $stmt->fetchColumn() : null;
     }

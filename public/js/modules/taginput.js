@@ -127,6 +127,14 @@ const TagInput = (() => {
             $tag.find(`input[type="hidden"][name="${config.hiddenInputName}"]`).remove();
             $tag.remove();
 
+            const $container = TagInput.getTagsContainer($input, config.containerSelector);
+
+            if ($container.find(`input[name="${config.hiddenInputName}"]`).length === 0) {
+                $container.append(
+                    `<input type="hidden" name="${config.hiddenInputName}" value="" data-empty="1">`
+                );
+            }
+
             if ($input.data('context') !== 'popin') {
                 Utility.markFieldChanged($input);
             }
@@ -167,6 +175,7 @@ const TagInput = (() => {
         `);
 
         $container.append($tag);
+        $container.find(`input[data-empty="1"]`).remove();
         $input.val('');
 
         if ($input.data('context') !== 'popin') {

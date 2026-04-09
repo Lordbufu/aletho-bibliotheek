@@ -1,25 +1,14 @@
 <?php
 	// Store _flashForm data, or set empty array.
     $old = $_SESSION['_flashForm']['message'] ?? [];
-    unset($_SESSION['_flashForm']);
-
+	unset($_SESSION['_flashForm']);
+	
 	// Store _flashInlinePop data, or set empty array.
 	$popErrors = $_SESSION['_flashInlinePop']['message'] ?? [];
 	unset($_SESSION['_flashInlinePop']);
 
     // ensure $errors exists to avoid undefined notices
-    $errors = [];
-
-	// Store the correct inline error formats, for book details.
-    if (!empty($_SESSION['_flashInline']) && $_SESSION['_flashInline']['type'] !== 'data') {
-        $errors[$_SESSION['_flashInline']['type']] = $_SESSION['_flashInline']['message'];
-    } elseif (!empty($_SESSION['_flashInline']) && is_array($_SESSION['_flashInline']['type'])) {
-		foreach($_SESSION['_flashInline']['type'] as $key => $value) {
-			$errors[$value] = $_SESSION['_flashInline']['message'][$key];
-		}
-	}
-
-	
+    $errors = $_SESSION['_flashInline']['message'] ?? [];
 	unset($_SESSION['_flashInline']);
 
 	// expose server flash to javascript so client can restore popins / old input
@@ -41,6 +30,7 @@
 		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
 		<link rel="stylesheet" href="https://use.typekit.net/rsa4jkk.css">
 		<link href='https://fonts.googleapis.com/css?family=Quicksand' rel='stylesheet'>
+		<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
 		<link rel="stylesheet" type="text/css" href="css/style.css">
 		<script src="js/jquery-3.7.1.min.js"></script>
 		<script type="module" src="js/main.js"></script>
