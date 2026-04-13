@@ -20,7 +20,7 @@ final class BookStatusRepo {
         $ctx->actionToken       = $bookStatus['action_token'];
         $ctx->tokenExpires      = $bookStatus['token_expires'] ? new \DateTimeImmutable($bookStatus['token_expires']) : null;
         $ctx->tokenUsed         = (bool)$bookStatus['token_used'];
-        $ctx->actionFinished    = (bool)$bookStatus['finished'];
+        $ctx->actionFinished    = (bool)$bookStatus['action_finished'];
         $ctx->createdAt         = new \DateTimeImmutable($bookStatus['created_at']);
 
         $ctx->book = [
@@ -94,7 +94,7 @@ final class BookStatusRepo {
     /** API: Insert a new status row */
     public function insertBookStatus(int $bookId, int $statusId): int {
         $sql = "
-            INSERT INTO book_status (book_id, status_id, active, finished)
+            INSERT INTO book_status (book_id, status_id, active, action_finished)
             VALUES (:book, :status, 1, 0)
         ";
 
@@ -113,7 +113,6 @@ final class BookStatusRepo {
             SET active = 0
             WHERE book_id = :book
             AND active = 1
-            AND finished = 0
         ";
 
         $this->db->query()->run($sql, ['book' => $bookId]);
@@ -136,7 +135,7 @@ final class BookStatusRepo {
 
         $this->db->query()->run("
             INSERT INTO book_status
-                (book_id, status_id, action_type, action_token, token_expires, token_used, finished, active)
+                (book_id, status_id, action_type, action_token, token_expires, token_used, action_finished, active)
             VALUES
                 (:book, :status, NULL, :token, :expires, 0, 0, :active)
         ", [

@@ -69,12 +69,11 @@ final class StatusRepo {
         if (!$bookIds) return [];
 
         $sql = "
-            SELECT bs.id, bs.book_id, bs.status_id, bs.active, bs.finished, s.type
+            SELECT bs.id, bs.book_id, bs.status_id, bs.active, bs.action_finished, s.type
             FROM book_status bs
             JOIN status s ON s.id = bs.status_id
             WHERE bs.book_id IN (" . implode(',', $bookIds) . ")
             AND bs.active = 1
-            AND bs.finished = 0
         ";
 
         return $this->db->query()->fetchAll($sql);
