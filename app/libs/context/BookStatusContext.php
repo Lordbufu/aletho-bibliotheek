@@ -11,7 +11,7 @@ final class BookStatusContext {
     public ?string              $actionToken;           // book_status.action_token
     public ?\DateTimeImmutable  $tokenExpires;          // book_status.token_expires
     public bool                 $tokenUsed;             // book_status.token_used
-    public bool                 $actionFinished;        // book_status.finished
+    public bool                 $actionFinished;        // book_status.action_finished
     public \DateTimeImmutable   $createdAt;             // book_status.created_at
 
     // minimal borrowed context data:
