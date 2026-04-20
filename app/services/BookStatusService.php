@@ -296,11 +296,11 @@ final class BookStatusService {
         );
     }
 
-    // TODO: Adjust `Gereserveerd` mail template, it seems to be a copy and pasta of `Ligt Klaar` & `Afwezig`, and has conflicting text lines.
     // TODO: Introduce the admin its template for overdue notifications, so they know who is late for witch book, token `:loaner_name` is already included in the notification logic.
+    // TODO: Ensure all `Overdatum` temp code is removed, this is not a status that should be manually set, should only be possible via automated CRON jobs.
     /** API: Evaluate and perform a status change event, based on the TransitionResult */
     public function changeStatus(array $data, string $trigger = 'debug'): TransitionResult {
-        $engine = new BookStatusEngine();
+        $engine                     = new BookStatusEngine();
         // 1. Load the book context
         $bookCtx                    = App::getService('books')->findBookById($data['book_id']);
         if (!$bookCtx) {
@@ -325,19 +325,28 @@ final class BookStatusService {
 
         // 3.4.2 If a reservation exists, load the reservation loaner context
         if ($tx->book->resvLoanerId !== null && $tx->currentLoaner === null) {
-            $tx->currentLoaner = App::getService('loaner')->getLoanerById($tx->book->resvLoanerId);
+            $tx->currentLoaner      = App::getService('loaner')->getLoanerById($tx->book->resvLoanerId);
         }
 
-        // 3.5. Deal with the loaner context, and include it into the TransitionContext
+        // 3.5.1 Deal with the loaner context, and include it into the TransitionContext
         if (isset($data['loaner_name'])) {
-            $selectedLoanerId       = App::getService('loaner')->findOrCreateLoaner(
-                                            $data['loaner_name'],
-                                            $data['loaner_email'],
-                                            $data['loaner_location']);
+            $officeId               = App::getService('offices')->findOfficeByName($data['loaner_location']);
+            $selectedLoanerId       = App::getService('loaner')->findOrCreateLoaner($data['loaner_name'], $data['loaner_email'], $officeId['id']);
 
             if ($selectedLoanerId !== null) {
                 $loanerCtx          = App::getService('loaner')->getLoanerById($selectedLoanerId);
                 $tx->currentLoaner  = $loanerCtx;
+            }
+        }
+
+        // 3.5.2 Fallback: if no loaner was provided, but there is an active loan for this book, rebuild currentLoaner from the existing loan row.
+        // TODO: remove this temp solution
+        if ($tx->currentLoaner === null && $data['status_type'] === 1) {
+            $activeLoan = App::getService('loan')->getActiveLoansForBook($tx->book->id);
+
+            if ($activeLoan !== null) {
+                $loanerCtx         = App::getService('loaner')->getLoanerById($activeLoan->loanerId);
+                $tx->currentLoaner = $loanerCtx;
             }
         }
 
@@ -354,9 +363,7 @@ final class BookStatusService {
         // 3.6.2. Reservation resolution override
         if ($tx->book->resvLoanerId !== null && $tx->book->curOfficeId === $tx->book->resvOfficeId && $statusCtx->type === StatusType::AANWEZIG) {
             // Force Ligt Klaar instead of Aanwezig
-            $tx->newStatus = App::getService('statuses')->getStatusById(
-                StatusType::toId('Ligt Klaar')
-            );
+            $tx->newStatus          = App::getService('statuses')->getStatusById(StatusType::toId('Ligt Klaar'));
         }
 
         // 3.7. (optional) Include a debug id for the admin that triggered the request
