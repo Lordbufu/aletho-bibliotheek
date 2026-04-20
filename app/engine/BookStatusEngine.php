@@ -1,14 +1,17 @@
 <?php
 namespace App\Engine;
 
+use App\Engine\Map\{NotificationMap, TransitionMap};
 use App\Engine\Result\TransitionResult;
 use App\Engine\Instructions\{StatusChangeInstruction, LoanChangeInstruction, NotificationInstruction, OfficeChangeInstruction};
 use App\Libs\Types\StatusType;
 
-/** BookStatusEngine:
- *      The goal is to evaluate status transitions, and then provide the service with the correct dataset.
- */
+        // error_log("DEBUG: Current notification result: " . print_r($result->notifications, true));
+
+/** BookStatusEngine: The goal is to evaluate status transitions, and then provide the service with the correct dataset. */
 final class BookStatusEngine {
+    // private $transitionMap = [];
+
     /** API: The function that drives the book status transitions */
     public function transition(TransitionContext $tx): TransitionResult {
         return match ($tx->newStatus->type) {
@@ -22,29 +25,14 @@ final class BookStatusEngine {
         };
     }
 
-    /** Helper: Validate Status Transition. */
-    private function validateTransition(string $curStatus, array $allowedStatuses) {
-        return in_array($curStatus, $allowedStatuses, true);
-    }
-
     /** Helper: Handle the `Afwezig` status logic */
     private function toAfwezig(TransitionContext $tx): TransitionResult {
         $result                             = new TransitionResult();
 
         // 1. Validate transition
-        $allowedStatusTypes                 = [
-            StatusType::TRANSPORT,
-            StatusType::LIGT_KLAAR,
-            StatusType::AANWEZIG,
-            StatusType::GERESERVEERD,
-            StatusType::OVERDATUM
-        ];
         $currentStatus                      = $tx->bookStatus->status['type'];
-        
-        if (!$this->validateTransition($currentStatus, $allowedStatusTypes)) {
-            $result->passed                 = false;
-            $result->errorMessage           = "Kan niet naar Afwezig vanuit {$currentStatus}.";
-            return $result;
+        if (!TransitionMap::canTransition($tx->newStatus->type, $currentStatus)) {
+            return TransitionMap::fail($result, "Kan niet naar Afwezig vanuit {$currentStatus}.");
         }
         
         // 1. Shared: due date
@@ -60,7 +48,7 @@ final class BookStatusEngine {
 
         // 3. Branch: direct loan vs transported loan
         $loanInstr                          = new LoanChangeInstruction();
-        $notif                              = new NotificationInstruction();
+        $noti                               = new NotificationInstruction();
 
         if ($currentStatus === StatusType::AANWEZIG) {
             // Direct loan: create new loan row
@@ -70,7 +58,7 @@ final class BookStatusEngine {
             $loanInstr->startDate           = new \DateTimeImmutable();
             $loanInstr->endDate             = $dueDate;
             $loanInstr->active              = true;
-            $notif->type                    = 'loan_confirm';                       // confirm book was handed out and the loan has started
+            $noti->type                     = NotificationMap::resolveNotificationType($tx->newStatus->type, $currentStatus);
         } elseif ($currentStatus === StatusType::LIGT_KLAAR && $tx->currentLoan) {
             // Transported loan: update existing row
             $loanInstr->existingLoanRowId   = $tx->currentLoan->id;
@@ -78,7 +66,7 @@ final class BookStatusEngine {
             $loanInstr->startDate           = new \DateTimeImmutable();
             $loanInstr->endDate             = $dueDate;
             $loanInstr->active              = true;
-            $notif->type                    = 'pickup_confirm';                     // confirm book was picked up and loan has started
+            $noti->type                     = NotificationMap::resolveNotificationType($tx->newStatus->type, $currentStatus);
         } else {
             $result->passed                 = false;
             $result->errorMessage           = "Kan niet naar Afwezig vanuit {$currentStatus}.";
@@ -87,8 +75,8 @@ final class BookStatusEngine {
 
         // 4. Shared Notification data and setting the correct instructions
         $result->loanChanges                = $loanInstr;
-        $notif->loanerId                    = $tx->currentLoaner->id;
-        $result->notifications              = $notif;
+        $noti->loanerId                     = $tx->currentLoaner->id;
+        $result->notifications              = $noti;
 
         // 5. Feedback
         $result->userFeedbackMessage        = "Het boek is nu uitgeleend.";
@@ -101,19 +89,9 @@ final class BookStatusEngine {
         $result                                     = new TransitionResult();
 
         // 1. Validate transition
-        $allowedStatusTypes                 = [
-            StatusType::AFWEZIG,
-            StatusType::LIGT_KLAAR,
-            StatusType::AANWEZIG,
-            StatusType::GERESERVEERD,
-            StatusType::OVERDATUM
-        ];
-        $currentStatus                              = $tx->bookStatus->status['type'];
-
-        if (!$this->validateTransition($currentStatus, $allowedStatusTypes)) {
-            $result->passed                 = false;
-            $result->errorMessage           = "Kan niet naar Gereserveerd vanuit {$currentStatus}.";
-            return $result;
+        $currentStatus                      = $tx->bookStatus->status['type'];
+        if (!TransitionMap::canTransition($tx->newStatus->type, $currentStatus)) {
+            return TransitionMap::fail($result, "Kan niet naar Afwezig vanuit {$currentStatus}.");
         }
 
         // 1. Status change → Transport
@@ -155,9 +133,11 @@ final class BookStatusEngine {
             $result->loanChanges                    = $loanInstr;
         }
 
-        // 2.1 Ensure the loanchages are null for specific reservation flows to avoid loan updates
-        if ($result->loanChanges->statusId === null && $result->loanChanges->bookId === null) {
-            $result->loanChanges = null;
+        if ($result->loanChanges !== null) {
+            // 2.1 Ensure the loanchages are null for specific reservation flows to avoid loan updates
+            if ($result->loanChanges->statusId === null && $result->loanChanges->bookId === null) {
+                $result->loanChanges = null;
+            }
         }
 
         // 3. Office change data to ensure the flow resolve correctly later
@@ -169,7 +149,7 @@ final class BookStatusEngine {
         // 4. Notification → transport_request
         $noti                                       = new NotificationInstruction();
         $noti->loanerId                             = null;
-        $noti->type                                 = 'transport_request';
+        $noti->type                                 = NotificationMap::resolveNotificationType($tx->newStatus->type, $currentStatus);
         $noti->originOfficeId                       = $tx->book->curOfficeId;
         $result->notifications                      = $noti;
 
@@ -184,18 +164,9 @@ final class BookStatusEngine {
         $result                             = new TransitionResult();
 
         // 1. Validate transition
-        $allowedStatusTypes                 = [
-            StatusType::AFWEZIG,
-            StatusType::TRANSPORT,
-            StatusType::GERESERVEERD,
-            StatusType::OVERDATUM
-        ];
         $currentStatus                      = $tx->bookStatus->status['type'];
-
-        if (!$this->validateTransition($currentStatus, $allowedStatusTypes)) {
-            $result->passed                 = false;
-            $result->errorMessage           = "Kan niet naar Ligt Klaar vanuit {$currentStatus}.";
-            return $result;
+        if (!TransitionMap::canTransition($tx->newStatus->type, $currentStatus)) {
+            return TransitionMap::fail($result, "Kan niet naar Afwezig vanuit {$currentStatus}.");
         }
 
         // 1. Status change
@@ -208,9 +179,7 @@ final class BookStatusEngine {
         // 2. Loan change (update existing Transport row, or create a new loan)
         $loanInstr                          = new LoanChangeInstruction();
 
-        // 2.b Ensure a new loan is corretly created, if there is no currentLoan data to carry over
-            // the lack of existingLoanRowId triggers a create
-            // existingLoanRowId triggers a update
+        // 2.b Ensure a new loan is corretly created, if there is no currentLoan data to carry over, the lack of existingLoanRowId triggers a create, existingLoanRowId triggers a update
         if ($tx->book->resvLoanerId !== null) {
             $loanInstr->bookId              = $tx->book->id;
             $loanInstr->loanerId            = $tx->book->resvLoanerId;
@@ -230,7 +199,7 @@ final class BookStatusEngine {
         // 3. Notification
         $noti                               = new NotificationInstruction();
         $noti->loanerId                     = $tx->currentLoaner->id;
-        $noti->type                         = 'pickup_ready';
+        $noti->type                         = NotificationMap::resolveNotificationType($tx->newStatus->type, $currentStatus);
         $result->notifications              = $noti;
 
         // 4. User feedback
@@ -244,17 +213,9 @@ final class BookStatusEngine {
         $result                             = new TransitionResult();
 
         // 1. Validate transition
-        $allowedStatusTypes                 = [
-            StatusType::AFWEZIG,
-            StatusType::TRANSPORT,
-            StatusType::OVERDATUM
-        ];
         $currentStatus                      = $tx->bookStatus->status['type'];
-
-        if (!$this->validateTransition($currentStatus, $allowedStatusTypes)) {
-            $result->passed                 = false;
-            $result->errorMessage           = "Kan niet naar Aanwezig vanuit {$currentStatus}.";
-            return $result;
+        if (!TransitionMap::canTransition($tx->newStatus->type, $currentStatus)) {
+            return TransitionMap::fail($result, "Kan niet naar Afwezig vanuit {$currentStatus}.");
         }
 
         // 2. Status instruction
@@ -286,17 +247,9 @@ final class BookStatusEngine {
         $result                                 = new TransitionResult();
 
         // 1. Validate transition
-        $allowedStatusTypes                 = [
-            StatusType::AFWEZIG,
-            StatusType::LIGT_KLAAR,
-            StatusType::OVERDATUM
-        ];
-        $currentStatus                          = $tx->bookStatus->status['type'];
-
-        if (!$this->validateTransition($currentStatus, $allowedStatusTypes)) {
-            $result->passed                 = false;
-            $result->errorMessage           = "Kan niet naar Gereserveerd vanuit {$currentStatus}.";
-            return $result;
+        $currentStatus                      = $tx->bookStatus->status['type'];
+        if (!TransitionMap::canTransition($tx->newStatus->type, $currentStatus)) {
+            return TransitionMap::fail($result, "Kan niet naar Afwezig vanuit {$currentStatus}.");
         }
 
         // 1. Status change → gereserveerd
@@ -313,7 +266,7 @@ final class BookStatusEngine {
         // 4. Notification → reserv_confirm
         $noti                                   = new NotificationInstruction();
         $noti->loanerId                         = $tx->currentLoaner->id;
-        $noti->type                             = 'reserv_confirm';
+        $noti->type                             = NotificationMap::resolveNotificationType($tx->newStatus->type, $currentStatus);
         $result->notifications                  = $noti;
 
         // 5. Feedback
@@ -325,16 +278,11 @@ final class BookStatusEngine {
     /** Helper: Handle the `Overdatum` status logic */
     private function toOverdatum(TransitionContext $tx): TransitionResult {
         $result                              = new TransitionResult();
-        // 1. Validate transition
-        $allowedStatusTypes                  = [
-            StatusType::AFWEZIG
-        ];
-        $currentStatus                       = $tx->bookStatus->status['type'];
 
-        if (!$this->validateTransition($currentStatus, $allowedStatusTypes)) {
-            $result->passed                  = false;
-            $result->errorMessage            = "Kan niet naar Overdatum vanuit {$currentStatus}.";
-            return $result;
+        // 1. Validate transition
+        $currentStatus                      = $tx->bookStatus->status['type'];
+        if (!TransitionMap::canTransition($tx->newStatus->type, $currentStatus)) {
+            return TransitionMap::fail($result, "Kan niet naar Afwezig vanuit {$currentStatus}.");
         }
 
         // 2. Status change
@@ -358,7 +306,7 @@ final class BookStatusEngine {
         // 4. Notification (optional)
         $noti                               = new NotificationInstruction();
         $noti->loanerId                     = $tx->currentLoan->loanerId;
-        $noti->type                         = 'overdue_reminder_user';
+        $noti->type                         = NotificationMap::resolveNotificationType($tx->newStatus->type, $currentStatus);
         $noti->originOfficeId               = $tx->book->curOfficeId;
         $result->notifications              = $noti;
 
