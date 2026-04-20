@@ -49,6 +49,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+
 -- pickup_ready_confirm
 (   'Het boek: :book_name is klaar voor ophalen',
     ':from_mail',
@@ -96,6 +97,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+
 -- pickup_confirm
 (   'Lening eind datum voor: :book_name',
     ':from_mail',
@@ -141,6 +143,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+
 -- return_reminder
 (   'Verloop reminder voor: :book_name',
     ':from_mail',
@@ -184,6 +187,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+
 -- transport_request
 (   'Transport verzoek voor: :book_name',
     ':from_mail',
@@ -224,6 +228,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+
 -- reserv_confirm
 (   'Reservering bevestiging voor: :book_name',
     ':from_mail',
@@ -237,10 +242,10 @@ VALUES
         <td style="padding:20px; font-family:\"Quicksand"\, Arial, sans-serif; color:#333; text-align:center;">
             <p style="margin:0 0 16px;">
                 Bedankt voor het reserveren van <strong>:book_name</strong>, we hopen dat het boek je gaat bevallen.<br><br>
-                Als de leenperiode bijna is verstreken, krijg je nog een herinnering van ons.
             </p>
-            <p style="margin:0;">
-                Het einde van de huidige leenperiode is:<br><strong>:due_date</strong>.
+            <p style="margin:0 0 16px;">
+                Als het boek klaar is om opgehaald te worden, krijg je nog een bericht van ons.<br>
+                De leenperiode gaat pas van start, als u het boek heeft opgehaald.
             </p>
             :action_block
         </td>
@@ -259,10 +264,9 @@ VALUES
     \r\n
     We hopen dat het boek je gaat bevallen.\r\n
     \r\n
-    Als de leenperiode bijna is verstreken, krijg je nog een herinnering van ons.\r\n
+    Als het boek klaar is om opgehaald te worden, krijg je nog een bericht van ons.\r\n
     \r\n
-    Het einde van de huidige leenperiode is:\r\n
-    :due_date\r\n
+    De leenperiode gaat pas van start, als u het boek heeft opgehaald.\r\n
     \r\n
     :action_block\r\n
     \r\n
@@ -271,6 +275,7 @@ VALUES
     De Aletho Bibliotheek\r\n',
     1
 ),
+
 -- overdue_reminder
 (   'Verstreken lening voor: :book_name',
     ':from_mail',
