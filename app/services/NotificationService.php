@@ -35,13 +35,13 @@ class NotificationService {
             $this->mailer->Password   = $this->config['password'];
 
             if (!PHPMailer::validateAddress($to)) {
-                error_log("[NotificationService] Invalid recipient address: $to");
+                // error_log("[NotificationService] Invalid recipient address: $to");
                 return false;
             }
 
             if (!PHPMailer::validateAddress($email['from_mail'])) {
                 $adress = $email['from_mail'];
-                error_log("[NotificationService] Invalid from address: $adress");
+                // error_log("[NotificationService] Invalid from address: $adress");
                 return false;
             }
 

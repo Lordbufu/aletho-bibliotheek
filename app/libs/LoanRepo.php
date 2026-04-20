@@ -19,7 +19,7 @@ final class LoanRepo {
         $ctx->statusId  = (int)$row['status_id'];
         $ctx->startDate = new \DateTimeImmutable($row['start_date']);
         $ctx->endDate   = $row['end_date'] ? new \DateTimeImmutable($row['end_date']) : null;
-        $ctx->active = (bool)$row['active'];
+        $ctx->active    = (bool)$row['active'];
         return $ctx;
     }
 
@@ -114,20 +114,4 @@ final class LoanRepo {
             WHERE id = :id
         ", [ 'id'       => $loanId ]);
     }
-
-    // No longer relevant, marked as redundant/obsolete
-        // /** API: Get latstest loaner row for specific book */
-        // public function getLatestLoanerRowForBook(int $bookId): ?LoanContext {
-        //     $row = $this->db->query()->fetchOne("
-        //         SELECT *
-        //         FROM book_loaners
-        //         WHERE book_id = :bId
-        //         ORDER BY id DESC
-        //         LIMIT 1
-        //     ", ['bId' => $bookId]);
-
-        //     return $row ? $this->mapRowToLoan($row) : null;
-        // }
-
-
 }

@@ -1,7 +1,6 @@
 <?php
 namespace App\Libs\Types;
 
-// New/Domain/NewStatusType.php
 /** */
 final class StatusType {
     public const AANWEZIG       = 'Aanwezig';
@@ -11,8 +10,7 @@ final class StatusType {
     public const GERESERVEERD   = 'Gereserveerd';
     public const OVERDATUM      = 'Overdatum';
 
-    // Optional: map DB IDs to names if needed
-    /** */
+    /** API: Map status id to status string */
     public static function fromId(int $id): string {
         return match ($id) {
             1 => self::AANWEZIG,
@@ -25,7 +23,7 @@ final class StatusType {
         };
     }
 
-    /** */
+    /** API: Map status string to status id */
     public static function toId(string $type): int {
         return match ($type) {
             self::AANWEZIG     => 1,
