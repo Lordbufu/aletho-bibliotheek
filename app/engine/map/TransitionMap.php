@@ -1,16 +1,24 @@
 <?php
 namespace App\Engine\Map;
 
-final class TransitionMap {
-    private array $map;
+use App\Engine\Result\TransitionResult;
 
-    /** */
-    public function __construct(string $configPath) {
-        $this->map = require $configPath . '/transitions.php';
+final class TransitionMap {
+    private static $map = [];
+
+    /** API: Evaluate if transition is allowed */
+    public static function canTransition(string $to, string $from): bool {
+        if (!self::$map) {
+            self::$map = require BASE_PATH . '/ext/config/statusTransitions.php';
+        }
+
+        return in_array($to, self::$map[$from] ?? [], true);
     }
 
-    /** */
-    public function getRulesFor(string $from, string $to): array {
-        return $this->map[$from][$to] ?? [];
+    /** API: Shared failed transition validation code */
+    public static function fail(TransitionResult $result, string $message): TransitionResult {
+        $result->passed = false;
+        $result->errorMessage = $message;
+        return $result;
     }
 }
