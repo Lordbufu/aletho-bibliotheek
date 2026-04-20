@@ -14,6 +14,16 @@ final class LoanerService {
         $this->offices  = new OfficesRepo();
     }
 
+    /** Facade: Create new loaner loaner and return its id */
+    public function createLoaner(string $name, string $email, int $officeId): int {
+        return $this->loaner->createLoaner($name, $email, $officeId);
+    }
+
+    /** Facade: Reactive loaner based on id */
+    public function reactivateLoaner(int $id): void {
+        $this->loaner->reactivateLoaner($id);
+    }
+
     /** Facade: Get loaner by id */
     public function getLoanerById(int $loanerId): ?LoanerContext {
         return $this->loaner->getLoanerById($loanerId);
@@ -24,9 +34,23 @@ final class LoanerService {
         return $this->loaner->findLoanerByName($query);
     }
 
-    /** Facade: Find loaner or create if non is found */
-    public function findOrCreateLoaner(string $name, string $email, string $location): int {
-        return $this->loaner->findOrCreateLoaner($name, $email, $location);
+    /** Facade: Find loaner by name and email, returns null if not found */
+    public function findLoanerByExactName(string $name): ?array {
+        return $this->loaner->findLoanerByExactName($name);
+    }
+
+    /** API: Attempt to find or create a loaner */
+    public function findOrCreateLoaner(string $name, string $email, int $officeId): int {
+        $tempLoaner = $this->loaner->findLoanerByExactName($name);
+
+        if ($tempLoaner) {
+            if (!$tempLoaner['active']) {
+                $this->loaner->reactivateLoaner($tempLoaner['id']);
+            }
+            return $tempLoaner['id'];
+        }
+
+        return $this->loaner->createLoaner($name, $email, $officeId);
     }
 
     /** API: Provide data context for frontend XHR requests */

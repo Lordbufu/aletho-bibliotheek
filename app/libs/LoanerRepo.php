@@ -21,7 +21,28 @@ final class LoanerRepo {
         return $ctx;
     }
 
-    /** API: Get loaner by 'loaners'.'id' */
+    /** API: Create new loaner */
+    public function createLoaner(string $name, string $email, int $officeId): int {
+        $this->db->query()->run("
+            INSERT INTO loaners (name, email, office_id, active)
+            VALUES (:name, :email, :officeId, 1)
+        ", [
+            'name' => $name,
+            'email' => $email,
+            'officeId' => $officeId
+        ]);
+
+        return (int)$this->db->query()->lastInsertId();
+    }
+
+    /** API: Reactive loaner based on id */
+    public function reactivateLoaner(int $id): void {
+        $this->db->query()->run("
+            UPDATE loaners SET active = 1 WHERE id = :id
+        ", ['id' => $id]);
+    }
+
+    /** API: Get loaner based on id */
     public function getLoanerById($loanerId): ?LoanerContext {
         $row = $this->db->query()->fetchOne("
             SELECT *
@@ -32,36 +53,7 @@ final class LoanerRepo {
         return $row ? $this->mapRowToLoaner($row) : null;
     }
 
-    /** API: Find loaner by email, if non found create new loaner */
-    public function findOrCreateLoaner(string $name, string $email, string $location): int {
-        // 1. Try to find existing loaner by email
-        $row = $this->db->query()->fetchOne("
-            SELECT id
-            FROM loaners
-            WHERE email = :email
-            LIMIT 1
-        ", [
-            'email' => $email
-        ]);
-
-        if ($row) {
-            return (int)$row['id'];
-        }
-
-        // 2. Create new loaner
-        $this->db->query()->run("
-            INSERT INTO loaners (name, email, location, created_at)
-            VALUES (:name, :email, :location, NOW())
-        ", [
-            'name' => $name,
-            'email' => $email,
-            'location' => $location
-        ]);
-
-        return (int)$this->db->query()->lastInsertId();
-    }
-
-    /** API: Fetch loaners based on a variable query input */
+    /** API: Fetch loaners based on a variable (fuzzy) query input */
     public function findLoanerByName(string $query): array {
         $rows = $this->db->query()->fetchAll("
             SELECT *
@@ -76,5 +68,26 @@ final class LoanerRepo {
         $rows = $rows ?: [];
 
         return array_map([$this, 'mapRowToLoaner'], $rows);
+    }
+
+    /** API: Find loaner based on exact name */
+    public function findLoanerByExactName(string $name): ?array {
+        $rows = $this->db->query()->fetchAll("
+            SELECT id, active
+            FROM loaners
+            WHERE name = :name
+        ", [ 'name' => $name]
+        );
+
+        if (count($rows) === 0) {
+            return null;
+        }
+
+        // Log a warning for the admin incase duplication does occure
+        if (count($rows) > 1) {
+            error_log("Warning: multiple loaners found with name '{$name}'. Using the first match.");
+        }
+        
+        return $rows[0];
     }
 }
