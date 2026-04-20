@@ -25,7 +25,7 @@ final class OfficesRepo {
     }
 
     /** API: Find office by name */
-    public function findByName(string $name): ?array {
+    public function findOfficeByName(string $name): ?array {
         $sql = "SELECT id, name FROM offices WHERE name = ?";
         return $this->db->query()->fetchOne($sql, [$name]);
     }

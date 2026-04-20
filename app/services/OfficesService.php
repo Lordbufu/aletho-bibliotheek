@@ -22,8 +22,8 @@ class OfficesService {
     }
 
     /** Facade: Find office by name */
-    public function findByName(string $name): ?array {
-        return $this->offices->findByName($name);
+    public function findOfficeByName(string $name): ?array {
+        return $this->offices->findOfficeByName($name);
     }
 
     /** Facade: Return office name based on its id */
