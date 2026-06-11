@@ -11,7 +11,7 @@ const SearchSort = (() => {
 
                 switch (method) {
                     case 'writer':
-                        textToSearch = $card.find('.writer-input').val() || '';
+                        textToSearch = $card.find('.schrijver-input').val() || '';
                         break;
                     case 'genre':
                         textToSearch = $card.find('.genre-input').val() || '';
@@ -78,7 +78,7 @@ const SearchSort = (() => {
 
         switch (field) {
             case 'writer':
-                value = $card.find('.writer-input').val() || '';
+                value = $card.find('.schrijver-input').val() || '';
                 break;
             case 'genre':
                 value = $card.find('.genre-input').val() || '';

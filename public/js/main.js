@@ -33,12 +33,12 @@ $(function() {
 
     // Setup for all TagInputs: autocomplete/tagging
     const tagInputConfigs = [
-        Utility.makeTagConfig('writer'),
+        Utility.makeTagConfig('schrijver'),
         Utility.makeTagConfig('genre'),
-        Utility.makeTagConfig('office', { allowCustom: false, maxTags: 1 }),
-        Utility.makePopTagConfig('writer'),
+        Utility.makeTagConfig('locatie', { allowCustom: false, maxTags: 1 }),
+        Utility.makePopTagConfig('schrijver'),
         Utility.makePopTagConfig('genre'),
-        Utility.makePopTagConfig('office', { allowCustom: false, maxTags: 1 })
+        Utility.makePopTagConfig('locatie', { allowCustom: false, maxTags: 1 })
     ];
     tagInputConfigs.forEach(config => TagInput.init(config));
 
@@ -206,6 +206,8 @@ $(function() {
         const $input = $(this);
         const query = $input.val().trim();
         
+        // console.log('loaner name suggestion event, for the status change popin');
+
         if (query.length < 2) {
             Suggestions.close();
             return;
@@ -221,23 +223,22 @@ $(function() {
                 }
 
                 // Show name suggestions
-                Suggestions.show($input, list.map(l => l.name), 'loaner-suggestion');
+                Suggestions.show($input, list, 'loaner-suggestion');
                 Suggestions.bindCloseOnBlur($input);
 
                 // Click handler for suggestion selection
                 $(document).off('mousedown.loaner-suggestion').on('mousedown.loaner-suggestion', '.loaner-suggestion', function(e) {
                     e.preventDefault();
-                    const name = $(this).text().trim();
-                    const selected = list.find(l => l.name === name);
+                    const id = $(this).data('id');
+                    const selected = list.find(l => l.id === id);
                     const ts = $('#change-loaner-location')[0]?.tomselect;
 
                     if (selected) {
-                        $input.val(selected.name);
-                        $('#change-loaner-email').val(selected.email || '');                        
+                        $input.val(selected.naam);
+                        $('#change-loaner-email').val(selected.email || '');
                         if (ts) {
-                            ts.setValue(selected.location || '', false);
+                            ts.setValue(selected.locatie || '', false);
                         }
-                        // Optionally store office id for later use if needed: $input.data('office-id', selected.office_id);
                     }
                     Suggestions.close();
                 });

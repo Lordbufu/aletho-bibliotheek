@@ -19,6 +19,7 @@ const TagInput = (() => {
                 allOptions = optionsCache[config.endpoint];
                 return;
             }
+
             Utility.request({
                 url: config.endpoint,
                 success: data => {
@@ -58,13 +59,18 @@ const TagInput = (() => {
             showSuggestions($input, allOptions, query, config.suggestionClass);
         });
 
+        // still needs review
         function showSuggestions($input, options, query, suggestionClass) {
-            const filtered = options.filter(opt =>
-                opt.name.toLowerCase().includes(query)
-            );
-            
+            const filtered = options.filter(option => {
+                const label = typeof option === 'string'
+                    ? option
+                    : (option.naam || option.name || '');
+                return label.toLowerCase().includes(query);
+            });
+
+            // console.log(filtered);
             if (filtered.length > 0) {
-                Suggestions.show($input, filtered.map(opt => opt.name), suggestionClass);
+                Suggestions.show($input, filtered, suggestionClass);
                 Suggestions.bindCloseOnBlur($input);
             } else {
                 Suggestions.close();
@@ -77,10 +83,11 @@ const TagInput = (() => {
 
             if (!activeTagInput) return;
 
-            const $input = activeTagInput;
-            const name = $(this).text().trim();
-            const $container = getTagsContainer($input, config.containerSelector);
-            const status = addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
+            const $input        = activeTagInput;
+            const name          = $(this).data('name') || $(this).text().trim();
+            const id            = $(this).data('id') || null;
+            const $container    = getTagsContainer($input, config.containerSelector);
+            const status        = addTag(name, id, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
 
             if (status) {
                 Suggestions.close();
@@ -95,6 +102,7 @@ const TagInput = (() => {
             e.preventDefault();
         });
 
+        // still needs review
         // Enter key: prevent form submit, add tag
         $inputs.on('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -106,7 +114,7 @@ const TagInput = (() => {
 
                 activeTagInput      = $input;
                 const $container    = getTagsContainer($input, config.containerSelector);
-                const status        = addTag(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
+                const status        = addTagLegacy(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
 
                 if (status) {
                     Suggestions.close();
@@ -119,15 +127,19 @@ const TagInput = (() => {
         });
 
         // Remove tag (delegated): removes tag and hidden input
-        $(document).on('click', `.remove-${config.tagClass}`, function(e) {
+        $(document).on('click', `${config.containerSelector} .remove-${config.tagClass}`, function(e) {
+            // TODO: Figure out why the old line below, suddenly gives console errors, and why i dint have that on the current live version
+            // Suggested actions: Add the console.log(config) to the live version, and see what it logs when removing a tag from either container.
+        // $(document).on('click', `.remove-${config.tagClass}`, function(e) {
+            // console.log(config);
             e.preventDefault();
-            const $tag = $(this).closest(`.${config.tagClass}`);
-            const $input = $tag.closest('form').find(config.inputSelector);
+            const $tag          = $(this).closest(`.${config.tagClass}`);
+            const $input        = $tag.closest('form').find(config.inputSelector);
             
             $tag.find(`input[type="hidden"][name="${config.hiddenInputName}"]`).remove();
             $tag.remove();
 
-            const $container = TagInput.getTagsContainer($input, config.containerSelector);
+            const $container    = TagInput.getTagsContainer($input, config.containerSelector);
 
             if ($container.find(`input[name="${config.hiddenInputName}"]`).length === 0) {
                 $container.append(
@@ -142,9 +154,9 @@ const TagInput = (() => {
     }
 
     /*  Add a tag to the container, if not already present and maxTags not exceeded. */
-    function addTag(name, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, allOptions = []) {
-        if ($container.find(`.${tagClass}[data-name="${name}"]`).length) {
-            showTagLimitWarning($input, 1, `"${name}" is al toegevoegd.`);
+    function addTag(naam, id, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, allOptions = []) {
+        if ($container.find(`.${tagClass}[data-name="${naam}"]`).length) {
+            showTagLimitWarning($input, 1, `"${naam}" is al toegevoegd.`);
             return false;
         }
 
@@ -155,8 +167,8 @@ const TagInput = (() => {
 
         if (!allowCustom) {
             const exists = Array.isArray(allOptions) && allOptions.some(opt => {
-                if (typeof opt === 'string') return opt === name;
-                if (opt && typeof opt.name === 'string') return opt.name === name;
+                if (typeof opt === 'string') return opt === naam;
+                if (opt && typeof opt.naam === 'string') return opt.naam === naam;
                 return false;
             });
 
@@ -166,14 +178,17 @@ const TagInput = (() => {
             }
         }
 
+        // TODO: Test re-factor for the new datasets (id+name)
         const $tag = $(`
-            <span class="${tagClass} aletho-border" data-name="${name}">
-                ${name}
+            <span class="${tagClass} aletho-border" data-name="${naam}" data-id="${id || ''}">
+                ${naam}
                 <button type="button" class="remove-${tagClass}" aria-label="Remove">&times;</button>
-                <input type="hidden" name="${hiddenInputName}" value="${name}">
+                <input type="hidden" name="${hiddenInputName}" value="${naam}">
+                ${id ? `<input type="hidden" name="${hiddenInputName.replace('[]', '_ids[]')}" value="${id}">` : ''}
             </span>
         `);
 
+        console.log($tag);
         $container.append($tag);
         $container.find(`input[data-empty="1"]`).remove();
         $input.val('');
@@ -235,10 +250,10 @@ const TagInput = (() => {
 
         if (existing) {
             existing.split(',')
-                .map(name => name.trim())
-                .forEach(name => {
-                    if (name) {
-                        addTag(name, $field, $container, tagClass, hiddenInputName);
+                .map(naam => naam.trim())
+                .forEach(naam => {
+                    if (naam) {
+                        addTagLegacy(naam, $field, $container, tagClass, hiddenInputName);
                     }
                 });
         }
@@ -247,7 +262,19 @@ const TagInput = (() => {
         $field.data('originalValue', Utility.normalizeValues(origValues));
     }
 
-    return { init, addTag, getTagsContainer, getValuesFromContainer, restoreTagsFromInput};
+    // Temp solution to support the previous non-id based system
+    function addTagLegacy(name, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom, allOptions) {
+        return addTag(name, null, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom, allOptions);
+    }
+
+    return {
+        init,
+        addTag,
+        getTagsContainer,
+        getValuesFromContainer,
+        restoreTagsFromInput,
+        addTagLegacy
+    };
 })();
 
 export { TagInput };

@@ -17,8 +17,26 @@ const Suggestions = (() => {
             width: widthRem
         });
 
-        suggestions.forEach(s => {
-            $list.append(`<div class="suggestion ${suggestionClass}">${s}</div>`);
+        suggestions.forEach(suggestion => {
+            if (typeof suggestion === 'object' && suggestion !== null) {
+                const id = suggestion.id;
+                const naam = suggestion.naam;
+
+                $list.append(`
+                    <div class="suggestion ${suggestionClass}"
+                        data-id="${id}"
+                        data-name="${naam}">
+                        ${naam}
+                    </div>
+                `);
+            // TODO: Review if still relevant after the re-factor, most of the lookups are now ID based, and (should) require a ID in the suggestion list.
+            } else {
+                $list.append(`
+                    <div class="suggestion ${suggestionClass}">
+                        ${suggestion}
+                    </div>
+                `);
+            }
         });
 
         $('body').append($list);

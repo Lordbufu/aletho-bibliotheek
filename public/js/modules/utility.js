@@ -1,6 +1,4 @@
-/*  Utility module: Generic helpers for input field state management in book edit forms. */
 const Utility = (() => {
-    /*  Mark an input/select field as changed and enable the save button. */
     function markFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
         const $saveBtn = $form.find('button[id^="save-changes-"]');
@@ -8,7 +6,6 @@ const Utility = (() => {
         $saveBtn.addClass('needs-save');
     }
 
-    /*  Clear changed state from a field and disable save button if no fields are dirty. */
     function clearFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
         const $saveBtn = $form.find('button[id^="save-changes-"]');
@@ -18,15 +15,14 @@ const Utility = (() => {
         }
     }
 
-    /*  Get configuration for taggable fields based on their class. */
     function getFieldConfig($field) {
         const configs = [
-            { class: 'writer-input', type: 'writer', container: '.writer-tags-container', name: 'book_writers[]' },
+            { class: 'schrijver-input', type: 'schrijver', container: '.schrijver-tags-container', name: 'book_schrijvers[]' },
             { class: 'genre-input', type: 'genre', container: '.genre-tags-container', name: 'book_genres[]' },
-            { class: 'office-input', type: 'office', container: '.office-tags-container', name: 'book_offices[]' },
-            { class: 'writer-input-pop', type: 'writer', container: '.add-writer-tags-container', name: 'book_writers[]' },
+            { class: 'locatie-input', type: 'locatie', container: '.locatie-tags-container', name: 'book_offices[]' },
+            { class: 'schrijver-input-pop', type: 'schrijver', container: '.add-schrijver-tags-container', name: 'book_schrijvers[]' },
             { class: 'genre-input-pop', type: 'genre', container: '.add-genre-tags-container', name: 'book_genres[]' },
-            { class: 'office-input-pop', type: 'office', container: '.add-office-tags-container', name: 'book_offices[]' }
+            { class: 'locatie-input-pop', type: 'locatie', container: '.add-locatie-tags-container', name: 'book_offices[]' }
         ];
 
         for (const config of configs) {
@@ -47,7 +43,6 @@ const Utility = (() => {
         return values.map(v => v.trim()).filter(Boolean).sort().join(',');
     }
 
-    // Tag config helpers
     function makeTagConfig(type, opts = {}) {
         return {
             inputSelector: `.${type}-input`,
@@ -76,7 +71,6 @@ const Utility = (() => {
         };
     }
 
-    // Request helper (GET, POST, etc.)
     function request({ url, method = 'GET', data = {}, success, error }) {
         $.ajax({
             url,
@@ -90,8 +84,15 @@ const Utility = (() => {
         });
     }
 
-
-    return { markFieldChanged, clearFieldChanged, getFieldConfig, normalizeValues, makeTagConfig, makePopTagConfig, request };
+    return {
+        markFieldChanged,
+        clearFieldChanged,
+        getFieldConfig,
+        normalizeValues,
+        makeTagConfig,
+        makePopTagConfig,
+        request
+    };
 })();
 
 export { Utility };
