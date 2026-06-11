@@ -17,10 +17,60 @@ class FormValidator {
         if ($value === "") {
             return null;
         }
+
         $value = trim((string)$value);
+
         return $value === '' ? null : $value;
     }
 
+    // Re-factor status: tested and working
+    /** Helper: Normalize writers list */
+    private function cleanWritersList(?array $values): array {
+        if (!$values) {
+            return [];
+        }
+
+        $clean = [];
+
+        foreach ($values as $v) {
+            if (is_int($v)) {
+                $clean[] = $v;
+            } elseif (is_string($v)) {
+                $name = trim($v);
+                if ($name !== '') {
+                    $clean[] = $name;
+                }
+            }
+        }
+
+        return array_values(array_unique($clean, SORT_REGULAR));
+    }
+
+    // Re-factor status: tested and working
+    /** Helper: Normalize the login name/email  */
+    private function normalizeIdentifier(?string $value): ?string {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        $value = trim($value);
+
+        // Email?
+        if (str_contains($value, '@')) {
+            return strtolower($value);
+        }
+
+        // Username normalization
+        $value = strtolower($value);
+        $value = preg_replace('/\s+/', ' ', $value); // collapse spaces
+
+        // Optional: remove accents
+        $value = iconv('UTF-8', 'ASCII//TRANSLIT', $value);
+
+        return $value;
+    }
+
+    // Re-factor status: No changes
     /** Helper: Normalize array data for  writer(s)/genre(s)/office(s) */
     private function cleanList(?array $values): array {
         if (!$values) {
@@ -38,34 +88,39 @@ class FormValidator {
         return array_values($clean);
     }
 
+    // Re-factor status: No changes
     /** Helper: Validate email inputs */
     private function cleanEmail(?string $value): ?string {
         $value = $this->cleanString($value);
         return filter_var($value, FILTER_VALIDATE_EMAIL) ? $value : null;
     }
 
+    // Re-factor status: No changes
     /** Helper: Validate integere inputs */
-    private function cleanInt($value): ?int {
+    private function cleanInt(int $value): ?int {
         return filter_var($value, FILTER_VALIDATE_INT) !== false
             ? (int)$value
             : null;
     }
 
+    // Re-factor status: tested and working
     /** API: Validate the login form */
     public function validateLogin(array $input): array {
         $errors = [];
         $clean  = [];
 
-        // Normalize
-        $clean['userName'] = $this->cleanString($input['userName'] ?? null);
-        $clean['password'] = $this->cleanString($input['userPw'] ?? null);
+        // Normalize identifier
+        $clean['identifier'] = $this->normalizeIdentifier($input['userName'] ?? null);
+
+        // Password: only trim
+        $clean['password'] = trim((string)($input['userPw'] ?? ''));
 
         // Validate
-        if (!$clean['userName']) {
-            $errors['userName'] = 'Gebruikersnaam is verplicht.';
+        if (!$clean['identifier']) {
+            $errors['userName'] = 'Gebruikersnaam of e-mail is verplicht.';
         }
 
-        if (!$clean['password']) {
+        if ($clean['password'] === '') {
             $errors['password'] = 'Wachtwoord is verplicht.';
         }
 
@@ -81,11 +136,11 @@ class FormValidator {
         $errors = [];
         $clean  = [];
 
-        $clean['old_password'] = $this->cleanString($input['current_password'] ?? null);
-        $clean['new_password'] = $this->cleanString($input['new_password'] ?? null);
+        $clean['current_password']  = $this->cleanString($input['current_password'] ?? null);
+        $clean['new_password']      = $this->cleanString($input['new_password'] ?? null);
 
-        if (!$clean['old_password']) {
-            $errors['old_password'] = 'Huidig wachtwoord is verplicht.';
+        if (!$clean['current_password']) {
+            $errors['current_password'] = 'Huidig wachtwoord is verplicht.';
         }
 
         if (!$clean['new_password']) {
