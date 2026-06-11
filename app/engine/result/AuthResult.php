@@ -1,4 +1,5 @@
 <?php
+// TODO: Remove as its now entire redundant, and was actually never fully used anyway.
 namespace App\Engine\Result;
 
 use App\Libs\Context\UserContext;
