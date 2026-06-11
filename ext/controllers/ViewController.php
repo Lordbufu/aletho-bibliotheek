@@ -1,16 +1,15 @@
 <?php
 namespace Ext\Controllers;
 
+// Re-factor status: tested and working
 final class ViewController {
-    private \Ext\Controllers\Formatter\BookFormatter    $formatter;
     private \App\App                                    $app;
     
     public function __construct() {
-        $this->formatter    = new \Ext\Controllers\Formatter\BookFormatter();
         $this->app          = new \App\App();
     }
 
-    /** The initial landing route (Tested & Working) */
+    /** The initial landing route */
     public function landing(): void {
         $this->app::getService('auth')->uaIpChecker();
 
@@ -18,20 +17,37 @@ final class ViewController {
             $this->app::redirect('/home');
         }
 
-        if (!isset($_SESSION['user']['role'])) {
-            $_SESSION['user']['role'] = 'Guest';
+        // a filter of sorts for unwanted/unexpected users or redirects session refresh/resets
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['user'] = [
+                'id'         => null,
+                'name'       => 'Guest',
+                'permission' => ['guest'],
+                'ua_hash'    => null,
+                'ip_hash'    => null
+            ];
         }
+
+        // codes testing section:
+        // dd($this->app::getService('status')->getStatusForSelect());
 
         $this->app::view('main');
     }
 
-    /** The main book catalog view for logged in users (Tested & Working) */
+    /** The main book catalog view for logged in users */
     public function home(): void {
         $this->app::getService('auth')->requireLogin();
 
-        $books      = $this->app::getService('books')->getBooksForView();
-        $formatted  = $this->formatter->formatMany($books);
+        // codes testing section:
+        // dd($this->app::getService('books')->testThis());
+        // dd(
+        //     $this->app::json(
+        //         $this->app::getService('genre')->getGenresForView()
+        //     )
+        // );
 
-        $this->app::view('main', ['books' => $formatted]);
+        $this->app::view('main', [
+            'books' => $this->app::getService('book')->getBooksForView()
+        ]);
     }
 }

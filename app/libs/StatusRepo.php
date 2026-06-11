@@ -10,72 +10,135 @@ final class StatusRepo {
         $this->db = \App\App::getService('database');
     }
 
-    private function mapRowToStatus($row): StatusContext {
-        $ctx = new StatusContext();
-        $ctx->id           = (int)$row['id'];
-        $ctx->type         = $row['type'];
-        $ctx->periodLength = (int)$row['period_length'];
-        $ctx->reminderDay  = (int)$row['reminder_day'];
-        $ctx->overdueDay   = (int)$row['overdue_day'];
-        return $ctx;
+    /** Re-factored\New functions */
+    // Re-factor status: tested and working
+    /** API: Shared getAllStatuses() function, either get all raw rows, or specifically only the active marked once. */
+    public function getStatuses(string $mode): array {
+        $sql = match ($mode) {
+            'all'    => "SELECT * FROM status",
+            'active' => "SELECT * FROM status WHERE is_active = 1",
+            default  => throw new \InvalidArgumentException("Invalid mode '$mode'")
+        };
+
+        $rows = $this->db->query()->fetchAll($sql);
+
+        return array_map(
+            fn($row) => StatusContext::fromRow($row),
+            $rows
+        );
     }
 
-    /** API: Get all `status` table data */
-    public function getAll(): array {
-        return $this->db->query()->fetchAll("
-            SELECT id, type, period_length, reminder_day, overdue_day
-            FROM status
-            ORDER BY type ASC
-        ");
-    }
+    // Re-factor status: tested and working
+    /** API: Get active status by book_id */
+    public function getBookStatusByBookId(mixed $book_ids): array {
+        if (!$book_ids) {
+            return [];
+        }
 
-    /** API: Get a specific `status` raw row based on a id */
-    public function getStatusRowById(int $statusId): ?array {
-        return $this->db->query()->fetchOne("
-            SELECT id, type, period_length, reminder_day, overdue_day
-            FROM status
-            WHERE id = :id
-            LIMIT 1
-        ", ['id' => $statusId]);
-    }
+        $book_ids = is_array($book_ids) ? $book_ids : [$book_ids];
+        $book_ids = array_map('intval', $book_ids);
+        $placeholders = [];
+        $params = [];
 
-    /** API: Get a formatted `status` context object based on a id */
-    public function getStatusById(int $statusId): ?StatusContext {
-        $row = $this->getStatusRowById($statusId);
-        return $row ? $this->mapRowToStatus($row) : null;
-    }
+        foreach ($book_ids as $i => $id) {
+            $key = "book_id{$i}";
+            $placeholders[] = ":{$key}";
+            $params[$key] = $id;
+        }
 
-    /** API: Update a `status` row */
-    public function updatePeriod(int $id, int $period, int $reminder, int $overdue): void {
         $sql = "
-            UPDATE status
-            SET period_length = :p,
-                reminder_day  = :r,
-                overdue_day   = :o
-            WHERE id = :id
+            SELECT *
+            FROM book_status bs
+            JOIN status s ON bs.status_id = s.status_id
+            WHERE bs.book_id IN (" . implode(',', $placeholders) . ")
+            AND bs.is_active = 1
         ";
 
-        $this->db->query()->run($sql, [
-            'p'  => $period,
-            'r'  => $reminder,
-            'o'  => $overdue,
-            'id' => $id
-        ]);
+        $rows = $this->db->query()->fetchAll($sql, $params);
+
+        $out = array_fill_keys($book_ids, null);
+
+        foreach ($rows as $r) {
+            $bid = (int)$r['book_id'];
+            $out[$bid] = StatusContext::fromRow($r);
+        }
+
+        return $out;
     }
+
+    // TODO: Review if still required or only has a purpose as a singleton helper, consider combining functions if the later is the case.
+    /** API: Get a specific `status` raw row based on a id */
+    // public function getStatusRowById(int $statusId): ?array {
+    //     return $this->db->query()->fetchOne("SELECT * FROM status WHERE id = :id LIMIT 1", ['id' => $statusId]);
+    // }
+
+    /** API: Get a formatted `status` context object based on a id */
+    // public function getStatusById(int $statusId): ?StatusContext {
+    //     $row = $this->getStatusRowById($statusId);
+    //     return $row ? new StatusContext($row) : null;
+    // }
+
+    /** API: Update a `status` row */
+    // public function updatePeriod(int $id, int $period, int $reminder, int $overdue): void {
+    //     $sql = "
+    //         UPDATE status
+    //         SET period_length = :p,
+    //             reminder_day  = :r,
+    //             overdue_day   = :o
+    //         WHERE id = :id
+    //     ";
+
+    //     $this->db->query()->run($sql, [
+    //         'p'  => $period,
+    //         'r'  => $reminder,
+    //         'o'  => $overdue,
+    //         'id' => $id
+    //     ]);
+    // }
     
     // This is not only `status` table related
     /** API: Return all active status rows for a set of books */
-    public function getActiveStatuses(array $bookIds): ?array {
-        if (!$bookIds) return [];
+    // public function getActiveStatus(array $bookIds): ?array {
+    //     if (!$bookIds) return [];
 
-        $sql = "
-            SELECT bs.id, bs.book_id, bs.status_id, bs.active, bs.action_finished, s.type
-            FROM book_status bs
-            JOIN status s ON s.id = bs.status_id
-            WHERE bs.book_id IN (" . implode(',', $bookIds) . ")
-            AND bs.active = 1
-        ";
+    //     $sql = "
+    //         SELECT bs.id, bs.book_id, bs.status_id, bs.active, bs.action_finished, s.type
+    //         FROM book_status bs
+    //         JOIN status s ON s.id = bs.status_id
+    //         WHERE bs.book_id IN (" . implode(',', $bookIds) . ")
+    //         AND bs.active = 1
+    //     ";
 
-        return $this->db->query()->fetchAll($sql);
-    }
+    //     return $this->db->query()->fetchAll($sql);
+    // }
 }
+// Redundant afte a recent refactor:
+    /** Helper: Map status row to context object */
+        // private function mapRowToStatus(array $row): StatusContext {
+        //     $ctx                = new StatusContext($row);
+        //     return $ctx;
+        // }
+
+    /** API: Get all `status` table data */
+        // public function getAllStatuses(): array {
+        //     $request = $this->db->query()->fetchAll("SELECT * FROM status");
+        //     $out = [];
+
+        //     foreach ($request as $status) {
+        //         $out[] = $this->mapRowToStatus($status);
+        //     }
+
+        //     return $out;
+        // }
+
+    /** API: Get all `status`.`active` table data */
+        // public function getAllActiveStatuses(): array {
+        //     $request = $this->db->query()->fetchAll("SELECT * FROM status WHERE active=1");
+        //     $out = [];
+
+        //     foreach ($request as $row) {
+        //         $out[] = StatusContext::fromRow($row);
+        //     }
+
+        //     return $out;
+        // }
