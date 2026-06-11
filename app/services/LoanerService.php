@@ -2,105 +2,84 @@
 namespace App\Services;
 
 use App\App;
-use App\Libs\Context\LoanerContext;
-use App\Libs\{LoanerRepo, OfficesRepo};
+use App\Libs\{LoanerRepo, LocationRepo};
+use App\ViewModel\LoanerViewModel;
 
 final class LoanerService {
-    private LoanerRepo  $loaner;
-    private OfficesRepo $offices;
+    private LoanerRepo   $loaner;
+    private LocationRepo $location;
 
     public function __construct() {
         $this->loaner   = new LoanerRepo();
-        $this->offices  = new OfficesRepo();
+        $this->location  = new LocationRepo();
     }
 
-    /** Facade: Create new loaner loaner and return its id */
-    public function createLoaner(string $name, string $email, int $officeId): int {
-        return $this->loaner->createLoaner($name, $email, $officeId);
+    /** Re-factored/new functions */
+    // Re-factor status: tested and working (maybe not usefull ?)
+    public function getLoanersForView() {
+        return $this->loaner->getAllActiveLoaners();
     }
 
-    /** Facade: Reactive loaner based on id */
-    public function reactivateLoaner(int $id): void {
-        $this->loaner->reactivateLoaner($id);
-    }
+    // Re-factor status: tested and working
+    /** API: Provide singleton data context for frontend XHR requests */
+    public function getLoanerForBook($bookId): LoanerViewModel {
+        $bookLoaner = $this->loaner->getActiveLoanerByBookId($bookId);
+        $location   = $this->location->getLocationContextById($bookLoaner->loaner_locId);
 
-    /** Facade: Get loaner by id */
-    public function getLoanerById(int $loanerId): ?LoanerContext {
-        return $this->loaner->getLoanerById($loanerId);
-    }
-
-    /** Facade: Search loaners based on variable query string */
-    public function findLoanerByName(string $query): array {
-        return $this->loaner->findLoanerByName($query);
-    }
-
-    /** Facade: Find loaner by name and email, returns null if not found */
-    public function findLoanerByExactName(string $name): ?array {
-        return $this->loaner->findLoanerByExactName($name);
-    }
-
-    /** API: Attempt to find or create a loaner */
-    public function findOrCreateLoaner(string $name, string $email, int $officeId): int {
-        $tempLoaner = $this->loaner->findLoanerByExactName($name);
-
-        if ($tempLoaner) {
-            if (!$tempLoaner['active']) {
-                $this->loaner->reactivateLoaner($tempLoaner['id']);
-            }
-            return $tempLoaner['id'];
-        }
-
-        return $this->loaner->createLoaner($name, $email, $officeId);
-    }
-
-    /** API: Provide data context for frontend XHR requests */
-    public function getLoanerForBook($bookId): array {
-        $bookStatusCtx      = App::getService('book_status')->loadBookStatusContext($bookId);
-        $loanCtx            = App::getService('loan')->getCurrentLoanById($bookStatusCtx->status['id'], $bookStatusCtx->book['id']);
-
-        // No loan? Return empty structure immediately
-        if (!$loanCtx || !$loanCtx->loanerId) {
-            return [
-                'name'      => '',
-                'email'     => '',
-                'location'  => ''
-            ];
-        }
-
-        $loaner             = $this->loaner->getLoanerById($loanCtx->loanerId);
-
-        // No loaner found? Also return empty structure
-        if (!$loaner) {
-            return [
-                'name'      => '',
-                'email'     => '',
-                'location'  => ''
-            ];
-        }
-
-        $officeLocation     = App::getService('offices')->getOfficeName($loaner->officeId);
-
-        return [
-            'name'          => $loaner->name ?? '',
-            'email'         => $loaner->email ?? '',
-            'location'      => $officeLocation ?? ''
-        ];
+        return new LoanerViewModel($bookLoaner, $location);
     }
 
     /** API: Search loaners based on variable query string for frontend XHR requests */
     public function searchLoaners(string $query): ?array {
         $loanersCtx = $this->loaner->findLoanerByName($query);
-        $loaners = [];
+        $loaners    = [];
 
         foreach ($loanersCtx as $loaner) {
-            $loaners[] = [
-                'name' => $loaner->name,
-                'email' => $loaner->email,
-                'location' => $this->offices->getOfficeName($loaner->officeId) ?? '',
-                'office_id' => $loaner->officeId
-            ];
+            $loaners[]  = new LoanerViewModel(
+                $loaner,
+                $this->location->getLocationContextById($loaner->loaner_id)
+            );
         }
-        
+
         return $loaners;
     }
+
+    // /** Facade: Create new loaner loaner and return its id */
+    // public function createLoaner(string $name, string $email, int $officeId): int {
+    //     return $this->loaner->createLoaner($name, $email, $officeId);
+    // }
+
+    // /** Facade: Reactive loaner based on id */
+    // public function reactivateLoaner(int $id): void {
+    //     $this->loaner->reactivateLoaner($id);
+    // }
+
+    // /** Facade: Get loaner by id */
+    // public function getLoanerById(int $loanerId): ?LoanerContext {
+    //     return $this->loaner->getLoanerById($loanerId);
+    // }
+
+    // /** Facade: Search loaners based on variable query string */
+    // public function findLoanerByName(string $query): array {
+    //     return $this->loaner->findLoanerByName($query);
+    // }
+
+    // /** Facade: Find loaner by name and email, returns null if not found */
+    // public function findLoanerByExactName(string $name): ?array {
+    //     return $this->loaner->findLoanerByExactName($name);
+    // }
+
+    // /** API: Attempt to find or create a loaner */
+    // public function findOrCreateLoaner(string $name, string $email, int $officeId): int {
+    //     $tempLoaner = $this->loaner->findLoanerByExactName($name);
+
+    //     if ($tempLoaner) {
+    //         if (!$tempLoaner['active']) {
+    //             $this->loaner->reactivateLoaner($tempLoaner['id']);
+    //         }
+    //         return $tempLoaner['id'];
+    //     }
+
+    //     return $this->loaner->createLoaner($name, $email, $officeId);
+    // }
 }
