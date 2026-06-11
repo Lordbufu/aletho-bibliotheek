@@ -1,4 +1,8 @@
 <?php
+/** Local TODO List:
+ *      - Review if we need a 'repo' class for this, since we moved more data to the Database.
+ *      - Then comment old NotificationContext code that is no longer valid, and see how we can best solve that on out new DB driven engine design.
+ */
 namespace App\Services;
 
 use App\App;
