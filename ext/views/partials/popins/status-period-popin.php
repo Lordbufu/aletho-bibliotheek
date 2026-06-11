@@ -1,4 +1,4 @@
-<div id="status-period-popin" class="modal" tabindex="-1" style="display:none;">
+<div id="status-period-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
 

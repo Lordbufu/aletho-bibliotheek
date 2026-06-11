@@ -1,4 +1,4 @@
-<div id="change-book-status-popin" class="modal" tabindex="-1" style="display:none;">
+<div id="change-book-status-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
             <div class="aletho-header modal-header pt-2 pb-2">

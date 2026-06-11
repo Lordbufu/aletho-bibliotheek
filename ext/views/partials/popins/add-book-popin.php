@@ -1,7 +1,5 @@
 <div id="add-book-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
-
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
-
         <div class="modal-content aletho-modal-content">
 
             <div class="aletho-header modal-header pt-2 pb-2">
@@ -10,11 +8,10 @@
             </div>
 
             <div class="aletho-modal-body">
-
                 <form id="add-book-form" method="post" action="/addBook">
 
                     <div class="input-group input-group-sm">
-                        <label for="book-name" class="aletho-labels extra-popin-style">Boeknaam</label>
+                        <label for="book-name-add" class="aletho-labels extra-popin-style">Boeknaam</label>
                         <input  type="text"
                                 class="aletho-inputs extra-input-style"
                                 id="book-name-add"
@@ -26,10 +23,10 @@
                     </div>
 
                     <div class="input-group input-group-sm">
-                        <label for="writer" class="aletho-labels extra-popin-style" data-context="popin">Schrijver</label>
-                        <div class="add-writer-tags-container" data-context="popin"></div>
+                        <label for="book-writer-add" class="aletho-labels extra-popin-style" data-context="popin">Schrijver</label>
+                            <div class="add-schrijver-tags-container" data-context="popin"></div>
                         <input  type="text"
-                                class="aletho-inputs extra-input-style writer-input-pop"
+                                class="aletho-inputs extra-input-style schrijver-input-pop"
                                 id="book-writer-add"
                                 placeholder="Type een schrijver naam, en druk op Enter"
                                 autocomplete="off"
@@ -40,7 +37,7 @@
                     </div>
 
                     <div class="input-group input-group-sm">
-                        <label for="genre" class="aletho-labels extra-popin-style" data-context="popin">Genre</label>
+                        <label for="book-genre-add" class="aletho-labels extra-popin-style" data-context="popin">Genre</label>
                         <div class="add-genre-tags-container" data-context="popin"></div>
                         <input  type="text"
                                 class="aletho-inputs extra-input-style genre-input-pop"
@@ -54,10 +51,10 @@
                     </div>
 
                     <div class="input-group input-group-sm">
-                        <label for="office" class="aletho-labels extra-popin-style" data-context="popin">Locatie</label>
-                        <div class="add-office-tags-container" data-context="popin"></div>
+                        <label for="book-office-add" class="aletho-labels extra-popin-style" data-context="popin">Locatie</label>
+                        <div class="add-locatie-tags-container" data-context="popin"></div>
                         <input  type="text"
-                                class="aletho-inputs extra-input-style office-input-pop"
+                                class="aletho-inputs extra-input-style locatie-input-pop"
                                 id="book-office-add"
                                 placeholder="Type een locatie naam, en druk op Enter"
                                 autocomplete="off"
@@ -68,13 +65,8 @@
                     </div>
 
                     <button type="submit" class="aletho-buttons extra-input-style">Opslaan</button>
-
                 </form>
-
             </div>
-
         </div>
-
     </div>
-    
 </div>

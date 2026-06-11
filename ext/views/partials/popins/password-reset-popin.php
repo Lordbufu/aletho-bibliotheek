@@ -1,4 +1,4 @@
-<div id="password-reset-popin" class="modal" tabindex="-1" style="display:none;">
+<div id="password-reset-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
 
@@ -11,7 +11,7 @@
                 <form id="password-reset-form mb-1" method="POST" action="/resetPassword">
                     <input type="hidden" name="_method" value="PATCH">
 
-                    <?php if (isset($_SESSION['user']['role']) && isGlobalAdmin()): ?>
+                    <?php if (isset($_SESSION['user']['permission']) && isGlobalAdmin()): ?>
                         <label  for="user-name" class="aletho-labels extra-popin-style">Account</label>
                         <input  type="text"
                                 class="aletho-inputs extra-popin-style"
