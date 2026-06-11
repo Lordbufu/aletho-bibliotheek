@@ -2,92 +2,96 @@
 
 namespace Ext\Controllers;
 
-use App\App;
-
 class StatusController {
-    /** XHR Request for: Current active statuses, or a specific status by id, for the popin <select> elements */
+    private \App\App                                    $app;
+    
+    public function __construct() {
+        $this->app          = new \App\App();
+    }
+
+    // Re-factor status: tested and working
+    /** XHR Request: Request a editable status list, and provide formatted data to the frontend */
     public function requestPopinStatus() {
-        $id = $_GET['id'] ?? null;
-
-        if ($id) {
-            $status = App::getService('statuses')->getStatusRowById((int)$id);
-            return App::json($status);
-        }
-
-        $statuses = App::getService('statuses')->getEditableStatuses();
-        return App::json($statuses);
+        return $this->app::json(
+            $this->app::getService('status')->getStatusForEdit()
+        );
     }
 
-    /** XHR Request for: provide the unfiltered list of status types */
+    // Re-factor status: tested and working
+    /** XHR Request: Request a selectable status list, and provide formatted data for the frontend */
     public function requestStatus() {
-        $statusTypes = App::getService('statuses')->getAllFormatted();
-        return App::json($statusTypes);
+        return $this->app::json(
+            $this->app::getService('status')->getStatusForSelect()
+        );
     }
 
-    /** XHR Request for: To pre-fill the status-change pop-in, with the current active status as first <option> */
-    public function requestBookStatus() {
-        $bookStatusCtx = App::getService('book_status')->loadBookStatusContext($_GET['book_id']);
-        return App::json($bookStatusCtx->status['type']);
-    }
-
+    // Everthing below here still needs a re-view/factor
     /** Edit the status period properties */
     public function editStatusPeriod() {
         // Authenticate login state and user roles
-        App::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
-        $validate = App::getService('form_val')->validateStatusPeriod($_POST);
+        $validate = $this->app::getService('form_val')->validateStatusPeriod($_POST);
 
         if (!$validate['valid']) {
             setFlash('inlinePop', 'data', $validate['errors']);
             setFlash('form', 'message', $validate['data']);
             setFlash('js', 'status_type', $_POST['status_type'] ?? '');
-            return App::redirect('/home#status-period-popin');
+            return $this->app::redirect('/home#status-period-popin');
         }
 
-        $result = App::getService('statuses')->updatePeriod($validate['data']);
+        $result = $this->app::getService('status')->updatePeriod($validate['data']);
 
         if (!$result) {
             setFlash('global', 'failure', 'Status periode kon niet worden bijgewerkt.');
             setFlash('form', 'message', $validate['data']);
             setFlash('js', 'status_type', $_POST['status_type'] ?? '');
-            return App::redirect('/home#status-period-popin');
+            return $this->app::redirect('/home#status-period-popin');
         }
 
         setFlash('global', 'success', 'Status periode aangepast.');
-        return App::redirect('/home');
+        return $this->app::redirect('/home');
     }
 
     // TODO: Considering changing the name of `$_POST['status_type']` and its associated flows, as its a index field not a type field
     /** Change status requests for books */
     public function changeStatus() {
-        App::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
-        $validate   = App::getService('form_val')->validateStatusChange($_POST);
+        $validate   = $this->app::getService('form_val')->validateStatusChange($_POST);
         $trigger    = 'manual';
 
         if (!$validate['valid']) {
             if (isset($validate['errors']['book_id'])) {
                 setFlash('global', 'failure', 'Status periode kon niet worden bijgewerkt.');
-                return App::redirect('/home');
+                return $this->app::redirect('/home');
             }
 
             setFlash('inlinePop', 'data', $validate['errors']);
             setFlash('form', 'message', $validate['data']);
             setFlash('js', 'status_type', $_POST['status_type'] ?? '');
-            return App::redirect('/home#change-book-status-popin');
+            return $this->app::redirect('/home#change-book-status-popin');
         }
 
-        $result = App::getService('book_status')->changeStatus($validate['data'], $trigger);
+        $result = $this->app::getService('book_status')->changeStatus($validate['data'], $trigger);
 
         if (!$result->passed) {
             setFlash('global', 'success', $result->errorMessage);
             setFlash('form', 'message', $validate['data']);
             setFlash('js', 'status_type', $_POST['status_type'] ?? '');
-            return App::redirect('/home#change-book-status-popin');
+            return $this->app::redirect('/home#change-book-status-popin');
         }
 
         // TODO: Remove null guard because user feedback should always be set, added for overdatum flow testing.
         setFlash('global', 'success', $result->userFeedbackMessage ?? null);
-        return App::redirect('/home');
+        return $this->app::redirect('/home');
     }
 }
+
+    // Re-factor status: Potentially redundant now
+    // /** XHR Request for: To pre-fill the status-change pop-in, with the current active status as first <option> */
+    // public function requestBookStatus() {
+    //     $bookId = (int)$_GET['book_id'];
+    //     $statusVM = $this->app->getService('status')->getStatusByBookId($bookId);
+    //     return $this->app::json($statusVM->id);
+    // }
