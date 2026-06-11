@@ -2,93 +2,109 @@
 
 namespace Ext\Controllers;
 
-use App\App;
-
 class BookController {
-    /** Request bookData for the frontend input suggestions (Tested & Working) */
-    public function bookData() {
-        $type = $_GET['data'] ?? '';
-        $data = App::getService('books')->getBookFormData($type);
-        return App::json($data);
+    private \App\App                                        $app;
+    
+    public function __construct() {
+        $this->app          = new \App\App();
     }
 
-    /** Process add book requests (Tested & Working) */
-    public function addBook() {
-        // Authenticate login state and user roles
-        App::getService('auth')->requireRole(['office_admin', 'global_admin']);
+    // Re-factor status: tested and working
+    /** Request bookData for the frontend input suggestions */
+    public function bookData() {
+        $data = [];
+        $type = $_GET['data'] ?? '';
 
-        $validate = App::getService('form_val')->validateBookForm($_POST, 'add');
+        switch($type) {
+            case "schrijvers":
+                $data = $this->app::getService('writer')->getWritersForView();
+                break;
+            case "genres":
+                $data = $this->app::getService('genre')->getGenresForView();
+                break;
+            case "locaties":
+                $data = $this->app::getService('location')->getLocationsForView();
+                break;
+        }
+
+        return $this->app::json($data);
+    }
+    
+    /** Process add book requests */
+    public function addBook() {
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        $validate = $this->app::getService('form_val')->validateBookForm($_POST, 'add');
 
         if (!$validate['valid']) {
             setFlash('inlinePop', 'data', $validate['errors']);
-            return App::redirect('/#add-book-popin');
+            return $this->app::redirect('/#add-book-popin');
         }
 
         $data = $validate['data'];
-        $result  = App::getService('books')->addBook($data);
+        $result  = $this->app::getService('book')->addBook($data);
 
         if (!$result) {
             setFlash('global', 'failure', 'Boekgegevens zijn niet toegevoegd.');
-            return App::redirect('/#add-book-popin');
+            return $this->app::redirect('/#add-book-popin');
         }
 
         setFlash('global', 'success', 'Boekgegevens zijn toegevoegd.');
-        return App::redirect('/home');
+        return $this->app::redirect('/home');
     }
 
-    /** Process edit book requests (Tested & Working) */
+    /** Process edit book requests */
     public function editBook() {
         // Authenticate login state and user roles
-        App::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
-        $validate   = App::getService('form_val')->validateBookForm($_POST, 'edit');
+        $validate   = $this->app::getService('form_val')->validateBookForm($_POST, 'edit');
         $bookId     = (int)($_POST['book_id'] ?? 0);
 
         if (!$bookId) {
             setFlash('global', 'failure', 'Ongeldig boek ID.');
-            return App::redirect('/home');
+            return $this->app::redirect('/home');
         }
 
         if (!$validate['valid']) {
             setFlash('single', 'book_id', $bookId);
             setFlash('inline', 'data', $validate['errors']);
-            return App::redirect('/home');
+            return $this->app::redirect('/home');
         }
 
         $data       = $validate['data'];
-        $result     = App::getService('books')->editBook($bookId, $data);
+        $result     = $this->app::getService('book')->editBook($bookId, $data);
 
         if (!$result) {
             setFlash('single', 'book_id', $bookId);
             setFlash('global', 'failure', 'Boek kon niet worden bijgewerkt.');
-            return App::redirect('/home');
+            return $this->app::redirect('/home');
         }
 
         setFlash('global', 'success', 'Boek succesvol bijgewerkt.');
-        return App::redirect('/home');
+        return $this->app::redirect('/home');
     }
 
-    /** Process delelete book requests (Tested & Working) */
+    /** Process delelete book requests */
     public function deleteBook() {
         // Authenticate login state and user roles
-        App::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
         $bookId = (int)($_POST['book_id'] ?? 0);
 
         if (!$bookId) {
             setFlash('global', 'failure', 'Ongeldig boek ID.');
-            return App::redirect('/home');
+            return $this->app::redirect('/home');
         }
 
-        $result = App::getService('books')->deleteBook($bookId);
+        $result = $this->app::getService('book')->deleteBook($bookId);
 
         if (!$result) {
             setFlash('single', 'book_id', $bookId);
             setFlash('global', 'failure', 'Boek kon niet worden gedeactiveerd.');
-            return App::redirect('/home');
+            return $this->app::redirect('/home');
         }
 
         setFlash('global', 'success', 'Boek is gedeactiveerd.');
-        return App::redirect('/home');
+        return $this->app::redirect('/home');
     }
 }
