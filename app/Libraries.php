@@ -3,7 +3,7 @@
 namespace App;
 
 use App\Database;
-use App\Libs\{BookRepo, GenresRepo, OfficesRepo, StatusRepo, WritersRepo, LoanRepo, LoanerRepo};
+use App\Libs\{BookRepo, GenresRepo, OfficesRepo, StatusRepo, WriterRepo, LoanRepo, LoanerRepo};
 
 class Libraries {
     protected array         $instances  = [];
@@ -16,7 +16,7 @@ class Libraries {
         // register factories
         $this->factories['books']           = fn() => new BookRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['genres']          = fn() => new GenresRepo($this->db, fn($n) => $this->resolveLibrary($n));
-        $this->factories['writers']         = fn() => new WritersRepo($this->db, fn($n) => $this->resolveLibrary($n));
+        $this->factories['writers']         = fn() => new WriterRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['offices']         = fn() => new OfficesRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['status']          = fn() => new StatusRepo($this->db, fn($n) => $this->resolveLibrary($n));
         $this->factories['loan']            = fn() => new LoanRepo($this->db, fn($n) => $this->resolveLibrary($n));
