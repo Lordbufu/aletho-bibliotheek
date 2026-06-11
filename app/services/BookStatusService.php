@@ -25,7 +25,7 @@ final class BookStatusService {
     /** Helper: Apply status change for the Transition flow */
     private function applyStatusChange(StatusChangeInstruction $instr, int $bookId): void {
         if ($instr->newStatusType === StatusType::GERESERVEERD) {
-            App::getService('books')->updateReservationDataForBook(
+            App::getService('book')->updateReservationDataForBook(
                 $bookId,
                 [
                     'resv_loaner_id' => $instr->reservationLoanerId,
@@ -81,7 +81,7 @@ final class BookStatusService {
 
         // 4. Clean up reservations if applicable during a transition to `Ligt Klaar`
         if ($book->resvLoanerId !== null && StatusType::fromId($instr->statusId) === StatusType::LIGT_KLAAR) {
-            App::getService('books')->updateReservationDataForBook(
+            App::getService('book')->updateReservationDataForBook(
                 $book->id,
                 [   'resv_loaner_id' => null,
                     'resv_office_id' => null,
@@ -93,7 +93,7 @@ final class BookStatusService {
     }
 
     private function applyOfficeChanges(OfficeChangeInstruction $instr, int $bookId): void {
-        App::getService('books')->updateCurOffice($bookId, $instr->newOfficeId);
+        App::getService('book')->updateCurOffice($bookId, $instr->newOfficeId);
     }
 
     /** Helper: Apply notification changes for the Transition flow */
@@ -162,7 +162,7 @@ final class BookStatusService {
 
         // 3. Now fetch the book context
         if ($bookId !== null) {
-            $bookCtx = App::getService('books')->findBookById($bookId);
+            $bookCtx = App::getService('book')->findBookById($bookId);
         }
 
         // 2. Fetch notification row (id + template_id)
@@ -271,7 +271,7 @@ final class BookStatusService {
     /** API: Load the full `BookStatusContext` based on a books its id */
     public function loadBookStatusContext($bookId): ?BookStatusContext {
         // 1. Load the associated `books` data
-        $bookCtx = App::getService('books')->findBookById($bookId);
+        $bookCtx = App::getService('book')->findBookById($bookId);
         if (!$bookCtx) {
             throw new \RuntimeException("Book not found");
         }
@@ -283,7 +283,7 @@ final class BookStatusService {
         }
 
         // 3. Load the associated status context
-        $statusCtx = App::getService('statuses')->getStatusById($bsCtx['status_id']);
+        $statusCtx = App::getService('status')->getStatusById($bsCtx['status_id']);
         if (!$statusCtx) {
             throw new \RuntimeException("No active status rows found");
         }
@@ -354,7 +354,7 @@ final class BookStatusService {
 
         // 3.6.1. Evaluate the automated Transport flow, and set the correct new status context
         if ($requiredOffice !== null && $tx->book->curOfficeId !== $requiredOffice) {
-            $tx->newStatus          = App::getService('statuses')->getStatusById(StatusType::toId('Transport'));
+            $tx->newStatus          = App::getService('status')->getStatusById(StatusType::toId('Transport'));
             $tx->targetOfficeId     = $requiredOffice;
         } else {
             $tx->newStatus          = $statusCtx;
@@ -363,7 +363,7 @@ final class BookStatusService {
         // 3.6.2. Reservation resolution override
         if ($tx->book->resvLoanerId !== null && $tx->book->curOfficeId === $tx->book->resvOfficeId && $statusCtx->type === StatusType::AANWEZIG) {
             // Force Ligt Klaar instead of Aanwezig
-            $tx->newStatus          = App::getService('statuses')->getStatusById(StatusType::toId('Ligt Klaar'));
+            $tx->newStatus          = App::getService('status')->getStatusById(StatusType::toId('Ligt Klaar'));
         }
 
         // 3.7. (optional) Include a debug id for the admin that triggered the request

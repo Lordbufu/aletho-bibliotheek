@@ -11,33 +11,6 @@ final class BookStatusRepo {
         $this->db = \App\App::getService('database');
     }
 
-    /** API: Hydrate the BookStatusContext. */
-    public function hydrateBookStatusContext(BookContext $book, ?StatusContext $status, ?array $bookStatus): BookStatusContext {
-        $ctx = new BookStatusContext();
-        $ctx->bookStatusId      = (int)$bookStatus['id'];
-        $ctx->active            = (bool)$bookStatus['active'];
-        $ctx->actionName        = $bookStatus['action_type'];
-        $ctx->actionToken       = $bookStatus['action_token'];
-        $ctx->tokenExpires      = $bookStatus['token_expires'] ? new \DateTimeImmutable($bookStatus['token_expires']) : null;
-        $ctx->tokenUsed         = (bool)$bookStatus['token_used'];
-        $ctx->actionFinished    = (bool)$bookStatus['action_finished'];     // TODO: Adjust in 'Live' branch, seems like this prevents books from being added atm :S
-        $ctx->createdAt         = new \DateTimeImmutable($bookStatus['created_at']);
-
-        $ctx->book = [
-            'id'           => $book->id,
-            'homeOfficeId' => $book->homeOfficeId,
-            'curOfficeId'  => $book->curOfficeId
-        ];
-
-        $ctx->status = [
-            'id'            => $status->id,
-            'type'          => $status->type,
-            'periodLength'  => $status->periodLength
-        ];
-
-        return $ctx;
-    }
-
     /** API: Get the main active status for a book */
     public function getActiveStatusForBook(int $bookId): ?array {
         return $this->db->query()->fetchOne("
@@ -149,3 +122,89 @@ final class BookStatusRepo {
         return (int)$this->db->query()->lastInsertId();
     }
 }
+
+// Does not belong here ?
+    /** API: Get (all) status(es) for book(s) */
+    // public function getStatusByBookId(?array $book_ids): ?array {
+    //     if (!$book_ids) {
+    //         return [];
+    //     }
+
+    //     // refactor for BookStatusContext, atm its copy and pasta code from the book_writers many-to-many relations
+    //     if (!is_array($book_ids)) {
+    //         $book_id = (int)$book_ids;
+    //         $rows = $this->db->query()->fetchAll("
+    //                 SELECT *
+    //                 FROM status s
+    //                 JOIN book_status bs
+    //                     ON bs.status_id = s.status_id
+    //                 WHERE bs.book_id = :book_id
+    //             ", ["book_id" => $book_id]
+    //         );
+        
+    //         return $rows ? array_map(fn($r) => BookStatusContext::fromRow($r), $rows) : null;
+    //     }
+
+    //     $book_ids = is_array($book_ids) ? $book_ids : [$book_ids];
+    //     $book_ids = array_map('intval', $book_ids);
+
+    //     $placeholders = [];
+    //     $params = [];
+
+    //     foreach ($book_ids as $i => $id) {
+    //         $key = "book_id{$i}";
+    //         $placeholders[] = ":{$key}";
+    //         $params[$key] = $id;
+    //     }
+
+    //     $sql = "
+    //         SELECT s.*, bs.book_id
+    //         FROM status s
+    //         JOIN book_status bs
+    //             ON bs.status_id = s.status_id
+    //         WHERE bs.book_id IN (" . implode(',', $placeholders) . ")
+    //         ORDER BY bs.book_id
+    //     ";
+
+    //     $rows = $this->db->query()->fetchAll($sql, $params);
+
+    //     if (!$rows) {
+    //         return [];
+    //     }
+
+    //     $out = [];
+    //     foreach ($rows as $r) {
+    //         $bid = (int)$r['book_id'];
+    //         $out[$bid][] = BookStatusContext::fromRow($r);
+    //     }
+
+    //     return $out;
+    // }
+
+// No longer relevant ?
+    /** API: Hydrate the BookStatusContext. */
+    // public function hydrateBookStatusContext(BookContext $book, ?StatusContext $status, ?array $bookStatus): BookStatusContext {
+    //     $ctx = new BookStatusContext();
+    //     $ctx->bookStatusId      = (int)$bookStatus['id'];
+    //     $ctx->active            = (bool)$bookStatus['active'];
+    //     $ctx->actionName        = $bookStatus['action_type'];
+    //     $ctx->actionToken       = $bookStatus['action_token'];
+    //     $ctx->tokenExpires      = $bookStatus['token_expires'] ? new \DateTimeImmutable($bookStatus['token_expires']) : null;
+    //     $ctx->tokenUsed         = (bool)$bookStatus['token_used'];
+    //     $ctx->actionFinished    = (bool)$bookStatus['action_finished'];     // TODO: Adjust in 'Live' branch, seems like this prevents books from being added atm :S
+    //     $ctx->createdAt         = new \DateTimeImmutable($bookStatus['created_at']);
+
+    //     $ctx->book = [
+    //         'id'           => $book->id,
+    //         'homeOfficeId' => $book->homeOfficeId,
+    //         'curOfficeId'  => $book->curOfficeId
+    //     ];
+
+    //     $ctx->status = [
+    //         'id'            => $status->id,
+    //         'type'          => $status->type,
+    //         'periodLength'  => $status->periodLength
+    //     ];
+
+    //     return $ctx;
+    // }
