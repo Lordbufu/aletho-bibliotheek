@@ -10,8 +10,6 @@ use App\Libs\Types\StatusType;
 
 /** BookStatusEngine: The goal is to evaluate status transitions, and then provide the service with the correct dataset. */
 final class BookStatusEngine {
-    // private $transitionMap = [];
-
     /** API: The function that drives the book status transitions */
     public function transition(TransitionContext $tx): TransitionResult {
         return match ($tx->newStatus->type) {
@@ -25,7 +23,7 @@ final class BookStatusEngine {
         };
     }
 
-    /** Helper: Handle the `Afwezig` status logic */
+    /** Helper: Handle the `Afwezig` status logic */ // New transitions documented
     private function toAfwezig(TransitionContext $tx): TransitionResult {
         $result                             = new TransitionResult();
 
@@ -84,7 +82,7 @@ final class BookStatusEngine {
         return $result;
     }
 
-    /** Helper: Handle the `Transport` status logic */
+    /** Helper: Handle the `Transport` status logic */ // New transitions documented
     private function toTransport(TransitionContext $tx): TransitionResult {
         $result                                     = new TransitionResult();
 
@@ -159,7 +157,7 @@ final class BookStatusEngine {
         return $result;
     }
 
-    /** Helper: Handle the 'Ligt Klaar' status logic */
+    /** Helper: Handle the 'Ligt Klaar' status logic */ // New transitions documented
     private function toLigtKlaar(TransitionContext $tx): TransitionResult {
         $result                             = new TransitionResult();
 
@@ -208,7 +206,7 @@ final class BookStatusEngine {
         return $result;
     }
 
-    /** Helper: handle the `Aanwezig` status logic */
+    /** Helper: handle the `Aanwezig` status logic */ // New transitions documented
     private function toAanwezig(TransitionContext $tx): TransitionResult {
         $result                             = new TransitionResult();
 
@@ -275,7 +273,7 @@ final class BookStatusEngine {
         return $result;
     }
 
-    /** Helper: Handle the `Overdatum` status logic */
+    /** Helper: Handle the `Overdatum` status logic */ // New transitions documented
     private function toOverdatum(TransitionContext $tx): TransitionResult {
         $result                              = new TransitionResult();
 
