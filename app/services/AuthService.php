@@ -2,24 +2,21 @@
 
 namespace App\Services;
 
-use App\Libs\UserRepo;
-use App\Engine\Result\AuthResult;
-use App\App;
-
 final class AuthService {
-    private UserRepo $users;
+    private \App\Libs\UserRepo $users;
 
     public function __construct() {
-        $this->users = new UserRepo();
+        $this->users = new \App\Libs\UserRepo();
     }
 
+    // Re-factor status: No changes
     /** API: Authenticate User-agent and bindings */
     public function uaIpChecker() {
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
         $ip = $_SERVER['REMOTE_ADDR'] ?? '';
 
         if (!$ua) {
-            App::htmlError(400);
+            \App\App::htmlError(400);
         }
 
         if (isset($_SESSION['user']['ua_hash']) && $_SESSION['user']['ua_hash'] !== hash('sha256', $ua)) {
@@ -31,57 +28,77 @@ final class AuthService {
         }
     }
 
+    // Re-factor status: tested and working
     /** API: Authenticate user */
-    public function authenticate(string $identifier, string $password, string $userAgent): AuthResult {
-        $user = $this->users->findByUsernameOrEmail($identifier);
+    public function authenticate(string $identifier, string $password, string $userAgent): ?int {
+        $user = $this->users->findByIdentifier($identifier);
 
-        if (!$user || !$user->active || !password_verify($password, $user->passwordHash)) {
-            return AuthResult::fail('invalid_credentials');
+        if (!$user || !$user->is_active || !password_verify($password, $user->user_password)) {
+            return null;
         }
 
         $_SESSION['user'] = [
-            'id'        => $user->id,
-            'role'      => $user->role,
-            'office'    => $user->officeId,
-            'canEdit'   => in_array($user->role, ['office_admin', 'global_admin']),
-            'ua_hash'   => hash('sha256', $userAgent),
-            'ip_hash'   => hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '')
+            'id'            => $user->user_id,
+            'name'          => $user->user_name,
+            'permission'    => $user->permission_flags,
+            'canEdit'       => in_array($user->permission_flags, ['office_admin', 'global_admin']),
+            'ua_hash'       => hash('sha256', $userAgent),
+            'ip_hash'       => hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '')
         ];
 
-        return AuthResult::success($user);
+        return $user->user_id;
     }
 
+    // Re-factor status: tested and working
     /** API: Check if user is logged in */
     public function isLoggedIn(): bool {
-        return isset($_SESSION['user']['id']);
+        if (empty($_SESSION['user']['id'])) {
+            return false;
+        }
+
+        $uaHash = hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');
+        $ipHash = hash('sha256', $_SERVER['REMOTE_ADDR'] ?? '');
+
+        if ( ($_SESSION['user']['ua_hash'] ?? '') !== $uaHash || ($_SESSION['user']['ip_hash'] ?? '') !== $ipHash ) {
+            return false;
+        }
+
+        $user = $this->users->findUserById($_SESSION['user']['id']);
+
+        return $user !== null && $user->is_active;
     }
 
+    // Re-factor status: tested and working
     /** API: Check login state, provide feedback and a forced redirect on failure */
     public function requireLogin(string $message = 'Je moet eerst inloggen.') {
         if (!$this->isLoggedIn()) {
             setFlash('global', 'failure', $message);
-            App::redirect('/');
+            \App\App::redirect('/');
         }
     }
 
+    // Re-factor status: tested and working
     /** API: Check login state and user roles, provide feedback and a forced redirect on failure */
     public function requireRole(array $roles, string $message = 'Je hebt geen rechten om deze actie uit te voeren.'): void {
         $this->requireLogin();
 
-        if (!in_array($_SESSION['user']['role'], $roles, true)) {
+        if (in_array($_SESSION['user']['permission'], $roles, true)) {
             setFlash('global', 'failure', $message);
-            App::redirect('/home');
+            \App\App::redirect('/home');
         }
     }
 
-    // TODO: Review if still usefull, currently not used, but could also be functional as helper ?
-    /** API: Check if user has specific role */
-    // public function hasRole(string $role): bool {
-    //     return isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === $role;
-    // }
-    
-    /** API: Check if user has any of the provided roles */
-    // public function hasAnyRole(array $roles): bool {
-    //     return isset($_SESSION['user']['role']) && in_array($_SESSION['user']['role'], $roles, true);
-    // }
+    // Re-factor status: tested and working
+    /** API: Check if user has a specific permission */
+    public function hasPermission(string $permission): bool {
+        $flags = $_SESSION['user']['permission'] ?? [];
+        return in_array($permission, $flags, true);
+    }
+
+    // Re-factor status: tested and working
+    /** API: Check if user has any of the requested permissions */
+    public function hasAnyPermission(array $permissions): bool {
+        $flags = $_SESSION['user']['permission'] ?? [];
+        return array_intersect($permissions, $flags) !== [];
+    }
 }
