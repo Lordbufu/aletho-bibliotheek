@@ -1,25 +1,25 @@
 <?php
 namespace App\Libs\Context;
 
-/** Book context used for views */
+/** `books` db table */
 final class BookContext {
-    /* Static `books` table data */
-    public int                  $id;
-    public string               $title;
-    public bool                 $active;
-    public int                  $homeOfficeId;
-    public int                  $curOfficeId;
+    public int      $book_id;
+    public string   $book_title;
+    public int      $book_home_loc;
+    public int      $book_cur_loc;
+    public bool     $is_active;
 
-    /* Extra `books` reservation meta data */
-    public ?int                 $resvLoanerId   = null;
-    public ?int                 $resvOfficeId   = null;
-    public ?\DateTimeImmutable  $resvCreatedAt  = null;
-    public ?\DateTimeImmutable  $resvExpiresAt  = null;
+    /** Constructor for ease of use */
+    public function __construct(array $row) {
+        $this->book_id          = (int)$row['book_id'];
+        $this->book_title       = $row['book_title'];
+        $this->book_home_loc    = (int)$row['book_home_loc'];
+        $this->book_cur_loc     = (int)$row['book_cur_loc'];
+        $this->is_active        = (bool)$row['is_active'];
+    }
 
-    /* Attached data from other related tables */
-    public ?string              $curOfficeName  = null;
-    public ?string              $homeOfficeName = null;
-    public ?array               $writers        = null;
-    public ?array               $genres         = null;
-    public ?array               $status         = null;   
+    /** fromRow($row): To easily construct arrays of data */
+    public static function fromRow(array $row): self {
+        return new self($row);
+    }
 }

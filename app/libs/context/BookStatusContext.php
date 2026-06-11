@@ -1,21 +1,39 @@
 <?php
 namespace App\Libs\Context;
 
-/** A light-weight collection of book_status related data for additional view and status flows */
 final class BookStatusContext {
-    // pure `book_status` table
-    public int                  $bookStatusId;          // book_status.id
-    public int                  $bookId;                // book_status.book_id
-    public bool                 $active;                // book_status.active
-    public ?string              $actionName;            // book_status.action_type
-    public ?string              $actionToken;           // book_status.action_token
-    public ?\DateTimeImmutable  $tokenExpires;          // book_status.token_expires
-    public bool                 $tokenUsed;             // book_status.token_used
-    public bool                 $actionFinished;        // book_status.action_finished
-    public \DateTimeImmutable   $createdAt;             // book_status.created_at
+    /** book_status table fields represeted as properties. */
+    public int                  $bs_id;
+    public int                  $book_id;
+    public int                  $status_id;
+    public bool                 $noti_send;
+    public ?\DateTimeImmutable  $noti_send_at       = null;
+    public \DateTimeImmutable   $bs_created_at;
+    public bool                 $is_active;
+    public ?string              $action_name        = null;
+    public ?string              $action_token       = null;
+    public ?\DateTimeImmutable  $token_expires      = null;
+    public bool                 $token_used;
+    public bool                 $action_complete;
 
-    // minimal borrowed context data:
-        // TODO: Review removing the book_id from the borrowd context, since its already part of the main context
-    public ?array               $book       = null;     // populate from BookContext [id, home_off, cur_off]
-    public ?array               $status     = null;     // populate from StatusContext [id, type]
+    /** Construct context based on row data. */
+    public function __construct(array $row) {
+        $this->bs_id            = (int) $row['bs_id'];
+        $this->book_id          = (int) $row['book_id'];
+        $this->status_id        = (int) $row['status_id'];
+        $this->bs_created_at    = $row['created_at'];
+        $this->is_active        = (bool) $row['active'];
+        $this->noti_send        = (bool)$row['bs_noti_send'];
+        $this->noti_send_at     = $row['noti_send_at'] !== null ? (int) $row['token_expires'] : null;
+        $this->action_name      = $row['action_type'] ?? null;
+        $this->action_token     = $row['action_token'] ?? null;
+        $this->token_expires    = $row['token_expires'] !== null ? (int) $row['token_expires'] : null;
+        $this->token_used       = (bool) $row['token_used'];
+        $this->action_complete  = (bool) $row['action_finished'];
+    }
+
+    /** API: Return row as context. */
+    public static function fromRow(array $row): self {
+        return new self($row);
+    }
 }
