@@ -3,6 +3,7 @@ namespace App\ViewModel;
 
 use App\Libs\Context\{LoanerContext, LocationContext};
 
+// Re-factor status: Review uncommented code, after some changes a lot became redundant
 final class LoanerViewModel {
     public int      $id;        // PK for `loaners`.`loaner_id`
     public string   $naam;      // Derived from `loaners`.`loaner_name`
@@ -13,26 +14,20 @@ final class LoanerViewModel {
         $this->id       = $lener->loaner_id;
         $this->naam     = $lener->loaner_name;
         $this->email    = $lener->loaner_email;
-        $this->locatie  = $locatie->loc_name;
+        $this->locatie  = $locatie->loc_id;
     }
 
-    public static function formatOne(array $lener, array $locatie): self {
-        return new self($lener, $locatie);
-    }
+    // public static function formatOne(LoanerContext $lener, array $locatie): self {
+    //     // dd('testing format one');
+    //     return new self($lener, $locatie);
+    // }
 
     /** Re-factor status: W.I.P. ... needs proper repo/service calls to provide the correct datasets ? */
-    public static function formatMany(array $loaners, array $locaties): array {
+    public static function formatMany(array $loaners, array $locaties): ?array {
         $formatted = [];
 
         foreach ($loaners as $loaner) {
-            $format = [
-                'id'        => $loaner->loaner_id,
-                'naam'      => $loaner->loaner_name,
-                'email'     => $loaner->loaner_email,
-                'locatie'   => $locatie[$loaner->loaner_id]
-            ];
-
-            $formatted[] = new self($format);
+            $formatted[] = new self($loaner, $locaties[$loaner->loaner_id]);
         }
 
         return $formatted;

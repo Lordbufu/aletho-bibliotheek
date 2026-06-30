@@ -1,10 +1,11 @@
 <?php
 namespace App\ViewModel;
 
+// Re-factor status: tested and working
 final class BookViewModel {
     public int      $id;            // PK for `books`.`book_id`
     public string   $title;         // Derived from `books`.`book_title`
-    public string   $locatie;       // Derived from `books.book_cur_loc`
+    public array    $locatie;       // Derived from `books`.`book_cur_loc` -> `locations`.`location.id`
     public ?string  $schrijvers;    // Derived from `book_writers`.`writer_id` -> `writers`.`writer_id`
     public ?string  $genres;        // Derived from `book_genres`.`genre_id` -> `genres`.`genre_id`
     public ?array   $loaners;       // Derived from `book_loaners`.`loaner_id` -> `loaners`.`loaner_name`
@@ -28,18 +29,17 @@ final class BookViewModel {
         return new self($book);
     }
 
-    public static function formatMany(array $boeken, array $schrijvers, array $genres, array $locations, array $status, array $leners, array $reseveringen): array {
+    public static function formatMany(array $boeken, array $schrijvers, array $genres, array $locaties, array $status, array $leners, array $reseveringen): array {
         $formatted = [];
 
         foreach ($boeken as $boek) {
             $currentLoaner = $leners[$boek->book_id];
-
             $format = [
                 'book_id'       => $boek->book_id,
                 'book_title'    => $boek->book_title,
                 'writers'       => $schrijvers[$boek->book_id],
                 'genres'        => $genres[$boek->book_id],
-                'cur_loc'       => $locations[$boek->book_id],
+                'cur_loc'       => [ 'naam' => $locaties[$boek->book_id]->loc_name, 'id' => $locaties[$boek->book_id]->loc_id ],
                 'status_name'   => $status[$boek->book_id]->status_name,
                 'dueDate'       => $currentLoaner[$boek->book_id]->end_at ?? null,
                 'loanerHistory' => array_map(fn($l) => $l->loaner_name, $leners[$boek->book_id]),
