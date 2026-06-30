@@ -1,4 +1,4 @@
-<div id="change-book-status-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
+<div id="change-book-status-popin" class="modal clear-on-close" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
             <div class="aletho-header modal-header pt-2 pb-2">
@@ -9,6 +9,7 @@
                 <form id="change-book-status-form mb-1" method="post" action="/changeStatus">
                     <input type="hidden" name="_method" value="PATCH">
                     <input type="hidden" name="book_id" id="change-book-id">
+                    
                     <div class="input-group input-group-sm">
                         <label for="change-status-type" class="aletho-labels extra-popin-style">Status</label>
                         <select class="aletho-inputs extra-popin-style" id="change-status-type" name="status_type" required>
@@ -17,6 +18,7 @@
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['status_type']) ?></div>
                         <?php endif; ?>
                     </div>
+
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-name" class="aletho-labels extra-popin-style">Lener Naam</label>
                         <input  type="text"
@@ -28,6 +30,7 @@
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['loaner_name']) ?></div>
                         <?php endif; ?>
                     </div>
+
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-email" class="aletho-labels extra-popin-style">E-mail</label>
                         <input  type="email"
@@ -39,6 +42,7 @@
                             <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['loaner_email']) ?></div>
                         <?php endif; ?>
                     </div>
+
                     <div class="input-group input-group-sm">
                         <label for="change-loaner-location" class="aletho-labels extra-popin-style">Lener Locatie</label>
                         <select id="change-loaner-location" name="loaner_location" class="aletho-inputs extra-popin-style mb-2">

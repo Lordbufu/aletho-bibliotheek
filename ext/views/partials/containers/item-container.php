@@ -1,7 +1,7 @@
 <?php
     $statusClassMap = [                     // old code for indication lights, still needs concepting and refactoring.
         'aanwezig' => 'statusOne',
-        'afwezig' => 'statusTwo',
+        'uitgeleend' => 'statusTwo',
         'overdatum' => 'statusTwo',
         'transport' => 'statusThree',
         'ligt klaar' => 'statusThree',

@@ -1,4 +1,4 @@
-<div id="password-reset-popin" class="modal clear-on-close" tabindex="-1" style="display:none;">
+<div id="password-reset-popin" class="modal clear-on-close" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="margin:auto;">
         <div class="modal-content aletho-modal-content">
 
