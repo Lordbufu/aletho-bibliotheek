@@ -1,49 +1,54 @@
-const Utility = (() => {
-    function markFieldChanged($field) {
+import { AppState } from '../appstate.js';
+
+export const Utility = {
+    markFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
         const $saveBtn = $form.find('button[id^="save-changes-"]');
-        $field.addClass('field-changed');
-        $saveBtn.addClass('needs-save');
-    }
 
-    function clearFieldChanged($field) {
+        if ($field[0].tomselect) {
+            $($field[0].tomselect.wrapper).addClass('field-changed');
+        } else {
+            $field.addClass('field-changed');
+        }
+
+        $saveBtn.addClass('needs-save');
+    },
+
+    clearFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
         const $saveBtn = $form.find('button[id^="save-changes-"]');
         $field.removeClass('field-changed');
-        if ($form.find('.field-changed').length === 0) {
+
+        const changedFields = $form.find('input.field-changed, select.field-changed');
+        if (changedFields.length === 0) {
             $saveBtn.removeClass('needs-save');
         }
-    }
+    },
 
-    function getFieldConfig($field) {
-        const configs = [
-            { class: 'schrijver-input', type: 'schrijver', container: '.schrijver-tags-container', name: 'book_schrijvers[]' },
-            { class: 'genre-input', type: 'genre', container: '.genre-tags-container', name: 'book_genres[]' },
-            { class: 'locatie-input', type: 'locatie', container: '.locatie-tags-container', name: 'book_offices[]' },
-            { class: 'schrijver-input-pop', type: 'schrijver', container: '.add-schrijver-tags-container', name: 'book_schrijvers[]' },
-            { class: 'genre-input-pop', type: 'genre', container: '.add-genre-tags-container', name: 'book_genres[]' },
-            { class: 'locatie-input-pop', type: 'locatie', container: '.add-locatie-tags-container', name: 'book_offices[]' }
-        ];
-
-        for (const config of configs) {
-            if ($field.hasClass(config.class)) {
+    getFieldConfig($field) {
+        for (const selector in AppState.tagConfigs) {
+            const className = selector.replace('.', '');
+            if ($field.hasClass(className)) {
+                const cfg = AppState.tagConfigs[selector];
                 return {
-                    tagClass: `${config.type}-tag`,
-                    containerSelector: config.container,
-                    hiddenInputName: config.name,
+                    class: className,
+                    tagClass: cfg.tagClass,
+                    containerSelector: cfg.containerSelector,
+                    hiddenInputName: cfg.hiddenInputName,
                     isTaggable: true
                 };
             }
         }
 
         return { isTaggable: false };
-    }
+    },
 
-    function normalizeValues(values) {
+
+    normalizeValues(values) {
         return values.map(v => v.trim()).filter(Boolean).sort().join(',');
-    }
+    },
 
-    function makeTagConfig(type, opts = {}) {
+    makeTagConfig(type, opts = {}) {
         return {
             inputSelector: `.${type}-input`,
             containerSelector: `.${type}-tags-container`,
@@ -55,9 +60,9 @@ const Utility = (() => {
             allowCustom: true,
             ...opts
         };
-    }
+    },
 
-    function makePopTagConfig(type, opts = {}) {
+    makePopTagConfig(type, opts = {}) {
         return {
             inputSelector: `.${type}-input-pop`,
             containerSelector: `.add-${type}-tags-container`,
@@ -69,9 +74,77 @@ const Utility = (() => {
             allowCustom: true,
             ...opts
         };
-    }
+    },
 
-    function request({ url, method = 'GET', data = {}, success, error }) {
+    initTomSelectSingle($field, options, callback) {
+        const { endpoint, mode } = options;
+        const selector = '#' + $field.attr('id');
+        const self = this;
+
+        let originalId = null;
+        let originalName = null;
+
+        // EDIT or STATUS modes → capture original
+        if (mode === 'edit') {
+            originalId = parseInt($field.val());
+            originalName = $field.find('option:selected').text().trim();
+            $field.data('originalValue', originalId);
+        }
+
+        $field.prop('disabled', false).addClass('field-editable');
+
+        this.request({
+            url: '/bookData',
+            data: { data: endpoint },
+            success: function(list) {
+
+                // Clear and rebuild
+                $field.empty();
+                list.forEach(l => {
+                    l.id = parseInt(l.id, 10);
+                    if (mode === 'edit' && l.id === originalId) {
+                        $field.append(`<option value="${originalId}" selected>${originalName}</option>`);
+                    } else {
+                        $field.append(`<option value="${l.id}">${l.naam}</option>`);
+                    }
+                });
+
+                // Init TomSelect
+                const ts = new TomSelect(selector, {
+                    maxItems: 1,
+                    create: false,
+                    controlInput: null,
+                });
+
+
+                // STATUS mode → just return the TomSelect
+                if (callback) callback(ts);
+
+                // EDIT mode → revert on blur
+                if (mode === 'edit') {
+                    ts.focus();
+                    ts.on('blur', () => {
+                        const current = parseInt($field.val());
+                        const original = $field.data('originalValue');
+
+                        if (current === original) {
+                            $field.prop('disabled', true)
+                                .removeClass('field-editable field-changed')
+                                .removeData('originalValue');
+
+                            self.clearFieldChanged($field);
+                            ts.destroy();
+                        } else {
+                            self.markFieldChanged($field);
+                        }
+
+                    });
+                }
+            }
+        });
+    },
+
+    request({ url, method = 'GET', data = {}, success, error }) {
         $.ajax({
             url,
             method,
@@ -83,16 +156,4 @@ const Utility = (() => {
             }
         });
     }
-
-    return {
-        markFieldChanged,
-        clearFieldChanged,
-        getFieldConfig,
-        normalizeValues,
-        makeTagConfig,
-        makePopTagConfig,
-        request
-    };
-})();
-
-export { Utility };
+};

@@ -1,93 +1,62 @@
 import { Utility } from './utility.js';
 import { Suggestions } from './suggestions.js';
+import { AppState } from '../appstate.js';
 
-const TagInput = (() => {
-    let activeTagInput = null;
-    const optionsCache = {};
+let activeTagInput = null;
 
-    /*  Initialize tag input and tag container. */
-    function init(config) {
-        const $inputs   = $(config.inputSelector);
-        const allowCustom = config.allowCustom !== false;
-        const maxTags = config.maxTags || null;
-        let allOptions = [];
+export const TagInput = {
+    /*  Initialize tag input config (no DOM events here anymore) */
+    init(config) {
+        AppState.tagConfigs[config.inputSelector] = config;
+        AppState.tagInputSelectors.push(config.inputSelector);
+        AppState.tagSuggestionSelectors.push(`.${config.suggestionClass}`);
+        AppState.tagRemoveSelectors.push(`${config.containerSelector} .remove-${config.tagClass}`);
+    },
 
-        $inputs.on('focus', function() {
-            activeTagInput = $(this);
+    /*  ACTIVE INPUT MANAGEMENT */
+    setActive($input) {
+        activeTagInput = $input;
+    },
 
-            if (optionsCache[config.endpoint]) {
-                allOptions = optionsCache[config.endpoint];
-                return;
-            }
+    clearActiveDelayed() {
+        setTimeout(() => { activeTagInput = null; }, 200);
+    },
 
-            Utility.request({
-                url: config.endpoint,
-                success: data => {
-                    allOptions = data;
-                    optionsCache[config.endpoint] = data;
-                }
-            });
-        });
+    /*  INPUT HANDLER (called from Events.js) */
+    handleInput($input) {
+        const config = this.getConfigForInput($input);
+        const query = $input.val().trim().toLowerCase();
 
-        $inputs.on('blur', function() {
-            setTimeout(() => { activeTagInput = null; }, 200);
-        });
-
-        // Input handler: filter suggestions with debounce for performance
-        $inputs.on('input', function() {
-            const $input = $(this);
-            activeTagInput = $input;
-            const query = $input.val().trim().toLowerCase();
-
-            if (query.length < 2) {
-                Suggestions.close();
-                return;
-            }
-
-            if (!allOptions.length && !optionsCache[config.endpoint]) {
-                Utility.request({
-                    url: config.endpoint,
-                    success: data => {
-                        allOptions = data;
-                        optionsCache[config.endpoint] = data;
-                        showSuggestions($input, allOptions, query, config.suggestionClass);
-                    }
-                });
-                return;
-            }
-
-            showSuggestions($input, allOptions, query, config.suggestionClass);
-        });
-
-        // still needs review
-        function showSuggestions($input, options, query, suggestionClass) {
-            const filtered = options.filter(option => {
-                const label = typeof option === 'string'
-                    ? option
-                    : (option.naam || option.name || '');
-                return label.toLowerCase().includes(query);
-            });
-
-            // console.log(filtered);
-            if (filtered.length > 0) {
-                Suggestions.show($input, filtered, suggestionClass);
-                Suggestions.bindCloseOnBlur($input);
-            } else {
-                Suggestions.close();
-            }
+        if (query.length < 2) {
+            Suggestions.close();
+            return;
         }
 
-        // Mousedown on suggestion: add tag before blur closes
-        $(document).on('click', `.${config.suggestionClass}`, function(e) {
-            e.preventDefault();
+        this.loadOptions(config.endpoint, (options) => {
+            this.showSuggestions($input, options, query, config.suggestionClass);
+        });
+    },
 
-            if (!activeTagInput) return;
+    /*  ENTER KEY HANDLER */
+    handleEnter($input) {
+        const config = this.getConfigForInput($input);
+        const name = $input.val().trim();
+        if (!name) return;
 
-            const $input        = activeTagInput;
-            const name          = $(this).data('name') || $(this).text().trim();
-            const id            = $(this).data('id') || null;
-            const $container    = getTagsContainer($input, config.containerSelector);
-            const status        = addTag(name, id, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
+        const $container = this.getTagsContainer($input, config.containerSelector);
+
+        this.loadOptions(config.endpoint, (options) => {
+            const status = this.addTag(
+                name,
+                null,
+                $input,
+                $container,
+                config.tagClass,
+                config.hiddenInputName,
+                config.maxTags,
+                config.allowCustom,
+                options
+            );
 
             if (status) {
                 Suggestions.close();
@@ -96,65 +65,106 @@ const TagInput = (() => {
 
             $input.focus();
         });
+    },
 
-        // Prevent blur from closing suggestions while clicking
-        $(document).on('mousedown', `.${config.suggestionClass}`, function(e) {
-            e.preventDefault();
-        });
+    /*  SUGGESTION CLICK HANDLER */
+    handleSuggestionClick($suggestion) {
+        if (!activeTagInput) return;
 
-        // still needs review
-        // Enter key: prevent form submit, add tag
-        $inputs.on('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+        const $input = activeTagInput;
+        const config = this.getConfigForInput($input);
 
-                const $input = $(this);
-                const name = $input.val().trim();
-                if (!name) return;
+        const name = $suggestion.data('name') || $suggestion.text().trim();
+        const id = $suggestion.data('id') || null;
 
-                activeTagInput      = $input;
-                const $container    = getTagsContainer($input, config.containerSelector);
-                const status        = addTagLegacy(name, $input, $container, config.tagClass, config.hiddenInputName, maxTags, allowCustom, allOptions);
+        const $container = this.getTagsContainer($input, config.containerSelector);
 
-                if (status) {
-                    Suggestions.close();
-                    $input.focus();
-                    $input.val('');
-                } else {
-                    $input.focus();
-                }
-            }
-        });
+        this.loadOptions(config.endpoint, (options) => {
+            const status = this.addTag(
+                name,
+                id,
+                $input,
+                $container,
+                config.tagClass,
+                config.hiddenInputName,
+                config.maxTags,
+                config.allowCustom,
+                options
+            );
 
-        // Remove tag (delegated): removes tag and hidden input
-        $(document).on('click', `${config.containerSelector} .remove-${config.tagClass}`, function(e) {
-            // TODO: Figure out why the old line below, suddenly gives console errors, and why i dint have that on the current live version
-            // Suggested actions: Add the console.log(config) to the live version, and see what it logs when removing a tag from either container.
-        // $(document).on('click', `.remove-${config.tagClass}`, function(e) {
-            // console.log(config);
-            e.preventDefault();
-            const $tag          = $(this).closest(`.${config.tagClass}`);
-            const $input        = $tag.closest('form').find(config.inputSelector);
-            
-            $tag.find(`input[type="hidden"][name="${config.hiddenInputName}"]`).remove();
-            $tag.remove();
-
-            const $container    = TagInput.getTagsContainer($input, config.containerSelector);
-
-            if ($container.find(`input[name="${config.hiddenInputName}"]`).length === 0) {
-                $container.append(
-                    `<input type="hidden" name="${config.hiddenInputName}" value="" data-empty="1">`
-                );
+            if (status) {
+                Suggestions.close();
+                $input.val('');
             }
 
-            if ($input.data('context') !== 'popin') {
-                Utility.markFieldChanged($input);
+            $input.focus();
+        });
+    },
+
+    /*  REMOVE TAG HANDLER */
+    handleRemoveTag($removeButton) {
+        const $tag   = $removeButton.closest('span');
+        const $group = $tag.closest('.input-group');
+        const $input = $group.find(AppState.UI.TAG_INPUTS.join(', ')).first();
+
+        const config = this.getConfigForInput($input);
+
+        const hiddenName = $tag.find('input[type="hidden"]').first().attr('name');
+        $tag.remove();
+
+        const $container = this.getTagsContainer($input, config.containerSelector);
+
+        if ($container.find(`input[name="${hiddenName}"]`).length === 0) {
+            $container.append(`<input type="hidden" name="${hiddenName}" value="" data-empty="1">`);
+        }
+
+        if ($input.data('context') !== 'popin') {
+            Utility.markFieldChanged($input);
+        }
+    },
+
+    /*  OPTION LOADING (centralized caching) */
+    loadOptions(endpoint, callback) {
+        if (AppState.optionsCache[endpoint]) {
+            callback(AppState.optionsCache[endpoint]);
+            return;
+        }
+
+        if (AppState.pendingRequests[endpoint]) {
+            AppState.pendingRequests[endpoint].push(callback);
+            return;
+        }
+
+        AppState.pendingRequests[endpoint] = [callback];
+
+        Utility.request({
+            url: endpoint,
+            success: data => {
+                AppState.optionsCache[endpoint] = data;
+                AppState.pendingRequests[endpoint].forEach(cb => cb(data));
+                delete AppState.pendingRequests[endpoint];
             }
         });
-    }
+    },
 
-    /*  Add a tag to the container, if not already present and maxTags not exceeded. */
-    function addTag(naam, id, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, allOptions = []) {
+    /*  SUGGESTION FILTERING */
+    showSuggestions($input, options, query, suggestionClass) {
+        const filtered = options.filter(option => {
+            const label = typeof option === 'string'
+                ? option
+                : (option.naam || option.name || '');
+            return label.toLowerCase().includes(query);
+        });
+
+        if (filtered.length > 0) {
+            Suggestions.show($input, filtered, suggestionClass);
+        } else {
+            Suggestions.close();
+        }
+    },
+
+    /*  TAG ADDING */
+    addTag(naam, id, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, options = null) {
         if ($container.find(`.${tagClass}[data-name="${naam}"]`).length) {
             showTagLimitWarning($input, 1, `"${naam}" is al toegevoegd.`);
             return false;
@@ -165,8 +175,8 @@ const TagInput = (() => {
             return false;
         }
 
-        if (!allowCustom) {
-            const exists = Array.isArray(allOptions) && allOptions.some(opt => {
+        if (!allowCustom && Array.isArray(options)) {
+            const exists = options.some(opt => {
                 if (typeof opt === 'string') return opt === naam;
                 if (opt && typeof opt.naam === 'string') return opt.naam === naam;
                 return false;
@@ -178,7 +188,6 @@ const TagInput = (() => {
             }
         }
 
-        // TODO: Test re-factor for the new datasets (id+name)
         const $tag = $(`
             <span class="${tagClass} aletho-border" data-name="${naam}" data-id="${id || ''}">
                 ${naam}
@@ -188,7 +197,6 @@ const TagInput = (() => {
             </span>
         `);
 
-        console.log($tag);
         $container.append($tag);
         $container.find(`input[data-empty="1"]`).remove();
         $input.val('');
@@ -198,83 +206,49 @@ const TagInput = (() => {
         }
 
         return true;
-    }
+    },
 
-    /*  Show a tooltip near the input if user tries to add more than allowed tags. */
-    function showTagLimitWarning($input, maxTags, customMsg) {
-        if (!$input || !$input.length) return;
-
-        const msg = customMsg || `Maximaal ${maxTags} ${maxTags > 1 ? 'items' : 'item'} toegestaan.`;
-        const offset = $input.offset();
-        
-        if (!offset) return;
-
-        let $tooltip = $('<div class="tag-limit-tooltip"></div>').text(msg);
-
-        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const topRem = ($input.offset().top + $input.outerHeight() + 2) / rootFont + 'rem';
-        const leftRem = ($input.offset().left) / rootFont + 'rem';
-
-        $tooltip.css({
-            position: 'absolute',
-            top: topRem,
-            left: leftRem
-        });
-
-        $('body').append($tooltip);
-        setTimeout(() => { $tooltip.fadeOut(300, () => $tooltip.remove()); }, 1800);
-    }
-
-    /*  Get the tags container for a given input field. */
-    function getTagsContainer($field, containerSelector) {
+    /*  TAG CONTAINER + VALUE HELPERS */
+    getTagsContainer($field, containerSelector) {
         const $group = $field.closest('.input-group');
         const $container = $group.find(containerSelector).first();
-
-        if ($container.length) {
-            return $container;
-        }
-
+        if ($container.length) return $container;
         throw new Error(`Tag container not found for ${containerSelector}`);
-    }
+    },
 
-    /*  Get all tag values from a container, sorted and trimmed. */
-    function getValuesFromContainer($container, hiddenInputName) {
-        return $container.find(`input[name="${hiddenInputName}"]`).map(function() {
-            return $(this).val().trim();
-        }).get().filter(Boolean).sort();
-    }
+    getValuesFromContainer($container, hiddenInputName) {
+        return $container.find(`input[name="${hiddenInputName}"]`)
+            .map(function() { return $(this).val().trim(); })
+            .get()
+            .filter(Boolean)
+            .sort();
+    },
 
-    /*  Restore tags from input value (comma-separated string) for a given field/container (Used when enabling edit mode). */
-    function restoreTagsFromInput($field, $container, tagClass, hiddenInputName) {
+    restoreTagsFromInput($field, $container, tagClass, hiddenInputName) {
         const existing = $field.val();
-
         if (existing) {
             existing.split(',')
                 .map(naam => naam.trim())
                 .forEach(naam => {
-                    if (naam) {
-                        addTagLegacy(naam, $field, $container, tagClass, hiddenInputName);
-                    }
+                    if (naam) this.addTag(naam, null, $field, $container, tagClass, hiddenInputName);
                 });
         }
 
-        const origValues = getValuesFromContainer($container, hiddenInputName);
+        const origValues = this.getValuesFromContainer($container, hiddenInputName);
         $field.data('originalValue', Utility.normalizeValues(origValues));
+    },
+
+    /*  CONFIG RESOLUTION */
+    getConfigForInput($input) {
+        const classes = $input.attr('class').split(/\s+/);
+
+        for (const selector in AppState.tagConfigs) {
+            const className = selector.replace('.', '');
+            if (classes.includes(className)) {
+                return AppState.tagConfigs[selector];
+            }
+        }
+
+        throw new Error("No TagInput config found for input: " + $input.attr('class'));
     }
-
-    // Temp solution to support the previous non-id based system
-    function addTagLegacy(name, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom, allOptions) {
-        return addTag(name, null, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom, allOptions);
-    }
-
-    return {
-        init,
-        addTag,
-        getTagsContainer,
-        getValuesFromContainer,
-        restoreTagsFromInput,
-        addTagLegacy
-    };
-})();
-
-export { TagInput };
+};

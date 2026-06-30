@@ -1,57 +1,51 @@
+import { AppState } from "../appstate.js";
 
-/**
- * Dropdowns module: Handles opening, closing, and toggling of dropdown menus using Bootstrap Collapse.
- * - open: Opens a dropdown by selector
- * - close: Closes one or more dropdowns by selector(s)
- * - toggle: Toggles a dropdown, optionally closing others first
- */
-const Dropdowns = (() => {
-    /**
-     * Open a dropdown menu by selector.
-     * @param {string} selector - Selector for the dropdown
-     */
-    function open(selector) {
-        const $dropdown = $(selector);
-        bootstrap.Collapse.getOrCreateInstance($dropdown[0], { toggle: false }).show();
-    }
+export const Dropdowns = {
+    open(selector) {
+        $(selector).addClass("show");
+    },
 
-    /**
-     * Close one or more dropdown menus by selector(s).
-     * @param {string|string[]} selectors - Selector or array of selectors
-     */
-    function close(selectors) {
-        const selectorArray = Array.isArray(selectors) ? selectors : [selectors];
-        selectorArray.forEach(sel => {
-            const $dropdown = $(sel);
-            if ($dropdown.hasClass('show')) {
-                bootstrap.Collapse.getOrCreateInstance($dropdown[0], { toggle: false }).hide();
+    close(selectors) {
+        const list = Array.isArray(selectors) ? selectors : [selectors];
+        list.forEach(sel => $(sel).removeClass("show"));
+    },
+
+    closeAll(selector) {
+        $(selector).removeClass("show");
+    },
+
+    closeOthers(targetSelector, groupSelector) {
+        $(groupSelector)
+            .filter(".show, .collapsing")
+            .not(targetSelector)
+            .each(function() {
+                bootstrap.Collapse.getOrCreateInstance(this, { toggle: false }).hide();
+            });
+    },
+
+    toggle(selector, { closeGroup = null, closeMenu = false } = {}) {
+        const isItem = selector.startsWith("#customItemDropdown");
+
+        if (isItem) {
+            const currentlyOpen = AppState.dropdownState.openItem;
+
+            if (currentlyOpen && currentlyOpen !== selector) {
+                bootstrap.Collapse.getOrCreateInstance(currentlyOpen, { toggle: false }).hide();
             }
-        });
-    }
 
-    /**
-     * Toggle a dropdown menu, optionally closing others first.
-     * @param {string} selector - Selector for the dropdown to toggle
-     * @param {string[]} [others=[]] - Array of selectors for other dropdowns to close
-     */
-    function toggle(selector, others = []) {
-        const $dropdown = $(selector);
-        if ($dropdown.hasClass('show')) {
-            close(selector);
+            bootstrap.Collapse.getOrCreateInstance(selector, { toggle: false }).show();
+            AppState.dropdownState.openItem = selector;
+            return;
+        }
+
+        const isMenuOpen = AppState.dropdownState.menuOpen;
+
+        if (isMenuOpen) {
+            bootstrap.Collapse.getOrCreateInstance(selector, { toggle: false }).hide();
+            AppState.dropdownState.menuOpen = false;
         } else {
-            if (others.length) {
-                close(others);
-            }
-            open(selector);
+            bootstrap.Collapse.getOrCreateInstance(selector, { toggle: false }).show();
+            AppState.dropdownState.menuOpen = true;
         }
     }
-
-    // Exported API
-    return {
-        open,
-        close,
-        toggle
-    };
-})();
-
-export { Dropdowns };
+};
