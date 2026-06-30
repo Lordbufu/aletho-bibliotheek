@@ -1,0 +1,13 @@
+<?php
+namespace App\Libs\Context;
+
+/** `book_loaners` table data */
+final class LoanContext {
+    public int                  $id;
+    public int                  $bookId;
+    public int                  $loanerId;
+    public int                  $statusId;
+    public ?\DateTimeImmutable  $startDate;
+    public ?\DateTimeImmutable  $endDate;
+    public ?bool                $active;
+}
