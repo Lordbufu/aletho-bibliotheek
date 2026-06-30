@@ -1,15 +1,17 @@
 <?php if (canEdit()): ?>
     <div class="input-group input-group-sm" data-context="details">
         <div class="locatie-tags-container" data-book-id="<?= $book->id ?>" data-context="details"></div>
-        <input  type="text"
+        <select id="book-office-<?= $book->id ?>"
+                name="book_location"
                 class="aletho-inputs extra-input-style locatie-input"
-                id="book-office-<?= $book->id ?>"
-                value="<?=htmlspecialchars($book->locatie) ?>"
-                placeholder="Type een locatie en druk op Enter"
                 data-book-id="<?= $book->id ?>"
                 data-context="details"
                 autocomplete="off"
                 disabled>
+            <option value="<?= $book->locatie['id'] ?>" data-locatie-naam="<?= htmlspecialchars($book->locatie['naam']) ?>" selected>
+                <?= htmlspecialchars($book->locatie['naam']) ?>
+            </option>
+        </select>
         <button type="button"
                 class="btn btn-link extra-button-style"
                 data-swap-targets="#book-office-<?= $book->id ?>"
