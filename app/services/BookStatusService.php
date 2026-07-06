@@ -269,7 +269,7 @@ final class BookStatusService {
     }
 
     /** API: Load the full `BookStatusContext` based on a books its id */
-    public function loadBookStatusContext($bookId): ?BookStatusContext {
+    public function loadBookStatusContext(int $bookId): ?BookStatusContext {
         // 1. Load the associated `books` data
         $bookCtx = App::getService('book')->findBookById($bookId);
         if (!$bookCtx) {
@@ -302,13 +302,13 @@ final class BookStatusService {
     public function changeStatus(array $data, string $trigger = 'debug'): TransitionResult {
         $engine                     = new BookStatusEngine();
         // 1. Load the book context
-        $bookCtx                    = App::getService('books')->findBookById($data['book_id']);
+        $bookCtx                    = App::getService('book')->findBookById($data['book_id']);
         if (!$bookCtx) {
             throw new \RuntimeException("Book not found");
         }
 
         // 2. Load status context for later inclusion depending on logic flow
-        $statusCtx                  = App::getService('statuses')->getStatusById($data['status_type']);
+        $statusCtx                  = App::getService('statuses')->getStatusById($data['status_id']);
 
         // 3. Bundle into TransitionContext, and trigger the engine to evaluate the transition
         $tx                         = new TransitionContext();
@@ -341,7 +341,7 @@ final class BookStatusService {
 
         // 3.5.2 Fallback: if no loaner was provided, but there is an active loan for this book, rebuild currentLoaner from the existing loan row.
         // TODO: remove this temp solution
-        if ($tx->currentLoaner === null && $data['status_type'] === 1) {
+        if ($tx->currentLoaner === null && $data['status_id'] === 1) {
             $activeLoan = App::getService('loan')->getActiveLoansForBook($tx->book->id);
 
             if ($activeLoan !== null) {

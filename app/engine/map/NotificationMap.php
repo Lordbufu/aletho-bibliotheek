@@ -2,7 +2,7 @@
 namespace App\Engine\Map;
 
 final class NotificationMap {
-    /** Global: Pre-defined map for status_type -> notification_type */
+    /** Global: Pre-defined map for status_id -> notification_type */
     public static array $map = [
         'Afwezig' => [
             'Aanwezig'   => 'loan_confirm',

@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Libs\LoanRepo;
 use App\Libs\Context\LoanContext;
 
+// Re-factor status: Pending, was tied heavily to the old status-change logic.
 final class LoanService {
     private LoanRepo    $loan;
 
@@ -40,9 +41,4 @@ final class LoanService {
     public function deactivateLoan(int $loanId): void {
         $this->loan->deactivateLoan($loanId);
     }
-
-    // /** Facade: Get latstest loaner row for specific book */
-    // public function getLatestLoanerRowForBook(int $bookId): ?LoanContext {
-    //     return $this->loan->getLatestLoanerRowForBook($bookId);
-    // }
 }

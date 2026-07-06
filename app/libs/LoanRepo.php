@@ -3,6 +3,7 @@ namespace App\Libs;
 
 use App\Libs\Context\LoanContext;
 
+// Re-factor status: Still pending, not sure if still relevant.
 final class LoanRepo {
     private \App\Database $db;
 

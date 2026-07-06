@@ -12,8 +12,8 @@ final class BookStatusContext {
     public bool                 $is_active;
     public ?string              $action_name        = null;
     public ?string              $action_token       = null;
-    public ?\DateTimeImmutable  $token_expires      = null;
-    public bool                 $token_used;
+    public ?\DateTimeImmutable  $action_expires     = null;
+    public bool                 $action_used;
     public bool                 $action_complete;
 
     /** Construct context based on row data. */
@@ -21,15 +21,15 @@ final class BookStatusContext {
         $this->bs_id            = (int) $row['bs_id'];
         $this->book_id          = (int) $row['book_id'];
         $this->status_id        = (int) $row['status_id'];
-        $this->bs_created_at    = $row['created_at'];
-        $this->is_active        = (bool) $row['active'];
-        $this->noti_send        = (bool)$row['bs_noti_send'];
-        $this->noti_send_at     = $row['noti_send_at'] !== null ? (int) $row['token_expires'] : null;
-        $this->action_name      = $row['action_type'] ?? null;
+        $this->noti_send        = (bool) ($row['noti_send'] ?? false);
+        $this->noti_send_at     = !empty($row['noti_send_at']) ? new \DateTimeImmutable($row['noti_send_at']): null;
+        $this->bs_created_at    = new \DateTimeImmutable($row['bs_created_at']);
+        $this->is_active        = (bool) $row['is_active'];
+        $this->action_name      = $row['action_name'] ?? null;
         $this->action_token     = $row['action_token'] ?? null;
-        $this->token_expires    = $row['token_expires'] !== null ? (int) $row['token_expires'] : null;
-        $this->token_used       = (bool) $row['token_used'];
-        $this->action_complete  = (bool) $row['action_finished'];
+        $this->action_expires   = !empty($row['action_expires']) ? new \DateTimeImmutable($row['action_expires']) : null;
+        $this->action_used      = (bool) ($row['action_used'] ?? false);
+        $this->action_complete  = (bool) ($row['action_complete'] ?? false);
     }
 
     /** API: Return row as context. */

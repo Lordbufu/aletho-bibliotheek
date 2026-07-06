@@ -15,7 +15,7 @@ final class LoanerService {
     }
 
     /** Re-factored/new functions */
-    // Re-factor status: tested and working (maybe not usefull ?)
+    // Re-factor status: tested and working (current not used any more maybe not usefull ?)
     public function getLoanersForView() {
         return $this->loaner->getAllActiveLoaners();
     }
@@ -47,6 +47,7 @@ final class LoanerService {
         return $loaners;
     }
 
+    // Re-factor status: Evertything below still needs a review.
     // /** Facade: Create new loaner loaner and return its id */
     // public function createLoaner(string $name, string $email, int $officeId): int {
     //     return $this->loaner->createLoaner($name, $email, $officeId);
