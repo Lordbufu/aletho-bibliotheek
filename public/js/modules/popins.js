@@ -156,7 +156,7 @@ export const Popins = {
                     `);
                 });
 
-                if (window.__appFlash?.type === "status_type") {
+                if (window.__appFlash?.type === "status_id") {
                     $select.val(window.__appFlash.message);
                 }
 
