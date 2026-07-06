@@ -1,5 +1,5 @@
 <?php
-/** Return structure for all functions:
+/** @return: structure for all functions:
  *  [
  *      'valid' => bool,
  *      'data'  => normalizedData,
@@ -12,6 +12,25 @@ namespace App\Validation;
 use App\Libs\Types\StatusType;
 
 class FormValidator {
+    // Re-factor status: tested and working
+    /** Helper: To merge ids and names from the input, so the service layer can process it correctly */
+    private function mergeNamesAndIds(?array $names, ?array $ids): array {
+        $names = $names ?? [];
+        $ids   = $ids ?? [];
+
+        $clean = [];
+
+        foreach ($names as $index => $name) {
+            $clean[] = [
+                'id'   => isset($ids[$index]) ? $this->cleanInt($ids[$index]) : null,
+                'name' => $this->cleanString($name)
+            ];
+        }
+
+        return $clean;
+    }
+
+    // Re-factor status: No changes
     /** Helper: Trim and normalize strings */
     private function cleanString(?string $value): ?string {
         if ($value === "") {
@@ -21,29 +40,6 @@ class FormValidator {
         $value = trim((string)$value);
 
         return $value === '' ? null : $value;
-    }
-
-    // Re-factor status: tested and working
-    /** Helper: Normalize writers list */
-    private function cleanWritersList(?array $values): array {
-        if (!$values) {
-            return [];
-        }
-
-        $clean = [];
-
-        foreach ($values as $v) {
-            if (is_int($v)) {
-                $clean[] = $v;
-            } elseif (is_string($v)) {
-                $name = trim($v);
-                if ($name !== '') {
-                    $clean[] = $name;
-                }
-            }
-        }
-
-        return array_values(array_unique($clean, SORT_REGULAR));
     }
 
     // Re-factor status: tested and working
@@ -68,24 +64,6 @@ class FormValidator {
         $value = iconv('UTF-8', 'ASCII//TRANSLIT', $value);
 
         return $value;
-    }
-
-    // Re-factor status: No changes
-    /** Helper: Normalize array data for  writer(s)/genre(s)/office(s) */
-    private function cleanList(?array $values): array {
-        if (!$values) {
-            return [];
-        }
-
-        $clean = array_map(
-            fn($v) => is_string($v) ? trim($v) : '',
-            $values
-        );
-
-        $clean = array_filter($clean, fn($v) => $v !== '');
-        $clean = array_unique($clean);
-
-        return array_values($clean);
     }
 
     // Re-factor status: No changes
@@ -131,6 +109,7 @@ class FormValidator {
         ];
     }
 
+    // Re-factor status: No changes
     /** API: Password change form for office_admins */
     public function validatePasswordChange(array $input): array {
         $errors = [];
@@ -154,6 +133,7 @@ class FormValidator {
         ];
     }
 
+    // Re-factor status: No changes
     /** API: Password reset form for global_admins */
     public function validatePasswordReset(array $input): array {
         $errors = [];
@@ -177,6 +157,7 @@ class FormValidator {
         ];
     }
 
+    // Re-factor status: tested and working
     /** API: Validate all books forms based on a '$mode' switch */
     public function validateBookForm(array $input, string $mode = 'add'): array {
         $errors = [];
@@ -189,22 +170,33 @@ class FormValidator {
             }
         }
 
-        if ($mode === 'add' || array_key_exists('book_writers', $input)) {
-            $clean['writers'] = $this->cleanList($input['book_writers'] ?? null);
+        if ($mode === 'add' || array_key_exists('book_schrijvers', $input)) {
+            $clean['writers'] = $this->mergeNamesAndIds(
+                $input['book_schrijvers'] ?? null,
+                $input['book_schrijvers_ids'] ?? null
+            );
+
             if (empty($clean['writers'])) {
                 $errors['writers'] = 'Minimaal één schrijver is verplicht.';
             }
         }
 
         if ($mode === 'add' || array_key_exists('book_genres', $input)) {
-            $clean['genres'] = $this->cleanList($input['book_genres'] ?? null);
+            $clean['genres'] = $this->mergeNamesAndIds(
+                $input['book_genres'] ?? null,
+                $input['book_genres_ids'] ?? null
+            );
+
             if (empty($clean['genres'])) {
                 $errors['genres'] = 'Minimaal één genre is verplicht.';
             }
         }
 
-        if ($mode === 'add' || array_key_exists('book_offices', $input)) {
-            $clean['office'] = $this->cleanList($input['book_offices'] ?? null);
+        if ($mode === 'add' || array_key_exists('book_locatie', $input)) {
+            $clean['office'] = [
+                'id'    => $input['book_locatie'][0] ?? null
+            ];
+
             if (empty($clean['office'])) {
                 $errors['office'] = 'Kantoor selectie is ongeldig.';
             }
@@ -217,14 +209,15 @@ class FormValidator {
         ];
     }
 
+    // Re-factor status: tested and working
     /** API: Validate status edit form data */
     public function validateStatusPeriod(array $input): array {
         $errors = [];
         $clean  = [];
 
-        $clean['status_type'] = (int)($input['status_type'] ?? 0);
-        if ($clean['status_type'] <= 0) {
-            $errors['status_type'] = 'Ongeldige status geselecteerd.';
+        $clean['status_id'] = (int)($input['status_id'] ?? 0);
+        if ($clean['status_id'] <= 0) {
+            $errors['status_id'] = 'Ongeldige status geselecteerd.';
         }
 
         $clean['period_length'] = $this->cleanInt($input['period_length'] ?? null);
@@ -242,6 +235,14 @@ class FormValidator {
             $errors['overdue_day'] = 'Te-laat dag moet minimaal 1 dag zijn.';
         }
 
+        if ($clean['reminder_day'] >= $clean['period_length']) {
+            $errors['reminder_day'] = 'Herinneringsdag moet vóór het einde van de periode liggen.';
+        }
+
+        if ($clean['overdue_day'] > $clean['period_length']) {
+            $errors['overdue_day'] = 'Te-laat dag kan niet groter zijn dan de periode.';
+        }
+
         return [
             'valid'  => empty($errors),
             'data'   => $clean,
@@ -254,19 +255,19 @@ class FormValidator {
         $errors                         = [];
         $clean                          = [];
 
-        $clean['status_type']           = $this->cleanInt($input['status_type'] ?? null);
+        $clean['status_id']             = $this->cleanInt($input['status_id'] ?? null);
         $clean['book_id']               = $this->cleanInt($input['book_id'] ?? null);
 
         if (!$clean['book_id']) {
             $errors['book_id']          = 'Geen boek gevonden om de status van te veranderen.';
         }
 
-        if (!$clean['status_type']) {
-            $errors['status_type']      = 'Status is verplicht.';
+        if (!$clean['status_id']) {
+            $errors['status_id']        = 'Status is verplicht.';
         }
 
         // TODO: Remove overdatum check when cron jobs are finalized, this is for testing purposes only
-        if ($clean['status_type'] === StatusType::toId('Aanwezig') || $clean['status_type'] === StatusType::toId('Overdatum')) {
+        if ($clean['status_id'] === StatusType::toId('Aanwezig') || $clean['status_id'] === StatusType::toId('Overdatum')) {
             return [
                 'valid'  => empty($errors),
                 'data'   => $clean,
@@ -297,3 +298,44 @@ class FormValidator {
         ];
     }
 }
+
+// Re-factor status: tested and working (not used though ?)
+    /** Helper: Normalize writers list */
+    // private function cleanWritersList(?array $values): array {
+    //     if (!$values) {
+    //         return [];
+    //     }
+
+    //     $clean = [];
+
+    //     foreach ($values as $v) {
+    //         if (is_int($v)) {
+    //             $clean[] = $v;
+    //         } elseif (is_string($v)) {
+    //             $name = trim($v);
+    //             if ($name !== '') {
+    //                 $clean[] = $name;
+    //             }
+    //         }
+    //     }
+
+    //     return array_values(array_unique($clean, SORT_REGULAR));
+    // }
+
+// Re-factor status: No changes (not used anymore though ?)
+    /** Helper: Normalize array data for  writer(s)/genre(s)/office(s) */
+    // private function cleanList(?array $values): array {
+    //     if (!$values) {
+    //         return [];
+    //     }
+
+    //     $clean = array_map(
+    //         fn($v) => is_string($v) ? trim($v) : '',
+    //         $values
+    //     );
+
+    //     $clean = array_filter($clean, fn($v) => $v !== '');
+    //     $clean = array_unique($clean);
+
+    //     return array_values($clean);
+    // }
