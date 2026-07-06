@@ -4,7 +4,7 @@ namespace App\Services;
 use App\Libs\GenreRepo;
 use App\ViewModel\GenreViewModel;
 
-// Re-factor status: W.I.P. (all function present are new and re-factored)
+// Re-factor status: Tested and working
 final class GenreService {
     private GenreRepo $genre;
 

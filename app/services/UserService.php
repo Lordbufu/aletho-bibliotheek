@@ -50,9 +50,3 @@ final class UserService {
         return true;
     }
 }
-
-/** Old functions */
-/** Facade: Find admin by office id and office admin flag */
-// public function findAdminByOfficeId(int $officeId): ?UserContext {
-//     return $this->users->findAdminByOfficeId($officeId);
-// }

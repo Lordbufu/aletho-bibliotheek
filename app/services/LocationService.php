@@ -34,12 +34,12 @@ class LocationService {
 
     /** Facade: Get location names for loc_id */
     public function getLocationNameById(int $loc_id): ?string {
-        return $this->location->getLocationNameByIds($loc_id);
+        return $this->location->getLocationNamesByIds($loc_id);
     }
 
     /** Facade: Fetch a whole batch of office names matching loc_ids */
     public function getLocationNamesForBooks(array $loc_ids): array {
-        return $this->location->getLocationNameByIds($loc_ids);
+        return $this->location->getLocationNamesByIds($loc_ids);
     }
 
     /** API: Get locations for viewmodel */

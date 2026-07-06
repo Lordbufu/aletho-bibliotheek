@@ -2,10 +2,9 @@
 namespace App\Services;
 
 use App\Libs\WriterRepo;
-use App\Libs\Context\WritersContext;
 use App\ViewModel\WriterViewModel;
 
-// Re-factor status: W.I.P.
+// Re-factor status: Tested and working
 final class WriterService {
     private WriterRepo $writer;
     
@@ -35,36 +34,4 @@ final class WriterService {
     public function getWritersForView(): array {
         return WriterViewModel::formatMany($this->getAllActiveWriters());
     }
-
-    // Concept code.
-    /** API: Resolve writers for the book CRUD actions */
-        // public function resolveWriters(array $writers): array {
-        //     $resolved = [];
-
-        //     foreach ($writers as $w) {
-        //         if (is_int($w)) {
-        //             // Existing writer
-        //             $resolved[] = $w;
-        //             continue;
-        //         }
-
-        //         // New writer
-        //         $existing = $this->writersRepo->findByName($w);
-
-        //         if ($existing) {
-        //             $resolved[] = $existing->id;
-        //         } else {
-        //             $newId = $this->writersRepo->insert($w);
-        //             $resolved[] = $newId;
-        //         }
-        //     }
-
-        //     return $resolved;
-        // }
-
-    /** TODO List:
-     *      - Review if i need a specific look-up to return only writer names for display/add/remove logic
-     *      - Review how im going to deal with adding/linking writer data, for example: if writer isnt in DB add to `writers` else add link to `book_writers` etc.
-     *      - Review how im going to deal with 'syncing' writer data.
-     */
 }

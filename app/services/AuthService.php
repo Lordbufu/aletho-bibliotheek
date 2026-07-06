@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+// Re-factor status: tested and working
 final class AuthService {
     private \App\Libs\UserRepo $users;
 
@@ -9,7 +10,6 @@ final class AuthService {
         $this->users = new \App\Libs\UserRepo();
     }
 
-    // Re-factor status: No changes
     /** API: Authenticate User-agent and bindings */
     public function uaIpChecker() {
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -27,8 +27,7 @@ final class AuthService {
             session_unset();
         }
     }
-
-    // Re-factor status: tested and working
+    
     /** API: Authenticate user */
     public function authenticate(string $identifier, string $password, string $userAgent): ?int {
         $user = $this->users->findByIdentifier($identifier);
@@ -49,7 +48,6 @@ final class AuthService {
         return $user->user_id;
     }
 
-    // Re-factor status: tested and working
     /** API: Check if user is logged in */
     public function isLoggedIn(): bool {
         if (empty($_SESSION['user']['id'])) {
@@ -68,7 +66,6 @@ final class AuthService {
         return $user !== null && $user->is_active;
     }
 
-    // Re-factor status: tested and working
     /** API: Check login state, provide feedback and a forced redirect on failure */
     public function requireLogin(string $message = 'Je moet eerst inloggen.') {
         if (!$this->isLoggedIn()) {
@@ -77,7 +74,6 @@ final class AuthService {
         }
     }
 
-    // Re-factor status: tested and working
     /** API: Check login state and user roles, provide feedback and a forced redirect on failure */
     public function requireRole(array $roles, string $message = 'Je hebt geen rechten om deze actie uit te voeren.'): void {
         $this->requireLogin();
@@ -88,14 +84,12 @@ final class AuthService {
         }
     }
 
-    // Re-factor status: tested and working
     /** API: Check if user has a specific permission */
     public function hasPermission(string $permission): bool {
         $flags = $_SESSION['user']['permission'] ?? [];
         return in_array($permission, $flags, true);
     }
 
-    // Re-factor status: tested and working
     /** API: Check if user has any of the requested permissions */
     public function hasAnyPermission(array $permissions): bool {
         $flags = $_SESSION['user']['permission'] ?? [];
