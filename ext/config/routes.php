@@ -11,13 +11,13 @@ return [
 
     /** App book related routes */
     ['GET',    '/bookData',             'BookController@bookData'],                 // re-factored
-    ['POST',   '/addBook',              'BookController@addBook'],
-    ['PATCH',  '/editBook',             'BookController@editBook'],
-    ['DELETE', '/delBook',              'BookController@deleteBook'],
+    ['POST',   '/addBook',              'BookController@addBook'],                  // re-factored
+    ['PATCH',  '/editBook',             'BookController@editBook'],                 // re-factered
+    ['DELETE', '/delBook',              'BookController@deleteBook'],               // re-factored
 
     /** Status period popin routes */
-    ['PATCH',  '/editStatusPeriod',     'StatusController@editStatusPeriod'],
-    ['PATCH',  '/changeStatus',         'StatusController@changeStatus'],    
+    ['PATCH',  '/editStatusPeriod',     'StatusController@editStatusPeriod'],       // re-factored
+    ['PATCH',  '/changeStatus',         'StatusController@changeStatus'],           // 
     
     // XHR requests for frontend scripts:
     ['GET',    '/requestStatus',        'StatusController@requestStatus'],          // re-factored
