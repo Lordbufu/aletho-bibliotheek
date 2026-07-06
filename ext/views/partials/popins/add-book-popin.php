@@ -53,7 +53,7 @@
                     <div class="input-group input-group-sm">
                         <label for="book-office-add" class="aletho-labels extra-popin-style" data-context="popin">Locatie</label>
                         <div class="add-locatie-tags-container" data-context="popin"></div>
-                        <select id="book-office-add" name="book_location" class="aletho-inputs extra-popin-style mb-2">
+                        <select id="book-office-add" name="book_locatie" class="aletho-inputs extra-popin-style mb-2">
                             <option value="_placeholder" selected disabled hidden>Selecteer locatie...</option>
                         </select>
                         <?php if (!empty($popErrors['office'])): ?>

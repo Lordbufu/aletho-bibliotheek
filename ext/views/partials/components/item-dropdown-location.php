@@ -2,7 +2,7 @@
     <div class="input-group input-group-sm" data-context="details">
         <div class="locatie-tags-container" data-book-id="<?= $book->id ?>" data-context="details"></div>
         <select id="book-office-<?= $book->id ?>"
-                name="book_location"
+                name="book_locatie"
                 class="aletho-inputs extra-input-style locatie-input"
                 data-book-id="<?= $book->id ?>"
                 data-context="details"
