@@ -25,27 +25,24 @@ class StatusController {
         );
     }
 
-    // Everthing below here still needs a re-view/factor
+    // Re-factor status: tested and working
     /** Edit the status period properties */
     public function editStatusPeriod() {
-        // Authenticate login state and user roles
         $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
-
         $validate = $this->app::getService('form_val')->validateStatusPeriod($_POST);
 
         if (!$validate['valid']) {
             setFlash('inlinePop', 'data', $validate['errors']);
             setFlash('form', 'message', $validate['data']);
-            setFlash('js', 'status_type', $_POST['status_type'] ?? '');
+            setFlash('js', 'status_id', $_POST['status_id'] ?? '');
             return $this->app::redirect('/home#status-period-popin');
         }
 
         $result = $this->app::getService('status')->updatePeriod($validate['data']);
 
-        if (!$result) {
-            setFlash('global', 'failure', 'Status periode kon niet worden bijgewerkt.');
-            setFlash('form', 'message', $validate['data']);
-            setFlash('js', 'status_type', $_POST['status_type'] ?? '');
+        if (!$result['valid']) {
+            setFlash('global', 'failure', $result['message']);
+            setFlash('js', 'status_id', $_POST['status_id'] ?? '');
             return $this->app::redirect('/home#status-period-popin');
         }
 
@@ -53,7 +50,7 @@ class StatusController {
         return $this->app::redirect('/home');
     }
 
-    // TODO: Considering changing the name of `$_POST['status_type']` and its associated flows, as its a index field not a type field
+    // Re-factor status: W.I.P.
     /** Change status requests for books */
     public function changeStatus() {
         $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
@@ -69,7 +66,7 @@ class StatusController {
 
             setFlash('inlinePop', 'data', $validate['errors']);
             setFlash('form', 'message', $validate['data']);
-            setFlash('js', 'status_type', $_POST['status_type'] ?? '');
+            setFlash('js', 'status_id', $_POST['status_id'] ?? '');
             return $this->app::redirect('/home#change-book-status-popin');
         }
 
@@ -78,20 +75,11 @@ class StatusController {
         if (!$result->passed) {
             setFlash('global', 'success', $result->errorMessage);
             setFlash('form', 'message', $validate['data']);
-            setFlash('js', 'status_type', $_POST['status_type'] ?? '');
+            setFlash('js', 'status_id', $_POST['status_id'] ?? '');
             return $this->app::redirect('/home#change-book-status-popin');
         }
 
-        // TODO: Remove null guard because user feedback should always be set, added for overdatum flow testing.
         setFlash('global', 'success', $result->userFeedbackMessage ?? null);
         return $this->app::redirect('/home');
     }
 }
-
-    // Re-factor status: Potentially redundant now
-    // /** XHR Request for: To pre-fill the status-change pop-in, with the current active status as first <option> */
-    // public function requestBookStatus() {
-    //     $bookId = (int)$_GET['book_id'];
-    //     $statusVM = $this->app->getService('status')->getStatusByBookId($bookId);
-    //     return $this->app::json($statusVM->id);
-    // }
