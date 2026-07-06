@@ -22,10 +22,13 @@ final class LoanerService {
 
     // Re-factor status: tested and working
     /** API: Provide singleton data context for frontend XHR requests */
-    public function getLoanerForBook($bookId): LoanerViewModel {
+    public function getLoanerForBook(int $bookId): ?LoanerViewModel {
         $bookLoaner = $this->loaner->getActiveLoanerByBookId($bookId);
-        $location   = $this->location->getLocationContextById($bookLoaner->loaner_locId);
+        if ($bookLoaner === null) {
+            return null;
+        }
 
+        $location   = $this->location->getLocationContextById($bookLoaner->loaner_locId);
         return new LoanerViewModel($bookLoaner, $location);
     }
 

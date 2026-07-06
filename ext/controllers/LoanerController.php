@@ -25,7 +25,7 @@ class LoanerController {
     /** XHR Request for: Request loaner data for a specific book */
     public function requestLoanerForBook() {
         $bookId = (int)$_GET['book_id'];
-        $loaner = $this->app::getService('loaner')->getLoanerForBook($bookId);
+        $loaner = $this->app::getService('loaner')->getLoanerForBook($bookId) ?? null;
 
         return $this->app::json($loaner);
     }

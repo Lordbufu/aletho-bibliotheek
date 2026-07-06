@@ -32,7 +32,11 @@ final class LoanerRepo {
             ", ["book_id" => $book_id]
         );
 
-        return new LoanerContext($row) ?? null;
+        if ($row === null) {
+            return null;
+        }
+
+        return new LoanerContext($row);
     }
 
     // Re-factor status: tested and working
