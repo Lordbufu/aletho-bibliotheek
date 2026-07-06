@@ -53,7 +53,6 @@ final class AuthController {
 
         $input          = $_POST;
         $isSelf         = isset($input['current_password']);
-        $mode           = $isSelf ? 'self' : 'admin';
 
         $validator      = $this->app::getService('form_val');
         $val = $isSelf
