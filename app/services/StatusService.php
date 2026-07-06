@@ -1,5 +1,5 @@
 <?php
-namespace App\services;
+namespace App\Services;
 
 use App\Libs\Context\StatusContext;
 use App\ViewModel\StatusViewModel;
@@ -56,9 +56,48 @@ class StatusService {
 
     // Re-factor status: tested and working
     /** API: Get status by bookId, requires bookId as array-key to return the viewmodel because of how the repo works */
-    public function getStatusByBookId($bookId): StatusViewModel {
+    public function getStatusByBookId(int $bookId): StatusViewModel {
         $status = $this->statuses->getBookStatusByBookId($bookId);
         return new StatusViewModel($status[$bookId]);
+    }
+
+    /** API: Update the provided data for the edited status type */
+    public function updatePeriod(array $data): ?array {
+        $current = $this->statuses->getStatusById($data['status_id']);
+        $changes = [];
+
+        if ($current->status_length !== $data['period_length']) {
+            $changes['status_length'] = $data['period_length'];
+        }
+
+        if ($current->status_reminder !== $data['reminder_day']) {
+            $changes['status_reminder'] = $data['reminder_day'];
+        }
+
+        if ($current->status_overdue !== $data['overdue_day']) {
+            $changes['status_overdue'] = $data['overdue_day'];
+        }
+
+        if(empty($changes)) {
+            return [
+                'valid'     => false,
+                'message'   => 'Er waren geen waardes om aan te passen.'
+            ];
+        }
+
+        try {
+            $this->statuses->updateStatusPeriod($data['status_id'], $changes);
+            return [
+                'valid'     => true,
+                'message'   => 'Status gegevens aangepast.'
+            ];
+        } catch (\Throwable $t) {
+            error_log("[StatusService] " . $t->getMessage());
+            return [
+                'valid'     => false,
+                'message'   => 'Er is een database fout opgetreden, neem contact op met de beheerder.'
+            ];
+        }
     }
 }
 
@@ -105,24 +144,6 @@ class StatusService {
         // public function getActiveStatus(array $bookIds): ?array {
         //     return $this->statuses->getActiveStatus($bookIds);
         // }
-
-    /** API: Update the provided data for the edited status type */
-        // TODO: Review why this isnt id based, but rather seems to be type/string based ?
-        // public function updatePeriod(array $data): bool {
-        //     try {
-        //         $this->statuses->updatePeriod(
-        //             $data['status_type'],
-        //             $data['period_length'],
-        //             $data['reminder_day'],
-        //             $data['overdue_day']
-        //         );
-        //         return true;
-        //     } catch (\Throwable $t) {
-        //         error_log("[StatusService] " . $t->getMessage());
-        //         return false;
-        //     }
-        // }
-
 // TODO: Should now be obsolete, remove after the re-factor.
     /** API: Helper function to filter only active book statuses */
         // private function filterActive(array $all): array {
