@@ -10,7 +10,6 @@ final class StatusRepo {
         $this->db = \App\App::getService('database');
     }
 
-    /** Re-factored\New functions */
     // Re-factor status: tested and working
     /** API: Shared getAllStatuses() function, either get all raw rows, or specifically only the active marked once. */
     public function getStatuses(string $mode): array {
@@ -66,51 +65,32 @@ final class StatusRepo {
         return $out;
     }
 
-    // TODO: Review if still required or only has a purpose as a singleton helper, consider combining functions if the later is the case.
-    /** API: Get a specific `status` raw row based on a id */
-    // public function getStatusRowById(int $statusId): ?array {
-    //     return $this->db->query()->fetchOne("SELECT * FROM status WHERE id = :id LIMIT 1", ['id' => $statusId]);
-    // }
-
+    // Re-factor status: tested and working
     /** API: Get a formatted `status` context object based on a id */
-    // public function getStatusById(int $statusId): ?StatusContext {
-    //     $row = $this->getStatusRowById($statusId);
-    //     return $row ? new StatusContext($row) : null;
-    // }
+    public function getStatusById(int $statusId): ?StatusContext {
+        $row = $this->db->query()->fetchOne("SELECT * FROM status WHERE status_id = :id LIMIT 1", ['id' => $statusId]);
+        return $row ? new StatusContext($row) : null;
+    }
 
+    // Re-factor status: tested and working
     /** API: Update a `status` row */
-    // public function updatePeriod(int $id, int $period, int $reminder, int $overdue): void {
-    //     $sql = "
-    //         UPDATE status
-    //         SET period_length = :p,
-    //             reminder_day  = :r,
-    //             overdue_day   = :o
-    //         WHERE id = :id
-    //     ";
+    public function updateStatusPeriod(int $status_id, array $changes): void {
+        $fields = [];
+        $params = ['id' => $status_id];
 
-    //     $this->db->query()->run($sql, [
-    //         'p'  => $period,
-    //         'r'  => $reminder,
-    //         'o'  => $overdue,
-    //         'id' => $id
-    //     ]);
-    // }
-    
-    // This is not only `status` table related
-    /** API: Return all active status rows for a set of books */
-    // public function getActiveStatus(array $bookIds): ?array {
-    //     if (!$bookIds) return [];
+        foreach ($changes as $key => $value) {
+            $fields[] = "$key = :$key";
+            $params[$key] = $value;
+        }
 
-    //     $sql = "
-    //         SELECT bs.id, bs.book_id, bs.status_id, bs.active, bs.action_finished, s.type
-    //         FROM book_status bs
-    //         JOIN status s ON s.id = bs.status_id
-    //         WHERE bs.book_id IN (" . implode(',', $bookIds) . ")
-    //         AND bs.active = 1
-    //     ";
+        if (empty($fields)) {
+            return;
+        }
 
-    //     return $this->db->query()->fetchAll($sql);
-    // }
+        $sql = "UPDATE status SET " . implode(', ', $fields) . " WHERE status_id = :id";
+
+        $this->db->query()->run($sql, $params);
+    }
 }
 // Redundant afte a recent refactor:
     /** Helper: Map status row to context object */
@@ -141,4 +121,24 @@ final class StatusRepo {
         //     }
 
         //     return $out;
+        // }
+
+    /** API: Get a specific `status` raw row based on a id */
+        // public function getStatusRowById(int $statusId): ?array {
+        //     return $this->db->query()->fetchOne("SELECT * FROM status WHERE id = :id LIMIT 1", ['id' => $statusId]);
+        // }
+    
+    /** API: Return all active status rows for a set of books */
+        // public function getActiveStatus(array $bookIds): ?array {
+        //     if (!$bookIds) return [];
+
+        //     $sql = "
+        //         SELECT bs.id, bs.book_id, bs.status_id, bs.active, bs.action_finished, s.type
+        //         FROM book_status bs
+        //         JOIN status s ON s.id = bs.status_id
+        //         WHERE bs.book_id IN (" . implode(',', $bookIds) . ")
+        //         AND bs.active = 1
+        //     ";
+
+        //     return $this->db->query()->fetchAll($sql);
         // }
