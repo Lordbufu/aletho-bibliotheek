@@ -10,10 +10,10 @@ return [
         'class'     => \App\Database::class,
         'config'    => BASE_PATH . '/ext/config/databaseConfig.php'
     ],
-    'notifications' => [
-        'class' => \App\Services\NotificationService::class,
-        'config' => BASE_PATH . '/ext/config/notificationConfig.php'
-    ],
+
+    // Non-config auth/validation services
+    'auth'          => [ 'class' => \App\Services\AuthService::class ],
+    'form_val'      => [ 'class' => \App\Validation\FormValidator::class ],
 
     // Non-config core services
     'user'          => [ 'class' => \App\Services\UserService::class ],
@@ -22,16 +22,15 @@ return [
     'writer'        => [ 'class' => \App\Services\WriterService::class],
     'genre'         => [ 'class' => \App\Services\GenreService::class],
     'status'        => [ 'class' => \App\Services\StatusService::class ],
-
-    // Non-config layered services
-    'auth'          => [ 'class' => \App\Services\AuthService::class ],
-    'form_val'      => [ 'class' => \App\Validation\FormValidator::class ],
-
-    
-
-    'book_status'   => [ 'class' => \App\Services\BookStatusService::class ],
     'loan'          => [ 'class' => \App\Services\LoanService::class ],
     'loaner'        => [ 'class' => \App\Services\LoanerService::class ],
+
+    // Re-factor status: W.I.P.
+    'book_status'   => [ 'class' => \App\Services\BookStatusService::class ],
+    'notifications' => [
+        'class' => \App\Services\NotificationService::class,
+        'config' => BASE_PATH . '/ext/config/notificationConfig.php'
+    ],
     'mail'          => [ 'class' => \App\Services\MailTemplateService::class ],
     // 'logger'        => [ 'class' => \App\Services\LoggerService::class ],       // Extra functionality for later
 ];
