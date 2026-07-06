@@ -47,47 +47,41 @@ final class LocationRepo {
         return $row ? new LocationContext($row) : null;
     }
 
-    /** API: Get single or multiple location name(s) for loc_id(s)
+    /** API: Get single or multiple location view data for loc_id(s)
      *      @param int|int[]|null $loc_ids
      *      @return string|array|null
      */
-    public function getLocationNameByIds(mixed $loc_ids): mixed {
-        if (!$loc_ids) {
+    public function getLocationNamesByIds(mixed $book_ids): mixed {
+        if (!$book_ids) {
             return [];
         }
 
-        if (!is_array($loc_ids)) {
-            $loc_id = (int)$loc_ids;
-            $row = $this->db->query()->fetchOne("
-                SELECT loc_name FROM locations WHERE loc_id = :loc_id",
-                ['loc_id' => $loc_id]
+        if (!is_array($book_ids)) {
+            $loc_id = (int)$book_ids;
+            $row = $this->db->query()->fetchOne("SELECT loc_name FROM locations WHERE loc_id = :loc_id",
+                [ 'loc_id' => $loc_id ]
             );
             
-            return $row ? $row['loc_name'] : null;
+            return $row ? new LocationContext($row) : null;
         }
 
-        $loc_ids = array_map('intval', $loc_ids);
+        $book_ids = array_map('intval', $book_ids);
 
         $placeholders = [];
         $params = [];
 
-        foreach ($loc_ids as $i => $id) {
+        foreach ($book_ids as $i => $id) {
             $key = "id{$i}";
             $placeholders[] = ":{$key}";
             $params[$key] = $id;
         }
 
-        $sql = "
-            SELECT loc_id, loc_name
-            FROM locations
-            WHERE loc_id IN (" . implode(',', $placeholders) . ")
-        ";
-
+        $sql = "SELECT b.book_id, l.loc_name, l.loc_id, l.is_active FROM books b JOIN locations l ON l.loc_id = b.book_cur_loc WHERE b.book_id IN (" . implode(',', $placeholders) . ")";
         $rows = $this->db->query()->fetchAll($sql, $params);
 
         $out = [];
         foreach ($rows as $row) {
-            $out[(int)$row['loc_id']] = $row['loc_name'];
+            $out[(int)$row['book_id']] = new LocationContext($row);
         }
 
         return $out;

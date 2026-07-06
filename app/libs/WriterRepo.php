@@ -84,30 +84,46 @@ final class WriterRepo {
         }
 
         return $out;
-    }    
+    }
 
-    // Review usefullness of the code below, and re-factor where needed.
-    /** API: Ensure all writer names exist, return their IDs */
-    public function ensureWritersExist(array $names): array {
+    // Re-factor status: W.I.P.
+    /** API: Resolve the writer input, and return all ids to caller */
+    public function resolveWriterIds(array $writers): array {
         $ids = [];
 
-        foreach ($names as $name) {
-            $name = trim($name);
-            if ($name === '') continue;
-
-            $existing = $this->db->query()->fetchOne(
-                "SELECT id FROM writers WHERE name = :name",
-                ['name' => $name]
-            );
-
-            if ($existing) {
-                $ids[] = (int)$existing['id'];
+        foreach ($writers as $writer) {
+            // Case 1: existing writer by ID
+            if ($writer['id']) {
+                $ids[] = (int)$writer['id'];
                 continue;
             }
 
+            // Case 2: lookup by name (case-insensitive)
+            $row = $this->db->query()->fetchOne(
+                "SELECT writer_id, is_active FROM writers WHERE LOWER(writer_name) = LOWER(:name)",
+                ['name' => $writer['name']]
+            );
+
+
+            if ($row) {
+                $id = (int)$row['writer_id'];
+
+                // Case 2a: found but inactive → reactivate
+                if (!(bool)$row['is_active']) {
+                    $this->db->query()->run(
+                        "UPDATE writers SET is_active = 1 WHERE writer_id = :id",
+                        ['id' => $id]
+                    );
+                }
+
+                $ids[] = $id;
+                continue;
+            }
+
+            // Case 3: new writer → insert
             $this->db->query()->run(
-                "INSERT INTO writers (name) VALUES (:name)",
-                ['name' => $name]
+                "INSERT INTO writers (writer_name) VALUES (:name)",
+                ['name' => $writer['name']]
             );
 
             $ids[] = (int)$this->db->query()->lastInsertId();
@@ -116,6 +132,7 @@ final class WriterRepo {
         return $ids;
     }
 
+    // Re-factor status: W.I.P.
     /** API: Replace all writers for a book */
     public function syncBookWriters(int $bookId, array $writerIds): void {
         $this->db->query()->run("DELETE FROM book_writers WHERE book_id = :id", ['id' => $bookId]);
@@ -128,3 +145,31 @@ final class WriterRepo {
         }
     }
 }
+
+    // public function ensureWritersExist(array $names): array {
+    //     $ids = [];
+
+    //     foreach ($names as $name) {
+    //         $name = trim($name);
+    //         if ($name === '') continue;
+
+    //         $existing = $this->db->query()->fetchOne(
+    //             "SELECT id FROM writers WHERE name = :name",
+    //             ['name' => $name]
+    //         );
+
+    //         if ($existing) {
+    //             $ids[] = (int)$existing['id'];
+    //             continue;
+    //         }
+
+    //         $this->db->query()->run(
+    //             "INSERT INTO writers (name) VALUES (:name)",
+    //             ['name' => $name]
+    //         );
+
+    //         $ids[] = (int)$this->db->query()->lastInsertId();
+    //     }
+
+    //     return $ids;
+    // }

@@ -88,26 +88,42 @@ final class GenreRepo {
 
     // Review for the refactor
     /** API: Ensure all genre names exist, return their IDs */
-    public function ensureGenresExist(array $names): array {
+    public function resolveGenreIds(array $genres): array {
         $ids = [];
 
-        foreach ($names as $name) {
-            $name = trim($name);
-            if ($name === '') continue;
-
-            $existing = $this->db->query()->fetchOne(
-                "SELECT id FROM genres WHERE name = :name",
-                ['name' => $name]
-            );
-
-            if ($existing) {
-                $ids[] = (int)$existing['id'];
+        foreach ($genres as $genre) {
+            // Case 1: existing writer by ID
+            if ($genre['id']) {
+                $ids[] = (int)$genre['id'];
                 continue;
             }
 
+            // Case 2: lookup by name (case-insensitive)
+            $row = $this->db->query()->fetchOne(
+                "SELECT genre_id, is_active FROM genres WHERE LOWER(genre_name) = LOWER(:name)",
+                ['name' => $genre['name']]
+            );
+
+
+            if ($row) {
+                $id = (int)$row['genre_id'];
+
+                // Case 2a: found but inactive → reactivate
+                if (!(bool)$row['is_active']) {
+                    $this->db->query()->run(
+                        "UPDATE genres SET is_active = 1 WHERE genre_id = :id",
+                        ['id' => $id]
+                    );
+                }
+
+                $ids[] = $id;
+                continue;
+            }
+
+            // Case 3: new writer → insert
             $this->db->query()->run(
-                "INSERT INTO genres (name) VALUES (:name)",
-                ['name' => $name]
+                "INSERT INTO genres (genre_name) VALUES (:name)",
+                ['name' => $genre['name']]
             );
 
             $ids[] = (int)$this->db->query()->lastInsertId();
@@ -116,16 +132,44 @@ final class GenreRepo {
         return $ids;
     }
 
-    // Review for the refactor
+    // Re-factor status: W.I.P.
     /** API: Replace all genres for a book */
     public function syncBookGenres(int $bookId, array $genreIds): void {
-        $this->db->query()->run("DELETE FROM book_genre WHERE book_id = :id", ['id' => $bookId]);
+        $this->db->query()->run("DELETE FROM book_genres WHERE book_id = :id", ['id' => $bookId]);
 
         foreach ($genreIds as $gid) {
             $this->db->query()->run(
-                "INSERT INTO book_genre (book_id, genre_id) VALUES (:b, :g)",
+                "INSERT INTO book_genres (book_id, genre_id) VALUES (:b, :g)",
                 ['b' => $bookId, 'g' => $gid]
             );
         }
     }
 }
+
+    // public function ensureGenresExist(array $names): array {
+    //     $ids = [];
+
+    //     foreach ($names as $name) {
+    //         $name = trim($name);
+    //         if ($name === '') continue;
+
+    //         $existing = $this->db->query()->fetchOne(
+    //             "SELECT id FROM genres WHERE name = :name",
+    //             ['name' => $name]
+    //         );
+
+    //         if ($existing) {
+    //             $ids[] = (int)$existing['id'];
+    //             continue;
+    //         }
+
+    //         $this->db->query()->run(
+    //             "INSERT INTO genres (name) VALUES (:name)",
+    //             ['name' => $name]
+    //         );
+
+    //         $ids[] = (int)$this->db->query()->lastInsertId();
+    //     }
+
+    //     return $ids;
+    // }
