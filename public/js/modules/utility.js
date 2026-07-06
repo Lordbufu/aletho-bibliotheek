@@ -84,7 +84,6 @@ export const Utility = {
         let originalId = null;
         let originalName = null;
 
-        // EDIT or STATUS modes → capture original
         if (mode === 'edit') {
             originalId = parseInt($field.val());
             originalName = $field.find('option:selected').text().trim();
@@ -98,7 +97,6 @@ export const Utility = {
             data: { data: endpoint },
             success: function(list) {
 
-                // Clear and rebuild
                 $field.empty();
                 list.forEach(l => {
                     l.id = parseInt(l.id, 10);
@@ -109,7 +107,6 @@ export const Utility = {
                     }
                 });
 
-                // Init TomSelect
                 const ts = new TomSelect(selector, {
                     maxItems: 1,
                     create: false,
@@ -117,10 +114,8 @@ export const Utility = {
                 });
 
 
-                // STATUS mode → just return the TomSelect
                 if (callback) callback(ts);
 
-                // EDIT mode → revert on blur
                 if (mode === 'edit') {
                     ts.focus();
                     ts.on('blur', () => {

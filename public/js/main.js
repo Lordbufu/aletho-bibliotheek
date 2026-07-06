@@ -32,18 +32,6 @@ $(function() {
 });
 
 /*  Legacy Debug functions for XHR requests
-    Add book snippet for Tom Select:
-    Utility.initTomSelectSingle($field, {
-        endpoint: 'locaties',
-        mode: 'add'
-    });
-
-    Change status snippet for Tom Select:
-    Utility.initTomSelectSingle($field, {
-        endpoint: 'locaties',
-        mode: 'status'
-    });
-
     $(document).ajaxSuccess(function (event, xhr, settings, data) {
         console.log('AJAX SUCCESS:', settings.url, data);
     });

@@ -5,7 +5,6 @@ import { AppState } from '../appstate.js';
 let activeTagInput = null;
 
 export const TagInput = {
-    /*  Initialize tag input config (no DOM events here anymore) */
     init(config) {
         AppState.tagConfigs[config.inputSelector] = config;
         AppState.tagInputSelectors.push(config.inputSelector);
@@ -13,7 +12,6 @@ export const TagInput = {
         AppState.tagRemoveSelectors.push(`${config.containerSelector} .remove-${config.tagClass}`);
     },
 
-    /*  ACTIVE INPUT MANAGEMENT */
     setActive($input) {
         activeTagInput = $input;
     },
@@ -22,7 +20,6 @@ export const TagInput = {
         setTimeout(() => { activeTagInput = null; }, 200);
     },
 
-    /*  INPUT HANDLER (called from Events.js) */
     handleInput($input) {
         const config = this.getConfigForInput($input);
         const query = $input.val().trim().toLowerCase();
@@ -37,7 +34,6 @@ export const TagInput = {
         });
     },
 
-    /*  ENTER KEY HANDLER */
     handleEnter($input) {
         const config = this.getConfigForInput($input);
         const name = $input.val().trim();
@@ -67,7 +63,6 @@ export const TagInput = {
         });
     },
 
-    /*  SUGGESTION CLICK HANDLER */
     handleSuggestionClick($suggestion) {
         if (!activeTagInput) return;
 
@@ -101,7 +96,6 @@ export const TagInput = {
         });
     },
 
-    /*  REMOVE TAG HANDLER */
     handleRemoveTag($removeButton) {
         const $tag   = $removeButton.closest('span');
         const $group = $tag.closest('.input-group');
@@ -123,7 +117,6 @@ export const TagInput = {
         }
     },
 
-    /*  OPTION LOADING (centralized caching) */
     loadOptions(endpoint, callback) {
         if (AppState.optionsCache[endpoint]) {
             callback(AppState.optionsCache[endpoint]);
@@ -147,7 +140,6 @@ export const TagInput = {
         });
     },
 
-    /*  SUGGESTION FILTERING */
     showSuggestions($input, options, query, suggestionClass) {
         const filtered = options.filter(option => {
             const label = typeof option === 'string'
@@ -163,7 +155,6 @@ export const TagInput = {
         }
     },
 
-    /*  TAG ADDING */
     addTag(naam, id, $input, $container, tagClass, hiddenInputName, maxTags, allowCustom = true, options = null) {
         if ($container.find(`.${tagClass}[data-name="${naam}"]`).length) {
             showTagLimitWarning($input, 1, `"${naam}" is al toegevoegd.`);
@@ -208,7 +199,6 @@ export const TagInput = {
         return true;
     },
 
-    /*  TAG CONTAINER + VALUE HELPERS */
     getTagsContainer($field, containerSelector) {
         const $group = $field.closest('.input-group');
         const $container = $group.find(containerSelector).first();
@@ -238,7 +228,6 @@ export const TagInput = {
         $field.data('originalValue', Utility.normalizeValues(origValues));
     },
 
-    /*  CONFIG RESOLUTION */
     getConfigForInput($input) {
         const classes = $input.attr('class').split(/\s+/);
 

@@ -1,8 +1,3 @@
-/*  Events.js:
-        This is file is intended to:
-            - Bind all DOM element events
-            - Call module function to resolve events
- */
 import { AppState } from "./appstate.js";
 import { Dropdowns } from "./modules/dropdowns.js";
 import { Popins } from "./modules/popins.js";
@@ -109,7 +104,6 @@ export const Events = {
 
     /*  EDITABLE FIELDS (BOOK DETAILS) */
     bindEditableFieldEvents() {
-        // Make field editable
         $(document).on("click", ".extra-button-style", function (event) {
             event.stopPropagation();
 
@@ -147,7 +141,6 @@ export const Events = {
             setTimeout(() => $field.focus(), 0);
         });
 
-        // Input/change listener
         $(document).on("input change", "input.field-editable, select.field-editable", function () {
             if (AppState.POPIN.open) return;
 
@@ -162,7 +155,6 @@ export const Events = {
             }
         });
 
-        // Blur revert logic
         $(document).on("blur", "input.field-editable", function () {
             const $field = $(this);
 

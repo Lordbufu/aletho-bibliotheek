@@ -1,12 +1,3 @@
-/*  AppState.js:
-        This is file is intended to contain:
-            - global datasets
-            - cached XHR results
-            - constatns used across modules
-            - user selections
-            - tag lists
-            - anything that multople modules need
- */
 export const AppState = {
     /*  UI related datasets */
     UI: {
