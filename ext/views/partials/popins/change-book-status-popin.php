@@ -12,10 +12,10 @@
                     
                     <div class="input-group input-group-sm">
                         <label for="change-status-type" class="aletho-labels extra-popin-style">Status</label>
-                        <select class="aletho-inputs extra-popin-style" id="change-status-type" name="status_type" required>
+                        <select class="aletho-inputs extra-popin-style" id="change-status-type" name="status_id" required>
                         </select>
-                        <?php if (!empty($popErrors['status_type'])): ?>
-                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['status_type']) ?></div>
+                        <?php if (!empty($popErrors['status_id'])): ?>
+                            <div class="aletho-alert-inline aletho-border"><?= htmlspecialchars($popErrors['status_id']) ?></div>
                         <?php endif; ?>
                     </div>
 
