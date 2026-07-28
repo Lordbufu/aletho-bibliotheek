@@ -10,8 +10,10 @@ class StatusController {
     }
 
     // Re-factor status: tested and working
-    /** XHR Request: Request a editable status list, and provide formatted data to the frontend */
+    /** XHR Request: Request a editable status list, and provide formatted data to the frontend. */
     public function requestPopinStatus() {
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        
         return $this->app::json(
             $this->app::getService('status')->getStatusForEdit()
         );
@@ -20,6 +22,8 @@ class StatusController {
     // Re-factor status: tested and working
     /** XHR Request: Request a selectable status list, and provide formatted data for the frontend */
     public function requestStatus() {
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
+
         return $this->app::json(
             $this->app::getService('status')->getStatusForSelect()
         );
@@ -56,7 +60,6 @@ class StatusController {
         $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
         $validate   = $this->app::getService('form_val')->validateStatusChange($_POST);
-        $trigger    = 'manual';
 
         if (!$validate['valid']) {
             if (isset($validate['errors']['book_id'])) {
@@ -70,6 +73,7 @@ class StatusController {
             return $this->app::redirect('/home#change-book-status-popin');
         }
 
+        dd($validate);
         $result = $this->app::getService('book_status')->changeStatus($validate['data'], $trigger);
 
         if (!$result->passed) {
