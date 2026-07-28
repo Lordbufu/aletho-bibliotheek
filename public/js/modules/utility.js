@@ -1,6 +1,25 @@
 import { AppState } from '../appstate.js';
 
 export const Utility = {
+    applyEditModeLogic(ts, $field, self) {
+        ts.focus();
+        ts.on('blur', () => {
+            const current = parseInt($field.val());
+            const original = $field.data('originalValue');
+
+            if (current === original) {
+                $field.prop('disabled', true)
+                    .removeClass('field-editable field-changed')
+                    .removeData('originalValue');
+
+                self.clearFieldChanged($field);
+                ts.destroy();
+            } else {
+                self.markFieldChanged($field);
+            }
+        });
+    },
+
     markFieldChanged($field) {
         const $form = $field.closest('form.book-edit-form');
         const $saveBtn = $form.find('button[id^="save-changes-"]');
@@ -42,7 +61,6 @@ export const Utility = {
 
         return { isTaggable: false };
     },
-
 
     normalizeValues(values) {
         return values.map(v => v.trim()).filter(Boolean).sort().join(',');
@@ -92,12 +110,30 @@ export const Utility = {
 
         $field.prop('disabled', false).addClass('field-editable');
 
+        if ($field.children().length > 1) {
+            const ts = new TomSelect(selector, {
+                maxItems: 1,
+                create: false,
+                controlInput: null,
+            });
+
+            if (callback) callback(ts);
+
+            if (mode === 'edit') {
+                setTimeout(() => {
+                    self.applyEditModeLogic(ts, $field, self);
+                }, 0);
+            }
+
+            return;
+        }
+
         this.request({
             url: '/bookData',
             data: { data: endpoint },
             success: function(list) {
-
                 $field.empty();
+                $field.append(`<option value="_placeholder" disabled hidden>Selecteer locatie...</option>`);
                 list.forEach(l => {
                     l.id = parseInt(l.id, 10);
                     if (mode === 'edit' && l.id === originalId) {
@@ -113,27 +149,10 @@ export const Utility = {
                     controlInput: null,
                 });
 
-
                 if (callback) callback(ts);
 
                 if (mode === 'edit') {
-                    ts.focus();
-                    ts.on('blur', () => {
-                        const current = parseInt($field.val());
-                        const original = $field.data('originalValue');
-
-                        if (current === original) {
-                            $field.prop('disabled', true)
-                                .removeClass('field-editable field-changed')
-                                .removeData('originalValue');
-
-                            self.clearFieldChanged($field);
-                            ts.destroy();
-                        } else {
-                            self.markFieldChanged($field);
-                        }
-
-                    });
+                    self.applyEditModeLogic(ts, $field, self);
                 }
             }
         });

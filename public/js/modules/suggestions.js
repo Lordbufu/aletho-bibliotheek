@@ -47,5 +47,13 @@ export const Suggestions = {
     close() {
         $('.suggestion-list').remove();
         activeList = null;
+    },
+
+    bindCloseOnBlur($input) {
+        $input.on('blur', function() {
+            setTimeout(() => {
+                Suggestions.close();
+            }, 150);
+        });
     }
 };
