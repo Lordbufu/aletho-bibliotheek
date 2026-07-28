@@ -4,26 +4,28 @@ namespace Ext\Controllers;
 
 // Re-factor status: tested and working
 class BookController {
-    private \App\App                                        $app;
+    private \App\App    $app;
     
     public function __construct() {
-        $this->app          = new \App\App();
+        $this->app      = new \App\App();
     }
 
     /** Request bookData for the frontend input suggestions */
     public function bookData() {
-        $data = [];
-        $type = $_GET['data'] ?? '';
+        $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
+        
+        $data           = [];
+        $type           = $_GET['data'] ?? '';
 
         switch($type) {
             case "schrijvers":
-                $data = $this->app::getService('writer')->getWritersForView();
+                $data   = $this->app::getService('writer')->getWritersForView();
                 break;
             case "genres":
-                $data = $this->app::getService('genre')->getGenresForView();
+                $data   = $this->app::getService('genre')->getGenresForView();
                 break;
             case "locaties":
-                $data = $this->app::getService('location')->getLocationsForView();
+                $data   = $this->app::getService('location')->getLocationsForView();
                 break;
         }
 
@@ -33,14 +35,14 @@ class BookController {
     /** Process add book requests */
     public function addBook() {
         $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
-        $validate = $this->app::getService('form_val')->validateBookForm($_POST, 'add');
+        $validate   = $this->app::getService('form_val')->validateBookForm($_POST, 'add');
 
         if (!$validate['valid']) {
             setFlash('inlinePop', 'data', $validate['errors']);
             return $this->app::redirect('/#add-book-popin');
         }
 
-        $result  = $this->app::getService('book')->addBook($validate['data']);
+        $result     = $this->app::getService('book')->addBook($validate['data']);
 
         if (!$result['valid']) {
             setFlash('global', 'failure', 'Boekgegevens zijn niet toegevoegd.');
@@ -89,14 +91,14 @@ class BookController {
     public function deleteBook() {
         $this->app::getService('auth')->requireRole(['office_admin', 'global_admin']);
 
-        $bookId = (int)($_POST['book_id'] ?? 0);
+        $bookId         = (int)($_POST['book_id'] ?? 0);
 
         if (!$bookId) {
             setFlash('global', 'failure', 'Ongeldig boek ID.');
             return $this->app::redirect('/home');
         }
 
-        $result = $this->app::getService('book')->deleteBook($bookId);
+        $result         = $this->app::getService('book')->deleteBook($bookId);
 
         if (!$result) {
             setFlash('single', 'book_id', $bookId);
