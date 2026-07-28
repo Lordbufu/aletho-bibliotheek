@@ -46,4 +46,13 @@ final class ReservationRepo {
 
         return $out;
     }
+
+    /** API: Request ACTIVE reservation context for just this book_id */
+    public function getReservationByBookId(int $book_id): ?ReservationContext {
+        $row = $this->db->query()->fetchOne("SELECT * FROM book_reservations WHERE book_id = :bookId AND is_active = 1",
+            ["bookId" => $book_id]
+        );
+
+        return $row ? new ReservationContext($row) : null;
+    }
 }
