@@ -12,14 +12,6 @@ final class LoanerRepo {
 
     /** Re-factored code */
     // Re-factor status: tested and working
-    /** API: Get all active loaners */
-    public function getAllActiveLoaners() {
-        $rows = $this->db->query()->fetchAll("SELECT * FROM loaners WHERE is_active = 1");
-
-        return array_map(fn($r) => LoanerContext::fromRow($r), $rows);
-    }
-
-    // Re-factor status: tested and working
     /** API: Fetch active loaner based on a book_id (not used atm ?) */
     public function getActiveLoanerByBookId(int $book_id): ?LoanerContext {
         $row = $this->db->query()->fetchOne("
@@ -114,56 +106,62 @@ final class LoanerRepo {
         return array_map(fn($r) => LoanerContext::fromRow($r), $rows);
     }
 
-    /** API: Create new loaner */
-        // public function createLoaner(string $name, string $email, int $officeId): int {
-        //     $this->db->query()->run("
-        //         INSERT INTO loaners (name, email, office_id, active)
-        //         VALUES (:name, :email, :officeId, 1)
-        //     ", [
-        //         'name' => $name,
-        //         'email' => $email,
-        //         'officeId' => $officeId
-        //     ]);
+    // Re-factor status: tested and working
+    /** API: Get all active loaners */
+    public function getAllActiveLoaners() {
+        $rows = $this->db->query()->fetchAll("SELECT * FROM loaners WHERE is_active = 1");
 
-        //     return (int)$this->db->query()->lastInsertId();
-        // }
+        return array_map(fn($r) => LoanerContext::fromRow($r), $rows);
+    }
+
+    // Re-factor status: W.I.P.
+    /** API: Get loaner based on id */
+    public function getLoanerById(int $loanerId): ?LoanerContext {
+        $row = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE loaner_id = :lId",
+            [ 'lId'    => $loanerId ]
+        );
+        
+        return $row ? new LoanerContext($row) : null;
+    }
+
+    // Re-factor status: W.I.P.
+    /** API: Find loaner based on exact name */
+    public function findLoanerByExactName(string $name): ?LoanerContext {
+        $rows = $this->db->query()->fetchAll("SELECT * FROM loaners WHERE loaner_name = :lName",
+            [ 'lName' => $name]
+        );
+
+        if (count($rows) === 0) {
+            return null;
+        }
+
+        // Log a warning for the admin incase duplication does occure
+        if (count($rows) > 1) {
+            error_log("Warning: multiple loaners found with name '{$name}'. Using the first match.");
+        }
+        
+        return new LoanerContext($rows[0]);
+    }
+
+    // Re-factor status: W.I.P.
+    /** API: Create new loaner */
+    public function createLoaner(string $name, string $email, int $officeId): int {
+        $this->db->query()->run("
+            INSERT INTO loaners (loaner_name, loaner_email, Loaner_locId, is_ctive)
+            VALUES (:lName, :lEmail, :lLocId, 1)
+        ", [
+            'lName'     => $name,
+            'lEmail'    => $email,
+            'lLocId'    => $officeId
+        ]);
+
+        return (int)$this->db->query()->lastInsertId();
+    }
 
     /** API: Reactive loaner based on id */
         // public function reactivateLoaner(int $id): void {
         //     $this->db->query()->run("
         //         UPDATE loaners SET active = 1 WHERE id = :id
         //     ", ['id' => $id]);
-        // }
-
-    /** API: Get loaner based on id */
-        // public function getLoanerById($loanerId): ?LoanerContext {
-        //     $row = $this->db->query()->fetchOne("
-        //         SELECT *
-        //         FROM loaners
-        //         WHERE id = :id
-        //     ", [ 'id'    => $loanerId ]);
-
-        //     return $row ? $this->mapRowToLoaner($row) : null;
-        // }
-
-    /** API: Find loaner based on exact name */
-        // public function findLoanerByExactName(string $name): ?array {
-        //     $rows = $this->db->query()->fetchAll("
-        //         SELECT id, active
-        //         FROM loaners
-        //         WHERE name = :name
-        //     ", [ 'name' => $name]
-        //     );
-
-        //     if (count($rows) === 0) {
-        //         return null;
-        //     }
-
-        //     // Log a warning for the admin incase duplication does occure
-        //     if (count($rows) > 1) {
-        //         error_log("Warning: multiple loaners found with name '{$name}'. Using the first match.");
-        //     }
-            
-        //     return $rows[0];
         // }
 }
