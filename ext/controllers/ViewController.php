@@ -40,7 +40,7 @@ final class ViewController {
 
         // codes testing section:
         // dd($this->app::getService('books')->testThis());
-        // dd( $this->app::getService('loaner')->getActiveLoanerByBookId(13) );
+        dd( $this->app::getService('loaner')->getActiveLoanerByBookId(2) );
 
         $this->app::view('main', [
             'books' => $this->app::getService('book')->getBooksForView()

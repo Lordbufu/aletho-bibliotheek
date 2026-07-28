@@ -8,12 +8,12 @@ class Router {
     protected array $routes = [];
 
     /** Helper: Register a single route for the given HTTP method, path, and handler. */
-    private function addRoute(string $method, string $path, $handler): void {
+    private function addRoute(string $method, string $path, mixed $handler): void {
         $this->routes[$method][] = new Route($method, $path, $handler);
     }
 
     /** Helper: Resolve and invoke a route handler, handling controller@method strings. */
-    private function handle($handler, Request $request, Response $response): void {
+    private function handle(mixed $handler, Request $request, Response $response): void {
         try {
             if (is_string($handler) && str_contains($handler, '@')) {
                 [$class, $method] = explode('@', $handler, 2);

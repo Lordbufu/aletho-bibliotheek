@@ -14,18 +14,18 @@ final class BookStatusRepo {
 
     // Re-factor status: tested and working
     /** API: Deactive specific status row */
-    public function deactiveBookStatus(int $book_id): void {
-        $this->db->query()->run("UPDATE book_status SET is_active = 0 WHERE book_id = :id", ['id' => $book_id]);
+    public function deactiveBookStatus(int $boek_id): void {
+        $this->db->query()->run("UPDATE book_status SET is_active = 0 WHERE book_id = :id", ['id' => $boek_id]);
     }
 
     // Re-factor status: tested and working
     /** API: Set default book status by book_id, with optional status_id */
-    public function setDefaultStatus(int $book_id, int $statusId = 1): int {
+    public function setDefaultStatus(int $boek_id, int $status_id = 1): int {
         $sql = "INSERT INTO book_status (book_id, status_id, is_active, action_complete) VALUES (:book, :status, 1, 0)";
 
         $this->db->query()->run($sql, [
-            'book'   => $book_id,
-            'status' => $statusId
+            'book'   => $boek_id,
+            'status' => $status_id
         ]);
 
         return (int)$this->db->query()->lastInsertId();

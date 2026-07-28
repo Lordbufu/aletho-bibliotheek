@@ -67,8 +67,8 @@ final class StatusRepo {
 
     // Re-factor status: tested and working
     /** API: Get a formatted `status` context object based on a id */
-    public function getStatusById(int $statusId): ?StatusContext {
-        $row = $this->db->query()->fetchOne("SELECT * FROM status WHERE status_id = :id LIMIT 1", ['id' => $statusId]);
+    public function getStatusById(int $status_id): ?StatusContext {
+        $row = $this->db->query()->fetchOne("SELECT * FROM status WHERE status_id = :id LIMIT 1", ['id' => $status_id]);
         return $row ? new StatusContext($row) : null;
     }
 
