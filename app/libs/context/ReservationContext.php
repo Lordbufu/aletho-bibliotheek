@@ -12,7 +12,15 @@ final class ReservationContext {
     public bool                 $is_active;
 
     /** Constructor for ease of use */
-    public function __construct(array $row) {}
+    public function __construct(array $row) {
+        $this->br_id        = $row["br_id"];
+        $this->book_id      = $row["book_id"];
+        $this->loaner_id    = $row["loaner_id"];
+        $this->loc_id       = $row["loc_id"];
+        $this->created_at   = $row["created_at"];
+        $this->expires_at   = $row["expires_at"] ?? null;
+        $this->is_active    = $row["is_active"];
+    }
 
     /** fromRow($row): To easily construct arrays of data */
     // public static function fromRow(array $row): self {}
