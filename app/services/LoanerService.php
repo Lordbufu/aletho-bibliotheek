@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\App;
 use App\Libs\{LoanerRepo, LocationRepo};
+use App\Libs\Context\LoanerContext;
 use App\ViewModel\LoanerViewModel;
 
 final class LoanerService {
@@ -15,9 +16,34 @@ final class LoanerService {
     }
 
     /** Re-factored/new functions */
-    // Re-factor status: tested and working (current not used any more maybe not usefull ?)
-    public function getLoanersForView() {
+    /** Facade: Get all active loaners from the database*/
+    public function getAllActiveLoaners() {
         return $this->loaner->getAllActiveLoaners();
+    }
+
+    /** Facade: Get active loaner for a book_id */
+    public function getActiveLoanerByBookId(int $book_id): ?LoanerContext {
+        return $this->loaner->getActiveLoanerByBookId($book_id);
+    }
+
+    /** Facade: Get loaner by loaner_id */
+    public function getLoanerById(int $loaner_id): ?LoanerContext {
+        return $this->loaner->getLoanerById($loaner_id);
+    }
+
+    /** Facade: Get all book loaners for a book_id */
+    public function getAllBookLoanersByBookId(mixed $book_ids): array {
+        return $this->loaner->getAllBookLoanersByBookId($book_ids);
+    }
+
+    /** Facade: Find loaner by name for frontend (fuzzy search) */
+    public function findLoanerByName(string $query): ?array {
+        return $this->loaner->findLoanerByName($query);
+    }
+
+    /** Facade: Create a new loaner record */
+    public function createLoaner(string $loaner_name, string $loaner_email, int $loanerLocId): int {
+        return $this->loaner->createLoaner($loaner_name, $loaner_email, $loanerLocId);
     }
 
     // Re-factor status: tested and working
@@ -32,6 +58,7 @@ final class LoanerService {
         return new LoanerViewModel($bookLoaner, $location);
     }
 
+    // Re-factor status: tested and working
     /** API: Search loaners based on variable query string for frontend XHR requests */
     public function searchLoaners(string $query): ?array {
         $loanersCtx = $this->loaner->findLoanerByName($query);
@@ -47,10 +74,24 @@ final class LoanerService {
         return $loaners;
     }
 
+    // Re-factor status: W.I.P.
+    /** API: Get or create a loaner for status change flows */
+    public function getOrCreateLoaner(array $data): LoanerContext {
+        $loanerCTX      = $this->getActiveLoanerByBookId($data['book_id']);
+
+        if (!$loanerCTX) {
+            $tId        = $this->createLoaner($data['loaner_name'], $data['loaner_email'], $data['loaner_location']);
+            $loanerCTX  = $this->getLoanerById($tId);
+        }
+        
+        return $loanerCTX;
+    }
+}
+
     // Re-factor status: Evertything below still needs a review.
-    // /** Facade: Create new loaner loaner and return its id */
-    // public function createLoaner(string $name, string $email, int $officeId): int {
-    //     return $this->loaner->createLoaner($name, $email, $officeId);
+    // /** Facade: Find loaner by exact name for API logic */
+    // public function findLoanerByExactName(string $name): ?LoanerContext {
+    //     return $this->loaner->findLoanerByExactName($name);
     // }
 
     // /** Facade: Reactive loaner based on id */
@@ -86,4 +127,3 @@ final class LoanerService {
 
     //     return $this->loaner->createLoaner($name, $email, $officeId);
     // }
-}
