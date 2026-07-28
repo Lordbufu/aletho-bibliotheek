@@ -32,6 +32,11 @@ class StatusService {
         return $this->statuses->getStatuses($mode);
     }
 
+    /** Facade: Get status by id */
+    public function getStatusById(int $status_id): ?StatusContext {
+        return $this->statuses->getStatusById($status_id);
+    }
+
     // Re-factor status: tested and working
     /** API: Get all editable statuses for view functions */
     public function getStatusForEdit(): array {
