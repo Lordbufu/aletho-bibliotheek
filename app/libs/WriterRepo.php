@@ -145,31 +145,3 @@ final class WriterRepo {
         }
     }
 }
-
-    // public function ensureWritersExist(array $names): array {
-    //     $ids = [];
-
-    //     foreach ($names as $name) {
-    //         $name = trim($name);
-    //         if ($name === '') continue;
-
-    //         $existing = $this->db->query()->fetchOne(
-    //             "SELECT id FROM writers WHERE name = :name",
-    //             ['name' => $name]
-    //         );
-
-    //         if ($existing) {
-    //             $ids[] = (int)$existing['id'];
-    //             continue;
-    //         }
-
-    //         $this->db->query()->run(
-    //             "INSERT INTO writers (name) VALUES (:name)",
-    //             ['name' => $name]
-    //         );
-
-    //         $ids[] = (int)$this->db->query()->lastInsertId();
-    //     }
-
-    //     return $ids;
-    // }

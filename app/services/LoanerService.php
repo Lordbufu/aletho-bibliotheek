@@ -41,6 +41,11 @@ final class LoanerService {
         return $this->loaner->findLoanerByName($query);
     }
 
+    /** Facade: Find loaner bu exact name */
+    public function findLoanerByExactName(string $name): ?LoanerContext {
+        return $this->loaner->findLoanerByExactName($name);
+    }
+
     /** Facade: Create a new loaner record */
     public function createLoaner(string $loaner_name, string $loaner_email, int $loanerLocId): int {
         return $this->loaner->createLoaner($loaner_name, $loaner_email, $loanerLocId);
@@ -77,14 +82,14 @@ final class LoanerService {
     // Re-factor status: W.I.P.
     /** API: Get or create a loaner for status change flows */
     public function getOrCreateLoaner(array $data): LoanerContext {
-        $loanerCTX      = $this->getActiveLoanerByBookId($data['book_id']);
-
-        if (!$loanerCTX) {
+        $loanerCtx      = $this->findLoanerByExactName($data['loaner_name']);
+        
+        if (!$loanerCtx) {
             $tId        = $this->createLoaner($data['loaner_name'], $data['loaner_email'], $data['loaner_location']);
-            $loanerCTX  = $this->getLoanerById($tId);
+            $loanerCtx  = $this->getLoanerById($tId);
         }
         
-        return $loanerCTX;
+        return $loanerCtx;
     }
 }
 

@@ -1,36 +1,114 @@
 <?php
 namespace App\Services;
 
-use App\App;
-
+use App\{App, Database};
 use App\Libs\Context\BookStatusContext;
-
-use App\Engine\BookStatusEngine;
-use App\Engine\TransitionContext;
+use App\Libs\{BookRepo, BookStatusRepo, LoanerRepo, ReservationRepo};
+use App\Engine\{BookStatusEngine, TransitionContext};
 use App\Engine\Result\TransitionResult;
 
-
 final class BookStatusService {
-    private \App\Database               $db;
-    private \App\Libs\BookRepo          $book;
-    private \App\Libs\ReservationRepo   $reservation;
-    private \App\Libs\BookStatusRepo    $bookStatus;
+    private Database        $db;
+    private BookRepo        $book;
+    private BookStatusRepo  $bookStatus;
+    private LoanerRepo      $loanRepo;
+    private ReservationRepo $reservation;
+
 
     public function __construct() {
         $this->db               = \App\App::getService('database');
+        $this->book = new BookRepo();
+        $this->bookStatus = new BookStatusRepo();
+        $this->loanRepo = new LoanerRepo;
+        $this->reservation = new ReservationRepo();
     }
 
-    /* Facade: Deactive a book status record for a specific book_id */
+    /** Helper: resolve facade statuses to actual satuses */
+    private function resolveFacadeStatus(int $currentStatusId, int $requestedFacadeId, TransitionContext $tx): int {
+        switch ($requestedFacadeId) {
+            // Uitlenen id: 7
+            case 7:
+                // If book is at home location → loan directly (uitgeleend id: 2)
+                if ($tx->book->book_cur_loc === $tx->book->book_home_loc) {
+                    return (int) 2;
+                }
+
+                // Otherwise → transport first (id: 6)
+                return (int) 6;
+            // Ingelevered id: 8
+            case 8:
+                // If book was transported → return to transport (id: 6)
+                if ($currentStatusId === 2 && $tx->book->book_cur_loc !== $tx->book->book_home_loc) {
+                    return 6;
+                }
+
+                // If book is arriving at destination (id: 6) → Ligt Klaar (id: 3)
+                if ($currentStatusId === 6) {
+                    return 3;
+                }
+
+                // Default: return to Aanwezig (id: 1)
+                return 1;
+            // Aangekomen id: 9
+            case 9:
+                // If book is in transport (id: 6) → Ligt Klaar (id: 3)
+                if ($currentStatusId === 6) {
+                    return 3;
+                }
+
+                // Otherwise → Aanwezig (id: 1)
+                return 1;
+            // Reserveren id: 10
+            case 10:
+                // Gereserveerd id: 4
+                return 4;
+        }
+
+        throw new \RuntimeException("Unknown facade status");
+    }
+
+    /** Helper: resolve change status actions to repo calls */
+    private function executeAction(string $action, TransitionContext $tx, TransitionResult $result): void {
+        switch ($action) {
+            case 'updateStatus':
+                $this->bookStatus->setDefaultStatus(
+                    $tx->book->book_id,
+                    $result->newStatusId
+                );
+                break;
+            case 'closeLoan':
+                $this->loanRepo->closeLoan($tx->loaner->bl_id);
+                break;
+            case 'setDueDate':
+                $this->loanRepo->updateDueDate(
+                    $tx->loaner->bl_id,
+                    $tx->loaner->end_at
+                );
+                break;
+            case 'createLoan':
+                $this->loanRepo->createLoan(
+                    $tx->book->book_id,
+                    $tx->loaner->loaner_id,
+                    $tx->loaner->end_at
+                );
+                break;
+            case 'releaseReservation':
+                $this->reservation->release($tx->reservation->br_id);
+                break;
+        }
+    }
+
+    /** Facade: Deactive a book status record for a specific book_id */
     public function deactiveBookStatus(int $book_id): void {
         $this->bookStatus->deactiveBookStatus($book_id);
     }
 
-    /* Facade: Set a default status for a book id, for adding new books */
+    /** Facade: Set a default status for a book id, for adding new books */
     public function setDefaultStatus(int $book_id, int $status_id = 1): int {
         return $this->bookStatus->setDefaultStatus($book_id, $status_id);
     }
 
-    /* Facade: Get the active book_status context for this book_id */
+    /** Facade: Get the active book_status context for this book_id */
     public function getActiveBookStatusForBook(int $book_id): BookStatusContext {
         return $this->bookStatus->getActiveBookStatusForBook($book_id);
     }
@@ -39,34 +117,46 @@ final class BookStatusService {
     public function changeStatus(array $data): TransitionResult {
         $engine     = new BookStatusEngine();
         
-        // Process data into required datasets
+        /** Process data into the required datasets */
         $bookCtx    = $this->book->findBookById($data['book_id']);
         $loanerCtx  = App::getService('loaner')->getOrCreateLoaner($data);
         $reqStatus  = (int)$data['status_id'];
-        // Append remaining context for the transition
         $boStCtx    = $this->getActiveBookStatusForBook($bookCtx->book_id);
         $reservCtx  = $this->reservation->getReservationByBookId($bookCtx->book_id);
 
-        $transCtx   = new TransitionContext (                   // Build transition context
+        /** Build initial transition context data */
+        $transCtx   = new TransitionContext (
             book        : $bookCtx,
             bookStatus  : $boStCtx,
             reqStatusId : $reqStatus,
             loaner      : $loanerCtx,
             reservation : $reservCtx
         );
-    
-        $result = $engine->evaluate($transCtx);                 // Start engine evaluation
+
+        /** Deal with special edge cases for facade vs actual statuses */
+        $reqStatus = $this->resolveFacadeStatus(
+            $boStCtx->status_id,
+            (int)$data['status_id'],
+            $transCtx
+        );
         
+        $transCtx->reqStatusId = $reqStatus;
+
+        /** Start engine evaluation */
+        $result     = $engine->evaluate($transCtx);
+
         if (!$result->isAllowed) {
             return $result;
         }
 
-        $this->db->startTransaction();                          // Start DB transaction
+        /** Attempt to process the resulting action via a DB Transaction */
+        $this->db->startTransaction();
 
         try {
-            // attempt to update each relevant repo/data chain
+            foreach ($result->actions as $action) {
+                $this->executeAction($action, $transCtx, $result);
+            }
 
-            // Finish Transaction
             $this->db->finishTransaction();
         } catch (\Throwable $e) {
             $this->db->cancelTransaction();

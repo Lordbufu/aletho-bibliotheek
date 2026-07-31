@@ -13,8 +13,8 @@ final class StatusTransitionContext {
     /** Constructor for ease of use */
     public function __construct(array $row) {
         $this->st_id                = $row['st_id'];
-        $this->from_status          = $row['from_status'];
-        $this->to_status            = $row['to_status'];
+        $this->from_status          = $row['from_status_id'];
+        $this->to_status            = $row['to_status_id'];
         $this->noti_id              = $row['noti_id'] ?? null;
         $this->context_requirements = $this->decodeJson($row['context_requirements']);
         $this->is_active            = $row['is_active'];

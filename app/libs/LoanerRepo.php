@@ -21,15 +21,27 @@ final class LoanerRepo {
                 ON bl.loaner_id = l.loaner_id
             WHERE bl.book_id = :book_id
             AND bl.is_active = 1
-            ", ["book_id" => $book_id]
+            ", [ "book_id" => $book_id ]
         );
 
-        if ($row === null) {
+        if (!$row) {
             return null;
         }
 
         return new LoanerContext($row);
     }
+
+    // Re-factor status: W.I.P.
+    /** API: Get loaner based on id */
+    public function getLoanerById(int $loanerId): ?LoanerContext {
+        $row = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE loaner_id = :lId",
+            [ "lId" => $loanerId ]
+        );
+        
+        return $row ? new LoanerContext($row) : null;
+    }
+
+    /** API: Get loaner for  */
 
     // Re-factor status: tested and working
     /** API: Fetch all loaners based on multiple book_ids */
@@ -106,24 +118,6 @@ final class LoanerRepo {
         return array_map(fn($r) => LoanerContext::fromRow($r), $rows);
     }
 
-    // Re-factor status: tested and working
-    /** API: Get all active loaners */
-    public function getAllActiveLoaners() {
-        $rows = $this->db->query()->fetchAll("SELECT * FROM loaners WHERE is_active = 1");
-
-        return array_map(fn($r) => LoanerContext::fromRow($r), $rows);
-    }
-
-    // Re-factor status: W.I.P.
-    /** API: Get loaner based on id */
-    public function getLoanerById(int $loanerId): ?LoanerContext {
-        $row = $this->db->query()->fetchOne("SELECT * FROM loaners WHERE loaner_id = :lId",
-            [ 'lId'    => $loanerId ]
-        );
-        
-        return $row ? new LoanerContext($row) : null;
-    }
-
     // Re-factor status: W.I.P.
     /** API: Find loaner based on exact name */
     public function findLoanerByExactName(string $name): ?LoanerContext {
@@ -143,11 +137,19 @@ final class LoanerRepo {
         return new LoanerContext($rows[0]);
     }
 
-    // Re-factor status: W.I.P.
+    // Re-factor status: tested and working
+    /** API: Get all active loaners */
+    public function getAllActiveLoaners() {
+        $rows = $this->db->query()->fetchAll("SELECT * FROM loaners WHERE is_active = 1");
+
+        return array_map(fn($r) => LoanerContext::fromRow($r), $rows);
+    }
+
+    // Re-factor status: tested and working
     /** API: Create new loaner */
     public function createLoaner(string $name, string $email, int $officeId): int {
         $this->db->query()->run("
-            INSERT INTO loaners (loaner_name, loaner_email, Loaner_locId, is_ctive)
+            INSERT INTO loaners (loaner_name, loaner_email, loaner_locId, is_active)
             VALUES (:lName, :lEmail, :lLocId, 1)
         ", [
             'lName'     => $name,
@@ -158,6 +160,7 @@ final class LoanerRepo {
         return (int)$this->db->query()->lastInsertId();
     }
 
+    // Re-factor status: W.I.P.
     /** API: Reactive loaner based on id */
         // public function reactivateLoaner(int $id): void {
         //     $this->db->query()->run("

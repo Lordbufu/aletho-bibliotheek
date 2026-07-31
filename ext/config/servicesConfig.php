@@ -22,7 +22,7 @@ return [
     'writer'        => [ 'class' => \App\Services\WriterService::class],
     'genre'         => [ 'class' => \App\Services\GenreService::class],
     'status'        => [ 'class' => \App\Services\StatusService::class ],
-    'loan'          => [ 'class' => \App\Services\LoanService::class ],
+
     'loaner'        => [ 'class' => \App\Services\LoanerService::class ],
 
     // Re-factor status: W.I.P.
@@ -33,4 +33,7 @@ return [
     ],
     'mail'          => [ 'class' => \App\Services\MailTemplateService::class ],
     // 'logger'        => [ 'class' => \App\Services\LoggerService::class ],       // Extra functionality for later
+
+    // Legacy services
+    //'loan'          => [ 'class' => \App\Services\LoanService::class ],
 ];

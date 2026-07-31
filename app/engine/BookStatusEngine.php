@@ -1,9 +1,10 @@
 <?php
 namespace App\Engine;
 
+use App\Libs\StatusTransRepo;
+use App\Libs\Context\StatusTransitionContext;
 use App\Engine\TransitionContext;
 use App\Engine\Result\TransitionResult;
-use App\Libs\Context\StatusTransitionContext;
 
 /**     context requirements:
   *         "needsBook"             : true, // check
@@ -17,24 +18,90 @@ use App\Libs\Context\StatusTransitionContext;
   */
 /** BookStatusEngine: The goal is to evaluate status transitions, and then provide the service with the correct dataset. */
 final class BookStatusEngine {
-    private \App\Libs\StatusTransRepo   $statusTrans;
+    private StatusTransRepo   $statusTrans;
 
-    /** Helper:  Determine what operations the service has to perform */
-    private function determineOperations(TransitionContext $tx, StatusTransitionContext $rule): ?array {
-        $result = [];
-
-        return $result;
+    public function __construct() {
+        $this->statusTrans = new StatusTransRepo();
     }
 
+    /** Helper: Determine what operations the service has to perform */
+    private function determineActions(TransitionContext $tx, StatusTransitionContext $rule): array {
+        $actions = [];
+        $req = $rule->context_requirements;
+
+        // Always update status
+        $actions[] = 'updateStatus';
+
+        if (!empty($req['needsLoan'])) {
+            if ($tx->loaner->loaner_id) {
+                $actions[] = 'closeLoan';
+            } else {
+                $actions[] = 'createLoan';
+            }
+        }
+
+        if (!empty($req['needsReservation'])) {
+            if ($tx->reservation) {
+                $actions[] = 'releaseReservation';
+            } else {
+                $actions[] = 'createReservation';
+            }
+        }
+
+        if (!empty($req['needsDueDate'])) {
+            if (!$tx->loaner->end_at) {
+                $actions[] = 'setDueDate';
+            }
+        }
+
+        if (!empty($req['needsTransport'])) {
+            if ($tx->book->book_cur_loc !== $tx->book->book_home_loc) {
+                $actions[] = 'startTransport';
+            } else {
+                $actions[] = 'skipTransport';
+            }
+        }
+
+        if (!empty($req['needsNotificationType']) && $rule->noti_id) {
+            $actions[] = 'sendNotification';
+        }
+
+        return $actions;
+    }
+
+    /** Helper: Validate requirement conditions */
+    private function validateRequirements(array $req, TransitionContext $tx, TransitionResult $result): bool {
+        // True preconditions
+        if (!empty($req['needsBook']) && !$tx->book) {
+            return $result->deny("Missing book context")->isAllowed;
+        }
+
+        if (!empty($req['needsLoaner']) && !$tx->loaner) {
+            return $result->deny("Missing loaner context")->isAllowed;
+        }
+
+        // Temp removal, might still be needed later
+        // if (!empty($req['needsDueDate']) && !$tx->loaner->end_at) {
+        //     return $result->deny("Missing due date")->isAllowed;
+        // }
+
+        // Everything else is logic triggers, not preconditions
+        return true;
+    }
+ 
     /** API: Evaluate the requested transition */
     public function evaluate(TransitionContext $tx): TransitionResult {
         $result = new TransitionResult();
 
-        // 1. Load rule
+        // dd($tx);
+
+        // Load rule
         $rule = $this->statusTrans->getTransitionByIds(
             $tx->bookStatus->status_id,
             $tx->reqStatusId
         );
+
+        // dd($rule);
 
         if (!$rule) {
             return $result->deny("Transition not allowed: no rule found.");
@@ -44,67 +111,26 @@ final class BookStatusEngine {
             return $result->deny("Transition not allowed: rule inactive.");
         }
 
-        // 2. Validate context requirements
-        $requirements = $rule->context_requirements;
-
-        foreach ($requirements as $key => $needed) {
-            if (!$needed) {
-                continue;
-            }
-
-            switch ($key) {
-                case 'needsBook':
-                    if (!$tx->book) {
-                        return $result->deny("Missing required context: book");
-                    }
-                    break;
-                case 'needsLoaner':
-                    if (!$tx->loaner) {
-                        return $result->deny("Missing required context: loaner");
-                    }
-                    break;
-                case 'needsLoan':
-                    if (!$tx->loaner->end_at) {
-                        return $result->deny("Missing required context: active loan");
-                    }
-                    break;
-                case 'needsReservation':
-                    if (!$tx->reservation) {
-                        return $result->deny("Missing required context: reservation");
-                    }
-                    break;
-                // case `needsOffice`:
-                //     if (!$tx->loaner->end_at) {
-                //         return $result->deny("Missing required context: active loan");
-                //     }
-                //     break;
-                // case `needsTransport`:
-                //     if (!$tx->loaner->end_at) {
-                //         return $result->deny("Missing required context: active loan");
-                //     }
-                //     break;
-                // case `needsNotificationType`:
-                //     if (!$tx->reservation) {
-                //         return $result->deny("Missing required context: active loan");
-                //     }
-                //     break;
-            }
+        // Validate true preconditions
+        if (!$this->validateRequirements($rule->context_requirements, $tx, $result)) {
+            return $result;
         }
 
-        // 3. Build result
+        // Build result
         $result->isAllowed = true;
         $result->newStatusId = $rule->to_status;
 
-        // Notifications are OUTPUT, not INPUT
+        // Add notification ID
         if ($rule->noti_id) {
             $result->notifications[] = $rule->noti_id;
         }
 
-        // 4. Determine operations (loan create/close, reservation release, etc.)
-        $result->operations = $this->determineOperations($tx, $rule);
+        // Determine actions
+        $result->actions = $this->determineActions($tx, $rule);
 
         return $result;
     }
+
 }
     /** API: The function that drives the book status transitions */
         // public function transition(TransitionContext $tx): TransitionResult {

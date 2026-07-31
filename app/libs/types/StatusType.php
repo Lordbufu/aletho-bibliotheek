@@ -4,7 +4,7 @@ namespace App\Libs\Types;
 /** */
 final class StatusType {
     public const AANWEZIG       = 'Aanwezig';
-    public const AFWEZIG        = 'Afwezig';
+    public const UITGELEEND     = 'Uitgeleend';
     public const TRANSPORT      = 'Transport';
     public const LIGT_KLAAR     = 'Ligt Klaar';
     public const GERESERVEERD   = 'Gereserveerd';
@@ -14,7 +14,7 @@ final class StatusType {
     public static function fromId(int $id): string {
         return match ($id) {
             1 => self::AANWEZIG,
-            2 => self::AFWEZIG,
+            2 => self::UITGELEEND,
             3 => self::TRANSPORT,
             4 => self::LIGT_KLAAR,
             5 => self::GERESERVEERD,
@@ -27,7 +27,7 @@ final class StatusType {
     public static function toId(string $type): int {
         return match ($type) {
             self::AANWEZIG     => 1,
-            self::AFWEZIG      => 2,
+            self::UITGELEEND   => 2,
             self::TRANSPORT    => 3,
             self::LIGT_KLAAR   => 4,
             self::GERESERVEERD => 5,

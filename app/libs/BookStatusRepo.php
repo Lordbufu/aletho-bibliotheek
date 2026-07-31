@@ -33,10 +33,10 @@ final class BookStatusRepo {
 
     // Re-factor status: tested and working
     /** API: Get all active book_status rows for a specific book */
-    public function getActiveBookStatusForBook(int $book_id): ?BookStatusContext {
+    public function getActiveBookStatusForBook(int $boek_id): ?BookStatusContext {
         $row = $this->db->query()->fetchOne(
             "SELECT * FROM book_status WHERE book_id = :id AND is_active = 1",
-            ['id' => $book_id]
+            ['id' => $boek_id]
         );
 
         return $row ? new BookStatusContext($row) : null;

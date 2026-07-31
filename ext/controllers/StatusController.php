@@ -73,8 +73,8 @@ class StatusController {
             return $this->app::redirect('/home#change-book-status-popin');
         }
 
-        dd($validate);
-        $result = $this->app::getService('book_status')->changeStatus($validate['data'], $trigger);
+        $result = $this->app::getService('book_status')->changeStatus($validate['data']);
+        dd($result);
 
         if (!$result->passed) {
             setFlash('global', 'success', $result->errorMessage);
